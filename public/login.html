@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <link rel="stylesheet" href="/assets/css/public/login.css" />
+    <script src="/assets/component/loading.js"></script>
+    <script defer src="/assets/js/public/login.js"></script>
+  </head>
+  <body>
+    <div id="toast" class="toast"></div>
+
+    <!-- HTML Code for Back Button -->
+    <div class="back-btn">
+      <a
+        href="index.html"
+        class="back-btn-link"
+        aria-label="Go back to home page"
+      >
+        <button type="button" class="back-btn-button">
+          <span class="back-icon">&#8592;</span>
+          <span class="back-text">Back</span>
+        </button>
+      </a>
+    </div>
+
+    <div class="login-container">
+      <div class="login-box">
+        <h2>Login</h2>
+        <form id="loginForm" action="#">
+          <div class="textbox">
+            <input
+              type="text"
+              id="username"
+              placeholder="Username"
+              name="username"
+              required
+            />
+          </div>
+          <div class="textbox">
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              name="password"
+              required
+            />
+          </div>
+          <div class="remember">
+            <input type="checkbox" id="remember-me" name="remember" /> Remember
+            me
+          </div>
+          <button type="submit" id="loginBtn" class="btn">Login</button>
+          <div class="loader" id="loader"></div>
+          <div class="footer">
+            <a href="#" id="forgot-password">Forgot Password?</a> |
+            <a href="register.html">Sign Up</a> |
+            <a href="#" id="employee-login">Employee</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Employee Verification Modal -->
+    <div id="employee-verification-modal" style="display: none">
+      <div class="employee-modal">
+        <button class="modal-close" onclick="closeEmployeeModal()">
+          &times;
+        </button>
+        <h3>Employee Access Verification</h3>
+        <p>
+          Please enter your company email address to verify employee access.
+        </p>
+        <input
+          type="email"
+          id="employee-email"
+          class="email-input"
+          placeholder="Enter your email address"
+          required
+        />
+        <div class="modal-buttons">
+          <button
+            class="modal-btn modal-btn-primary"
+            onclick="verifyEmployeeEmail()"
+          >
+            Verify
+          </button>
+          <button
+            class="modal-btn modal-btn-secondary"
+            onclick="closeEmployeeModal()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

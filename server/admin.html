@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Admin Panel</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/css/server/admin.css" />
+    <script src="/assets/js/server/admin.js"></script>
+  </head>
+  <body>
+    <div id="header">
+      <div class="header-left">
+        <button class="toggle-sidebar" id="toggle-sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1>S2K Sewing</h1>
+      </div>
+
+      <div id="header-actions">
+        <!-- Bell icon only visible for super admin -->
+        <div
+          class="btn notification-badge super-admin-only"
+          id="notification-bell"
+        >
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="btn" id="user-profile">
+          <img
+            src="/api/placeholder/40/40?text=??"
+            alt="User"
+            id="user-avatar"
+            class="user-avatar"
+          />
+          <span class="user-email" id="user-email">Loading...</span>
+        </div>
+        <div class="btn" onclick="logoutAdmin()" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <h2>Admin Panel</h2>
+        <p id="logged-in-user" style="display: none">Loading...</p>
+        <p id="user-role">Loading...</p>
+      </div>
+
+      <!-- Dashboard - Available to all -->
+      <a class="nav-item active" src="dashboard.html">
+        <i class="fa-solid fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- Super Admin Only Sections -->
+      <a class="nav-item super-admin-only" src="edithome.html">
+        <i class="fa-solid fa-store"></i>
+        <span>Edit Home</span>
+      </a>
+
+      <!-- Available to all (Super Admin and Employees) -->
+      <a class="nav-item" src="addproduct.html">
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Product</span>
+      </a>
+      <a class="nav-item" src="manageproduct.html">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Manage Products</span>
+      </a>
+      <a class="nav-item" src="customer.html">
+        <i class="fa-solid fa-user"></i>
+        <span>Customers</span>
+      </a>
+
+      <!-- Available to all -->
+      <a class="nav-item" src="ordertracking.html">
+        <i class="fa-solid fa-truck-fast"></i>
+        <span>Orders</span>
+      </a>
+
+      <!-- Super Admin Only - Other Menu -->
+      <a class="nav-item super-admin-only" id="other-toggle">
+        <i class="fas fa-ellipsis-h"></i>
+        <span>Other</span>
+      </a>
+      <div id="other-submenu" class="super-admin-only" style="display: none">
+        <a class="nav-item" src="customadmin.html">
+          <i class="fa-solid fa-scissors"></i>
+          <span>Custom Orders</span>
+        </a>
+        <a class="nav-item" src="contactadmin.html">
+          <i class="fas fa-address-book"></i>
+          <span>Contact Info</span>
+        </a>
+        <a class="nav-item" src="pricing.html">
+          <i class="fas fa-tags"></i>
+          <span>Pricing</span>
+        </a>
+        <a class="nav-item" src="cancellationadmin.html">
+          <i class="fas fa-ban"></i>
+          <span>Cancellation Policy</span>
+        </a>
+        <a class="nav-item" src="testimonial.html">
+          <i class="fas fa-comment-dots"></i>
+          <span>Testimonial</span>
+        </a>
+        <a class="nav-item" src="giftcardadmin.html">
+          <i class="fas fa-gift"></i>
+          <span>Gift Cards</span>
+        </a>
+      </div>
+
+      <div class="sidebar-divider super-admin-only"></div>
+
+      <!-- Staff Management Section - Only visible to super admin -->
+      <div class="super-admin-only" id="staff-management-section">
+        <div class="sidebar-section-title">Staff Management</div>
+        <a class="nav-item" src="employee.html">
+          <i class="fa-solid fa-user-tie"></i>
+          <span>Employees</span>
+        </a>
+        <a class="nav-item" src="adminregister.html">
+          <i class="fas fa-user-plus"></i>
+          <span>Register Employee</span>
+        </a>
+      </div>
+    </div>
+
+    <div id="content-area">
+      <iframe
+        id="content-frame"
+        src="dashboard.html"
+        title="Content Frame"
+      ></iframe>
+    </div>
+  </body>
+</html>

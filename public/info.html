@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Garment & Fabric Information</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/css/public/info.css" />
+    <script src="/assets/js/public/info.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Garment & Fabric Information Center</h1>
+      </header>
+
+      <div class="card">
+        <!-- Main Tabs -->
+        <div class="main-tabs">
+          <div class="tab-indicator"></div>
+          <button
+            id="garmentBtn"
+            class="active"
+            onclick="showSection('garment')"
+          >
+            <i class="fas fa-tshirt"></i> Garment Information
+          </button>
+          <button id="fabricBtn" onclick="showSection('fabric')">
+            <i class="fas fa-ruler"></i> Fabric Conversion
+          </button>
+        </div>
+
+        <!-- Garment Info Section -->
+        <div id="garmentSection" class="section fade-enter">
+          <h2 class="section-title">
+            <i class="fas fa-tshirt"></i> Garment Size Guide
+          </h2>
+
+          <div class="tabs">
+            <button id="womenBtn" class="active" onclick="showChart('women')">
+              Women's Sizes
+            </button>
+            <button id="menBtn" onclick="showChart('men')">Men's Sizes</button>
+          </div>
+
+          <div id="womenChart" class="size-chart fade-enter">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Size</th>
+                    <th>Bust (in)</th>
+                    <th>Waist (in)</th>
+                    <th>Hip (in)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>XS</td>
+                    <td>32-33</td>
+                    <td>24-25</td>
+                    <td>34-35</td>
+                  </tr>
+                  <tr>
+                    <td>S</td>
+                    <td>34-35</td>
+                    <td>26-27</td>
+                    <td>36-37</td>
+                  </tr>
+                  <tr>
+                    <td>M</td>
+                    <td>36-37</td>
+                    <td>28-29</td>
+                    <td>38-39</td>
+                  </tr>
+                  <tr>
+                    <td>L</td>
+                    <td>38-40</td>
+                    <td>30-32</td>
+                    <td>40-42</td>
+                  </tr>
+                  <tr>
+                    <td>XL</td>
+                    <td>41-43</td>
+                    <td>33-35</td>
+                    <td>43-45</td>
+                  </tr>
+                  <tr>
+                    <td>XXL</td>
+                    <td>44-46</td>
+                    <td>36-38</td>
+                    <td>46-48</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="menChart" class="size-chart" style="display: none">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Size</th>
+                    <th>Chest (in)</th>
+                    <th>Waist (in)</th>
+                    <th>Hip (in)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>S</td>
+                    <td>34-36</td>
+                    <td>28-30</td>
+                    <td>34-36</td>
+                  </tr>
+                  <tr>
+                    <td>M</td>
+                    <td>38-40</td>
+                    <td>32-34</td>
+                    <td>38-40</td>
+                  </tr>
+                  <tr>
+                    <td>L</td>
+                    <td>42-44</td>
+                    <td>36-38</td>
+                    <td>42-44</td>
+                  </tr>
+                  <tr>
+                    <td>XL</td>
+                    <td>46-48</td>
+                    <td>40-42</td>
+                    <td>46-48</td>
+                  </tr>
+                  <tr>
+                    <td>XXL</td>
+                    <td>50-52</td>
+                    <td>44-46</td>
+                    <td>50-52</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Size Finder Tool with Improved Styling -->
+          <div class="size-finder">
+            <h3><i class="fas fa-search"></i> Find Your Perfect Size</h3>
+            <div class="finder-form">
+              <div class="input-group">
+                <label for="genderSelect">Gender</label>
+                <select id="genderSelect" class="form-control">
+                  <option value="women">Women</option>
+                  <option value="men">Men</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="bustInput" id="measureLabel1">Bust (in)</label>
+                <input
+                  type="number"
+                  id="bustInput"
+                  placeholder="Enter measurement"
+                  min="30"
+                  max="52"
+                />
+              </div>
+              <div class="input-group">
+                <label for="waistInput">Waist (in)</label>
+                <input
+                  type="number"
+                  id="waistInput"
+                  placeholder="Enter measurement"
+                  min="24"
+                  max="46"
+                />
+              </div>
+              <div class="input-group">
+                <label for="hipInput">Hip (in)</label>
+                <input
+                  type="number"
+                  id="hipInput"
+                  placeholder="Enter measurement"
+                  min="34"
+                  max="52"
+                />
+              </div>
+            </div>
+            <button class="calculator-btn" onclick="findSize()">
+              <i class="fas fa-calculator"></i> Calculate My Size
+            </button>
+            <div class="result-container">
+              <div id="sizeResult" class="result"></div>
+            </div>
+          </div>
+
+          <div class="info-block">
+            <h3><i class="fas fa-info-circle"></i> Measuring Tips</h3>
+            <p>
+              For the most accurate sizing, measure yourself in your underwear
+              or light clothing. Stand with your feet together and maintain good
+              posture while measuring.
+            </p>
+            <ul>
+              <li>
+                <strong>Bust/Chest:</strong> Measure around the fullest part of
+                your bust/chest.
+              </li>
+              <li>
+                <strong>Waist:</strong> Measure around your natural waistline,
+                keeping the tape comfortably loose.
+              </li>
+              <li>
+                <strong>Hip:</strong> Measure around the fullest part of your
+                hips.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Fabric Info Section -->
+        <div id="fabricSection" class="section" style="display: none">
+          <h2 class="section-title">
+            <i class="fas fa-ruler"></i> Fabric Measurement Conversion
+          </h2>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Meters</th>
+                  <th>Yards</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>0.5</td>
+                  <td>0.547</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>1.094</td>
+                </tr>
+                <tr>
+                  <td>1.5</td>
+                  <td>1.641</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>2.187</td>
+                </tr>
+                <tr>
+                  <td>2.5</td>
+                  <td>2.734</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>3.281</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>4.374</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>5.468</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="section-title" style="font-size: 20px">
+            <i class="fas fa-calculator"></i> Interactive Converter
+          </h3>
+
+          <div class="calculator">
+            <div class="input-group">
+              <label for="metersInput">Meters</label>
+              <input
+                type="number"
+                id="metersInput"
+                placeholder="Enter meters"
+                step="0.01"
+              />
+            </div>
+
+            <button id="convertBtn" onclick="convertMeasurement()">
+              <span id="convertDirection"
+                >Convert <i class="fas fa-arrow-right"></i
+              ></span>
+            </button>
+
+            <button
+              class="swap-btn"
+              onclick="swapConversion()"
+              title="Swap conversion direction"
+            >
+              <i class="fas fa-sync-alt"></i>
+            </button>
+
+            <div class="input-group">
+              <label for="yardsInput">Yards</label>
+              <input
+                type="number"
+                id="yardsInput"
+                placeholder="Enter yards"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          <div class="info-block">
+            <h3><i class="fas fa-info-circle"></i> Conversion Information</h3>
+            <p>
+              Use this calculator to convert between meters and yards for fabric
+              measurements. The conversion factor used is 1 meter = 1.094 yards.
+            </p>
+            <p>
+              For quick reference, you can also use the table above for common
+              measurements.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

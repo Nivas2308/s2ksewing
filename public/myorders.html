@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Orders</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/component/index.css" />
+<link rel="stylesheet" href="/assets/css/public/myorders.css">     
+     <script src="/assets/component/profile.js"></script>
+    <script src="/assets/component/auth.js"></script>
+    <script src="/assets/js/public/myorder.js"></script>
+  </head>
+  <body>
+    <body>
+      <!-- Loader -->
+      <div id="loader">
+          <div class="spinner"></div>
+      </div>
+  
+      <!-- AD BAR -->
+      <div class="adbar-container">
+          <marquee id="scrolling-text">Welcome to S2K Sewing - Your Premium Sewing Partner</marquee>
+      </div>
+  
+      <!-- Navigation -->
+      <div class="nav-container">
+          <div class="logo" id="logo-container">
+              <a href="index.html">
+                  <img id="site-logo" src="https://via.placeholder.com/150x50/4CAF50/FFFFFF?text=S2K+Sewing" alt="S2K Sewing" />
+              </a>
+          </div>
+  
+          <div class="nav-icons">
+              <a href="cart.html" id="your-cart-icon-container" style="position: relative; display: inline-block">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                  <span class="cart-counter" id="cart-count">0</span>
+              </a>
+              <a href="login.html" id="profile-link">
+                  <i class="fa fa-user-circle" id="profile-icon"></i>
+              </a>
+          </div>
+      </div>
+  
+      <!-- Main Container -->
+      <div class="container">
+          <div class="header">
+              <h1 class="page-title">My Orders</h1>
+              <p class="page-subtitle">Track and manage your orders</p>
+          </div>
+  
+          <!-- Auth Check Message (hidden by default) -->
+          <div id="authMessage" class="auth-message" style="display: none;">
+              <i class="fas fa-user-lock"></i>
+              <h2>Login Required</h2>
+              <p>Please log in to View and Track your orders.</p>
+              <a href="login.html" class="login-btn">
+                  <i class="fas fa-sign-in-alt"></i> Login Now
+              </a>
+          </div>
+  
+          <!-- Orders Content (hidden by default) -->
+          <div id="ordersContent" style="display: none;">
+              <div class="tabs">
+                  <button class="tab" data-filter="pending">Pending Orders</button>
+                  <button class="tab" data-filter="completed">Completed Orders</button>
+                  <button class="tab active" data-filter="all">All Orders</button>
+              </div>
+  
+              <div class="search-section">
+                  <input type="text" class="search-input" placeholder="Search by order ID or product name..." id="searchInput" />
+                  <button class="search-button" onclick="searchOrders()">
+                      Search
+                  </button>
+              </div>
+  
+              <div id="ordersContainer">
+                  <div class="loading">
+                      <i class="fas fa-spinner fa-spin"></i> Loading your orders...
+                  </div>
+              </div>
+          </div>
+      </div>
+
+        <!-- FOOTER STARTS -->
+    <footer class="footer-container">
+      <div class="newsletter">
+             <div class="newsletter-content">
+                 <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+             </div>
+         </div>
+ 
+ 
+         <div class="newsletter-btn-container">
+           <input class="email-btn" type="email" placeholder="Email" />
+           <button class="sub-btn" type="button">Submit</button>
+         </div>
+       </div>
+ 
+            <div class="footer-option-container">
+            <!-- <div class="footerlogo">
+            <h4><a href="index.html">S2K Sewing </a></h4>
+            </div> -->
+            
+             <div class="payment tut">
+                 <h4>Payment & Shipping</h4>
+                 <ul>
+                     <li><a href="shippingcost.html">Shipping Cost</a></li>
+                     
+                    
+                     <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                 </ul>
+             </div>
+             <div class="Services tut">
+                 <h4>Services</h4>
+                 <ul>
+                   <li><a href="giftcard.html">GiftCards</a></li>
+                 </ul>
+             </div>
+             <div class="Help tut">
+                 <h4>Help & Contact</h4>
+                 <ul>
+                     <li><a href="contact.html">Help & Support</a></li>
+                     
+                     
+                 </ul>
+             </div>
+             <div class="About-Us tut">
+                 <h4>About Us</h4>
+                 <ul>
+                     <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                     <li><a href="contact.html">Contact</a></li>
+                 </ul>
+             </div>
+         </div>
+     </footer>
+     
+         <div class="end-footer">
+             <div class="doc-con">
+                 <span><a href="">Privacy Policy</a></span>
+                 <span><a href="">GTC</a></span>
+             </div>
+     
+             <div class="social-icon">
+                 <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                 <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                 
+                 <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+             </div>
+     
+             <div class="copyright">
+                 <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+             </div>
+         </div>
+  
+
+  </body>
+</html>

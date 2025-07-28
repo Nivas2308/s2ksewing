@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gift Card Store</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/component/index.css" />
+    <link rel="stylesheet" href="/assets/css/public/giftcard.css" />
+    <script src="/assets/component/auth.js"></script>
+    <script src="/assets/component/profile.js"></script>
+    <script src="/assets/js/public/giftcard.js"></script>
+  </head>
+
+  <body class="bg-white-50 min-h-screen">
+    <!-- Loader -->
+    <div id="loader">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- AD BAR STARTS -->
+    <div class="adbar-container">
+      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+    </div>
+
+    <!-- Modified cart icon in the nav section -->
+    <div class="nav-container" style="z-index: 1">
+      <div class="logo" id="logo-container">
+        <a href="index.html">
+          <img id="site-logo" src="" alt="S2K Sewing" />
+        </a>
+      </div>
+
+      <div class="nav-icons">
+        <a
+          href="cart.html"
+          id="your-cart-icon-container"
+          style="position: relative; display: inline-block"
+        >
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="cart-counter" id="cart-count">0</span>
+        </a>
+        <a href="login.html" id="profile-link">
+          <i class="fa fa-user-circle" id="profile-icon"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="container mx-auto px-4 py-6">
+      <div
+        class="flex flex-wrap justify-center gap-2 mb-8"
+        id="categoryFilters"
+      >
+        <button
+          class="category-filter bg-indigo-600 text-white rounded-full px-4 py-2 rounded hover:bg-indigo-700 transition-colors active"
+          data-category="all"
+        >
+          All Categories
+        </button>
+        <!-- Dynamic categories will be added here -->
+      </div>
+    </div>
+
+    <!-- Gift Cards Grid -->
+    <div class="container mx-auto px-4 pb-16">
+      <div
+        id="giftCardsGrid"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      >
+        <!-- Gift cards will be loaded here -->
+        <div class="text-center text-gray-500 col-span-full py-12">
+          Loading gift cards...
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Purchase Modal with Pricing Options -->
+    <div
+      id="purchaseModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-screen overflow-y-auto"
+      >
+        <div class="p-6">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Purchase Gift Card</h2>
+            <button
+              id="closePurchaseBtn"
+              class="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Gift Card Details Section -->
+          <div class="mb-6">
+            <div class="flex gap-4 mb-4">
+              <img
+                id="modalCardImage"
+                src=""
+                alt="Gift Card"
+                class="w-24 h-24 object-cover rounded-lg"
+              />
+              <div class="flex-1">
+                <h3 id="modalCardTitle" class="text-lg font-semibold mb-2">
+                  Card Title
+                </h3>
+                <div class="text-sm text-gray-600 mb-1">
+                  <strong>Category:</strong>
+                  <span
+                    id="modalCardCategory"
+                    class="bg-gray-100 px-2 py-1 rounded text-xs ml-1"
+                    >Category</span
+                  >
+                </div>
+                <div class="text-sm text-gray-600">
+                  <strong>Validity:</strong>
+                  <span id="modalCardValidity">365 days</span>
+                </div>
+              </div>
+            </div>
+            <p id="modalCardDescription" class="text-gray-700 text-sm"></p>
+          </div>
+
+          <!-- Pricing Section -->
+          <div id="pricingSection" class="mb-6">
+            <h4 class="font-semibold mb-3">Select Amount:</h4>
+            <div id="pricingOptions">
+              <!-- Pricing options will be populated here -->
+            </div>
+          </div>
+
+          <!-- Quantity Section -->
+          <div class="quantity-control mb-6">
+            <label class="font-semibold">Quantity:</label>
+            <button type="button" class="quantity-btn" id="decreaseQty">
+              -
+            </button>
+            <input
+              type="number"
+              id="quantity"
+              class="quantity-input"
+              value="1"
+              min="1"
+              max="99"
+            />
+            <button type="button" class="quantity-btn" id="increaseQty">
+              +
+            </button>
+          </div>
+
+          <!-- Total Amount -->
+          <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="flex justify-between items-center">
+              <span class="font-semibold">Total Amount:</span>
+              <span id="totalAmount" class="text-lg font-bold text-indigo-600"
+                >$0.00</span
+              >
+            </div>
+          </div>
+
+          <!-- Purchase Form -->
+          <form id="purchaseForm">
+            <!-- Recipient Information -->
+            <div class="mb-4">
+              <h4 class="font-semibold mb-3">Recipient Information</h4>
+            </div>
+
+            <div class="mb-4">
+              <label
+                for="recipientName"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Recipient Name *</label
+              >
+              <input
+                type="text"
+                id="recipientName"
+                required
+                placeholder="Enter recipient's full name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div class="mb-4">
+              <label
+                for="recipientEmail"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Recipient Email *</label
+              >
+              <input
+                type="email"
+                id="recipientEmail"
+                required
+                placeholder="Enter recipient's email address"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div class="mb-6">
+              <label
+                for="personalMessage"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Personal Message (Optional)</label
+              >
+              <textarea
+                id="personalMessage"
+                rows="3"
+                placeholder="Add a personal message for the recipient..."
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              ></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+              <button
+                type="button"
+                id="cancelPurchaseBtn"
+                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                id="completePurchaseBtn"
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Proceed to Payment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchase Confirmation Modal -->
+    <div
+      id="purchaseConfirmModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div class="p-6 text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-16 w-16 text-green-500 mx-auto mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          <h2 class="text-2xl font-bold mb-4">Purchase Successful!</h2>
+          <p class="text-gray-700 mb-6">
+            Your gift card has been purchased successfully! We've sent the gift
+            card to the recipient's email address.
+          </p>
+          <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <p class="text-sm text-gray-600">
+              Purchase ID: <span id="orderIdDisplay" class="font-mono">-</span>
+            </p>
+          </div>
+          <button
+            id="confirmDoneBtn"
+            class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-red-700"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Alert -->
+    <div
+      id="errorAlert"
+      class="fixed top-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 hidden"
+    >
+      <div class="flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span id="errorMessage">Error message goes here</span>
+      </div>
+    </div>
+
+    <!-- FOOTER STARTS -->
+    <footer class="footer-container">
+      <div class="newsletter">
+        <div class="newsletter-content">
+          <p id="newsletter-text">
+            Subscribe to our newsletter for latest updates!
+          </p>
+        </div>
+      </div>
+
+      <div class="newsletter-btn-container">
+        <input class="email-btn" type="email" placeholder="Email" />
+        <button class="sub-btn" type="button">Submit</button>
+      </div>
+
+      <div class="footer-option-container">
+        <div class="payment tut">
+          <h4>Payment & Shipping</h4>
+          <ul>
+            <li><a href="shippingcost.html">Shipping Cost</a></li>
+            <li><a href="cancellationpolicy.html">Cancellation</a></li>
+          </ul>
+        </div>
+        <div class="Services tut">
+          <h4>Services</h4>
+          <ul>
+            <li><a href="giftcard.html">GiftCards</a></li>
+          </ul>
+        </div>
+        <div class="Help tut">
+          <h4>Help & Contact</h4>
+          <ul>
+            <li><a href="contact.html">Help & Support</a></li>
+          </ul>
+        </div>
+        <div class="About-Us tut">
+          <h4>About Us</h4>
+          <ul>
+            <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+    <div class="end-footer">
+      <div class="doc-con">
+        <span><a href="">Privacy Policy</a></span>
+        <span><a href="">GTC</a></span>
+      </div>
+
+      <div class="social-icon">
+        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#"><i class="fa-brands fa-facebook"></i></a>
+        <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+      </div>
+
+      <div class="copyright">
+        <span
+          >Proudly powered by
+          <a href="https://airlinksin.com/">AirLinksin</a></span
+        >
+      </div>
+    </div>
+  </body>
+</html>

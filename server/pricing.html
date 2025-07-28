@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Pricing</title>
+    <link rel="stylesheet" href="/assets/css/server/pricing.css">
+    <script src="/assets/js/server/pricing.js"></script>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div id="loader" style="display:none;">
+      <div class="spinner"></div>
+    </div>
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="header-title">S2K Sewing Pricing Configuration</h1>
+      </div>
+    </div>
+    <div class="main-content">
+    <!-- Pricing Configuration Section -->
+    <div class="main-content">
+      <section id="pricing-config">
+        <h1>Pricing Configuration</h1>
+        <div class="config-container">
+          <div class="form-section payment-section">
+            <h2 style="margin-top:0; margin-bottom:18px; color:#4caf50; font-size:22px; font-weight:700; letter-spacing:-0.01em; display:flex;align-items:center;gap:10px;"><i class="fas fa-credit-card"></i> Payment Settings</h2>
+            <div class="form-group payment-toggle-group">
+              <label for="online-payment-switch" class="payment-label"><b>Online Payment</b></label>
+              <label class="switch">
+                <input type="checkbox" id="online-payment-switch" checked>
+                <span class="slider round"></span>
+              </label>
+              <span id="online-payment-status" class="switch-status">On</span>
+              <span class="helper-text">Enable or disable online payment (Stripe) for your store.</span>
+            </div>
+            <div class="form-group cod-charge-group">
+              <label for="cod-charges" class="payment-label"><b>COD Charges</b></label>
+              <div class="cod-input-wrapper">
+                <span class="currency-symbol">$</span>
+                <input
+                  type="number"
+                  id="cod-charges"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 2.99"
+                  class="cod-input"
+                />
+              </div>
+              <span class="helper-text">Extra fee for Cash on Delivery orders (leave 0 for no extra charge).</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="vat-percentage">VAT Percentage (%)</label>
+            <input
+              type="number"
+              id="vat-percentage"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Enter VAT percentage"
+            />
+          </div>
+
+          <h2>Shipping Options</h2>
+          <div class="form-group">
+            <label for="shipping-cost-domestic"
+              >Standard Shipping - Domestic</label
+            >
+            <input
+              type="number"
+              id="shipping-cost-domestic"
+              min="0"
+              step="0.01"
+              placeholder="Enter domestic shipping cost"
+            />
+          </div>
+          <div class="form-group">
+            <label for="delivery-time-domestic"
+              >Delivery Time - Domestic (days)</label
+            >
+            <input
+              type="number"
+              id="delivery-time-domestic"
+              min="1"
+              placeholder="Enter domestic delivery time in days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="shipping-cost-business">Business Shipping</label>
+            <input
+              type="number"
+              id="shipping-cost-business"
+              min="0"
+              step="0.01"
+              placeholder="Enter Business shipping cost"
+            />
+          </div>
+          <div class="form-group">
+            <label for="delivery-time-business"
+              >Delivery Time - Business (days)</label
+            >
+            <input
+              type="number"
+              id="delivery-time-business"
+              min="1"
+              placeholder="Enter business delivery time in days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="shipping-cost-international"
+              >International Shipping - Global</label
+            >
+            <input
+              type="number"
+              id="shipping-cost-international"
+              min="0"
+              step="0.01"
+              placeholder="Enter international shipping cost"
+            />
+          </div>
+          <div class="form-group">
+            <label for="delivery-time-international"
+              >Delivery Time - International (days)</label
+            >
+            <input
+              type="number"
+              id="delivery-time-international"
+              min="1"
+              placeholder="Enter international delivery time in days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="shipping-cost-express"
+              >Express/Next-Day Shipping</label
+            >
+            <input
+              type="number"
+              id="shipping-cost-express"
+              min="0"
+              step="0.01"
+              placeholder="Enter express shipping cost"
+            />
+          </div>
+          <div class="form-group">
+            <label for="delivery-time-express"
+              >Delivery Time - Express (days)</label
+            >
+            <input
+              type="number"
+              id="delivery-time-express"
+              min="1"
+              placeholder="Enter express delivery time in days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="free-shipping-threshold">Free Shipping Threshold</label>
+            <input
+              type="number"
+              id="free-shipping-threshold"
+              min="0"
+              step="0.01"
+              placeholder="Minimum order amount for free shipping (0 to disable)"
+            />
+          </div>
+
+          <h2>Promo Codes</h2>
+          <div id="promo-codes-container">
+            <!-- Promo codes will be added here dynamically -->
+          </div>
+          <div class="form-group">
+            <label for="promo-code">Promo Code</label>
+            <input type="text" id="promo-code" placeholder="Enter promo code" />
+            <label for="promo-amount">Amount</label>
+            <input
+              type="number"
+              id="promo-amount"
+              min="0"
+              step="0.01"
+              placeholder="Enter discount amount"
+            />
+            <label for="promo-type">Type</label>
+            <select id="promo-type">
+              <option value="percentage">Percentage</option>
+              <option value="fixed">Fixed Amount</option>
+            </select>
+            <button type="button" onclick="addPromoCode()">
+              Add Promo Code
+            </button>
+          </div>
+          <div class="action-buttons">
+            <button type="button" onclick="savePricingConfig()">
+              Save Configuration
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  
+  </body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Fabric Request</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      />
+    <link
+    rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=search"
+      />
+    <link rel="stylesheet" href="/assets/component/index.css" />
+    <link rel="stylesheet" href="/assets/css/public/custom.css">
+    <script src="/assets/component/profile.js"></script>
+    <script src="/assets/component/auth.js"></script>
+    </head>
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+      </div>
+
+     <!-- AD BAR STARTS -->
+     <div class="adbar-container">
+    <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+  </div>
+
+ <!-- Modified cart icon in the nav section -->
+ <div class="nav-container">
+  <div class="logo" id="logo-container">
+  <a href="index.html">
+    <img id="site-logo" src="" alt="S2K Sewing"  />
+  </a>
+</div>
+
+
+  <div class="nav-icons">
+    <a href="cart.html" id="your-cart-icon-container" style="position: relative; display: inline-block;">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <span class="cart-counter" id="cart-count">0</span>
+    </a>
+    <a href="login.html" id="profile-link">
+      <i class="fa fa-user-circle" id="profile-icon"></i>
+    </a>
+  </div>
+</div>
+
+    <!-- Payment Instruction Popup -->
+    <div
+      id="paymentPopup"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          border-radius: 14px;
+          max-width: 95vw;
+          width: 370px;
+          padding: 32px 22px 22px 22px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+          text-align: center;
+          position: relative;
+        "
+      >
+        <h2 style="font-size: 1.3rem; color: #4caf50; margin-bottom: 12px">
+          Instructions
+        </h2>
+        <p style="color: #444; font-size: 1.05rem; margin-bottom: 18px">
+          1. By Clicking on Proceed you will be redirected to Stripe Payment
+          page.
+        </p>
+        <p style="color: #444; font-size: 1.05rem; margin-bottom: 18px">
+          2. After Successful Payment, Our Marketing Team will contact you when
+          your Fabric is ready.
+        </p>
+        <p style="color: #444; font-size: 1.05rem; margin-bottom: 18px">
+          3. After the Confirmation You will get a Form through the Mail for the
+          Delivery Details.
+        </p>
+        <div
+          class="form-note"
+          style="
+            margin-bottom: 10px;
+            background: #fffbe6;
+            border-left: 4px solid #ff9800;
+            color: #b26a00;
+          "
+        >
+          <strong>Note:</strong> You are paying Amount only for the Pattern.
+          Cost of Fabric will be added later.
+        </div>
+
+        <div
+          style="
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 18px;
+          "
+        >
+          <button
+            id="proceedBtn"
+            style="
+              background: #4caf50;
+              color: #fff;
+              border: none;
+              border-radius: 7px;
+              padding: 10px 22px;
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            Proceed
+          </button>
+          <button
+            id="cancelBtn"
+            style="
+              background: #e74c3c;
+              color: #fff;
+              border: none;
+              border-radius: 7px;
+              padding: 10px 22px;
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  <body>
+    <div id="productDetailsContainer"></div>
+    <div class="form-container">
+      <div class="form-content">
+        <div class="success-message" id="successMessage">
+          Thank you! Your custom fabric request has been submitted successfully.
+          We'll contact you within 24-48 hours.
+        </div>
+
+        <div class="error-message" id="errorMessage">
+          There was an error submitting your request. Please try again.
+        </div>
+
+        <div class="form-note">
+          <strong>Note:</strong> Please fill out all required fields marked with
+          an asterisk (*). Your request will be processed within 24-48 hours.
+        </div>
+
+        <form id="fabricRequestForm" action="#" method="POST">
+          <div class="form-group">
+            <label for="fullName" class="required">Full Name</label>
+            <input type="text" id="fullName" name="fullName" required />
+          </div>
+
+          <div class="form-group">
+            <label for="phone" class="required">Phone Number</label>
+            <input type="tel" id="phone" name="phone" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="required">Email Address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="fabricColor" class="required"
+              >Desired Fabric Color</label
+            >
+            <input
+              type="text"
+              id="fabricColor"
+              name="fabricColor"
+              placeholder="e.g., Deep navy blue, Burgundy red, etc."
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fabricMaterial" class="required"
+              >Desired Fabric Material</label
+            >
+            <input
+              type="text"
+              id="fabricMaterial"
+              name="fabricMaterial"
+              placeholder="e.g., Cotton blend, Silk, Linen, Polyester, etc."
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="referenceDescription"
+              >Reference Description (Optional)</label
+            >
+            <textarea
+              id="referenceDescription"
+              name="referenceDescription"
+              placeholder="Describe the pattern, texture, or style you're looking for. For example: 'Similar to vintage floral prints with small roses'"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="referenceImage"
+              >Reference Image Upload (Optional)</label
+            >
+            <input
+              type="file"
+              id="referenceImage"
+              name="referenceImage"
+              accept="image/*"
+            />
+            <div class="file-upload-info">
+              <small>Supported formats: JPG, PNG, GIF (Max size: 5MB)</small>
+            </div>
+            <div id="imagePreview" class="image-preview"></div>
+          </div>
+
+          <div
+            class="form-note"
+            style="
+              margin-bottom: 10px;
+              background: #fffbe6;
+              border-left: 4px solid #ff9800;
+              color: #b26a00;
+            "
+          >
+            <strong>Note:</strong> You need to pay the amount of the Pattern for
+            processing your order
+          </div>
+
+          <div
+            class="pay-cancel-btns"
+            style="display: flex; gap: 16px; margin-top: 10px"
+          >
+            <button
+              type="submit"
+              class="submit-btn"
+              style="flex: 1; margin-top: 0"
+            >
+              Pay Now
+            </button>
+            <button
+              type="button"
+              class="cancel-btn"
+              id="returnToProductBtn"
+              style="flex: 1; margin-top: 0"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+      <!-- FOOTER STARTS -->
+      <footer class="footer-container">
+        <div class="newsletter">
+               <div class="newsletter-content">
+                   <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+               </div>
+           </div>
+   
+   
+           <div class="newsletter-btn-container">
+             <input class="email-btn" type="email" placeholder="Email" />
+             <button class="sub-btn" type="button">Submit</button>
+           </div>
+         </div>
+   
+       <div class="footer-option-container">
+            
+              
+               <div class="payment tut">
+                   <h4>Payment & Shipping</h4>
+                   <ul>
+                       <li><a href="shippingcost.html">Shipping Cost</a></li>
+                       
+                      
+                       <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                   </ul>
+               </div>
+               <div class="Services tut">
+                   <h4>Services</h4>
+                   <ul>
+                     <li><a href="giftcard.html">GiftCards</a></li>
+                   </ul>
+               </div>
+               <div class="Help tut">
+                   <h4>Help & Contact</h4>
+                   <ul>
+                       <li><a href="contact.html">Help & Support</a></li>
+                       
+                       
+                   </ul>
+               </div>
+               <div class="About-Us tut">
+                   <h4>About Us</h4>
+                   <ul>
+                       <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                       <li><a href="contact.html">Contact</a></li>
+                   </ul>
+               </div>
+           </div>
+       </footer>
+       
+           <div class="end-footer">
+               <div class="doc-con">
+                   <span><a href="">Privacy Policy</a></span>
+                   <span><a href="">GTC</a></span>
+               </div>
+       
+               <div class="social-icon">
+                   <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                   <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                   <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+               </div>
+       
+               <div class="copyright">
+                   <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+               </div>
+           </div>
+
+    
+   
+  </body>
+</html>

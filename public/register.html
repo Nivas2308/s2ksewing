@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register Page</title>
+    <script src="/assets/component/loading.js"></script>
+    <script src="/assets/js/public/register.js"></script>
+    <link rel="stylesheet" href="/assets/css/public/register.css" />
+  </head>
+  <body>
+    <div id="toast" class="toast"></div>
+    <div class="bg-loading" id="bgLoading"></div>
+
+    <!-- HTML Code for Back Button -->
+    <div class="back-btn">
+      <a
+        href="index.html"
+        class="back-btn-link"
+        aria-label="Go back to home page"
+      >
+        <button type="button" class="back-btn-button">
+          <span class="back-icon">&#8592;</span>
+          <span class="back-text">Back</span>
+        </button>
+      </a>
+    </div>
+
+    <div class="register-container">
+      <div class="register-box">
+        <h2>Register</h2>
+        <form id="registerForm" action="#">
+          <div class="textbox">
+            <input
+              type="text"
+              id="fullname"
+              placeholder="Full Name"
+              name="fullname"
+              required
+            />
+          </div>
+
+          <div class="textbox">
+            <div class="mobile-input-container">
+              <select id="country-code" class="country-code" required>
+                <option value="+1">+1 (USA)</option>
+                <option value="+44">+44 (UK)</option>
+                <option value="+91" selected>+91 (India)</option>
+                <option value="+61">+61 (Australia)</option>
+                <option value="+49">+49 (Germany)</option>
+                <option value="+33">+33 (France)</option>
+                <option value="+86">+86 (China)</option>
+                <option value="+81">+81 (Japan)</option>
+                <option value="+7">+7 (Russia)</option>
+                <option value="+55">+55 (Brazil)</option>
+                <option value="+27">+27 (South Africa)</option>
+                <option value="+65">+65 (Singapore)</option>
+                <option value="+971">+971 (UAE)</option>
+                <option value="+52">+52 (Mexico)</option>
+              </select>
+              <input
+                type="tel"
+                id="mobile"
+                placeholder="Mobile Number (10 digits)"
+                name="mobile"
+                class="mobile-number"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                required
+              />
+            </div>
+            <div id="mobile-error" class="error-message">
+              Please enter a valid 10-digit mobile number
+            </div>
+          </div>
+          <div class="textbox">
+            <input
+              type="email"
+              id="email"
+              placeholder="Email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="textbox">
+            <input
+              type="text"
+              id="username"
+              placeholder="Username"
+              name="username"
+              required
+            />
+          </div>
+          <div class="textbox">
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              name="password"
+              required
+            />
+          </div>
+          <div class="textbox">
+            <input
+              type="password"
+              id="confirm-password"
+              placeholder="Confirm Password"
+              name="confirm-password"
+              required
+            />
+          </div>
+          <div class="remember">
+            <input type="checkbox" id="terms" name="terms" required /> I agree
+            to the <a href="#"> Terms and Conditions</a>
+          </div>
+          <button type="submit" id="registerBtn" class="btn">Register</button>
+          <div class="loader" id="loader"></div>
+          <div class="footer">
+            <a href="login.html">Already have an account? Login</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

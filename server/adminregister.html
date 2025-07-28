@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Registration</title>
+    <link rel="stylesheet" href="/assets/css/server/adminreg.css" />
+    <script src="/assets/component/loading.js"></script>
+    <script src="/assets/js/server/adminreg.js"></script>
+  </head>
+  <body>
+    <div class="register-container">
+      <div class="register-box">
+        <h2>
+          Employee Registration <span class="employee-badge">Employee</span>
+        </h2>
+        <form id="employeeRegisterForm">
+          <!-- Personal Information Section -->
+          <div class="section">
+            <h3>Personal Information</h3>
+            <div class="textbox">
+              <label class="label" for="employeeName">Employee Name</label>
+            </div>
+            <div class="textbox" id="namebox">
+              <input
+                type="text"
+                id="firstName"
+                placeholder="First Name"
+                name="firstName"
+                required
+              />
+              <input
+                type="text"
+                id="lastName"
+                placeholder="Last Name"
+                name="lastName"
+                required
+              />
+            </div>
+
+            <!-- Date of Birth Field -->
+            <div class="textbox">
+              <label class="label" for="dob">Date of Birth</label>
+              <input type="date" id="dob" name="dob" required />
+            </div>
+
+            <div class="textbox">
+              <label class="label" for="orgEmail">Organization Email</label>
+              <input
+                type="email"
+                id="orgEmail"
+                placeholder="Employee Mail ID"
+                name="orgEmail"
+                required
+              />
+            </div>
+
+            <!-- Mobile Number with Country Code -->
+            <div class="textbox">
+              <label class="label" for="mobileNumber">Mobile Number</label>
+              <div class="phone-container">
+                <select
+                  id="countryCode"
+                  name="countryCode"
+                  class="country-code"
+                  required
+                >
+                  <option value="+1">+1 (USA/Canada)</option>
+                  <option value="+44">+44 (UK)</option>
+                  <option value="+91">+91 (India)</option>
+                  <option value="+61">+61 (Australia)</option>
+                  <option value="+86">+86 (China)</option>
+                  <option value="+49">+49 (Germany)</option>
+                  <option value="+33">+33 (France)</option>
+                  <option value="+81">+81 (Japan)</option>
+                  <option value="+65">+65 (Singapore)</option>
+                  <option value="+971">+971 (UAE)</option>
+                  <!-- Add more country codes as needed -->
+                </select>
+                <input
+                  type="tel"
+                  id="mobileNumber"
+                  placeholder="Mobile Number"
+                  name="mobileNumber"
+                  class="phone-number"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Address broken into 5 fields -->
+            <div class="textbox">
+              <label class="label">Employee Address</label>
+              <div class="address-grid">
+                <div class="textbox address-full">
+                  <input
+                    type="text"
+                    id="houseNumber"
+                    placeholder="House/Flat No."
+                    name="houseNumber"
+                    required
+                  />
+                </div>
+                <div class="textbox address-full">
+                  <input
+                    type="text"
+                    id="street"
+                    placeholder="Street"
+                    name="street"
+                    required
+                  />
+                </div>
+                <div class="textbox">
+                  <input
+                    type="text"
+                    id="city"
+                    placeholder="City"
+                    name="city"
+                    required
+                  />
+                </div>
+                <div class="textbox">
+                  <input
+                    type="text"
+                    id="state"
+                    placeholder="State/Province"
+                    name="state"
+                    required
+                  />
+                </div>
+                <div class="textbox address-full">
+                  <select id="country" name="country" required>
+                    <option value="">Select Country</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="United States">United States</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Canada">Canada</option>
+
+                    <option value="France">France</option>
+                    <option value="Germany">Germany</option>
+                    <option value="India">India</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Malaysia">Malaysia</option>
+
+                    <option value="Russia">Russia</option>
+
+                    <option value="Singapore">Singapore</option>
+                    <option value="South Africa">South Africa</option>
+
+                    <option value="Thailand">Thailand</option>
+
+                    <option value="United Arab Emirates">
+                      United Arab Emirates
+                    </option>
+
+                    <!-- Add more countries as needed -->
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="textbox">
+              <input
+                type="text"
+                id="pincode"
+                placeholder="Pincode/ZIP Code"
+                name="pincode"
+                pattern="[0-9]{4,10}"
+                title="Please enter a valid pincode (4-10 digits)"
+                required
+              />
+            </div>
+
+            <!-- New Image Upload Field -->
+            <div class="image-upload">
+              <label class="image-upload-label" for="profileImage"
+                >Profile Image</label
+              >
+              <div class="image-preview-container">
+                <div class="image-preview" id="imagePreview">
+                  <div class="image-preview-placeholder">
+                    No image<br />selected
+                  </div>
+                </div>
+                <div class="upload-controls">
+                  <div class="upload-btn-wrapper">
+                    <button type="button" class="upload-btn">
+                      Choose Image
+                    </button>
+                    <input
+                      type="file"
+                      id="profileImage"
+                      name="profileImage"
+                      accept="image/*"
+                    />
+                  </div>
+                  <span class="file-name" id="fileName">No file chosen</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Department Information Section -->
+          <div class="section">
+            <h3>Department Information</h3>
+            <div class="textbox">
+              <label class="label" for="department">Select Department</label>
+              <select id="department" name="department" required>
+                <option value="">Select Department</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipping">Shipping</option>
+              </select>
+            </div>
+            <div class="textbox">
+              <label class="label" for="position">Position</label>
+              <select id="position" name="position" required>
+                <option value="">Select Position</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="teamMember">Team Member</option>
+                <option value="support">Support</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Account Information Section -->
+          <div class="section">
+            <h3>Account Information</h3>
+            <div class="textbox">
+              <label class="label" for="username">Employee Username</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Choose a username"
+                name="username"
+                required
+              />
+            </div>
+            <div class="textbox">
+              <label class="label" for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Create a password"
+                name="password"
+                required
+              />
+              <div class="password-strength">
+                <div class="strength-meter" id="strength-meter"></div>
+              </div>
+              <div class="strength-text" id="strength-text">
+                Password strength
+              </div>
+            </div>
+            <div class="textbox">
+              <label class="label" for="confirmPassword"
+                >Confirm Password</label
+              >
+              <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm password"
+                name="confirmPassword"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="btn" id="registerBtn">
+            Register
+            <div class="loader" id="loader"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Custom Alert -->
+    <div id="custom-alert-container" style="display: none">
+      <div class="custom-alert" id="custom-alert">
+        <h3 id="alert-title">Success</h3>
+        <p id="alert-message">Your message here</p>
+        <button class="alert-btn" id="alert-btn">OK</button>
+      </div>
+    </div>
+  </body>
+</html>

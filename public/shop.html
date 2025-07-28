@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Page</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/component/index.css">
+   <link rel="stylesheet" href="/assets/css/public/shop.css">
+    <script src="/assets/component/auth.js"></script>
+       <script src="/assets/component/profile.js"></script>
+       <script src="/assets/js/public/shop.js"></script>
+   
+
+  </head>
+  <body>
+
+     <!-- Loader -->
+    <div id="loader">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- AD BAR STARTS -->
+    <div class="adbar-container">
+      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+    </div>
+
+   <!-- Modified cart icon in the nav section -->
+   <div class="nav-container">
+    <div class="logo" id="logo-container">
+    <a href="index.html">
+      <img id="site-logo" src="" alt="S2K Sewing"  />
+    </a>
+  </div>
+  
+  
+    <div class="nav-icons">
+      <a href="cart.html" id="your-cart-icon-container" style="position: relative; display: inline-block;">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="cart-counter" id="cart-count">0</span>
+      </a>
+      <a href="login.html" id="profile-link">
+        <i class="fa fa-user-circle" id="profile-icon"></i>
+      </a>
+    </div>
+  </div>
+
+    <!-- Filter Button with ☰ Icon -->
+    <header class="shop">
+      <div class="filtercontainer">
+        <button id="filterBtn" onclick="toggleFilter()">☰</button>
+      </div>
+
+      <input type="search" id="searchBar" placeholder="Search for Products" />
+    </header>
+
+    <div class="list-container">
+      <div class="sort-container">
+        <select class="sort">
+          <option>A to Z</option>
+          <option>Z to A</option>
+        </select>
+        <select class="sort">
+        <option>High to Low</option>
+        <option>Low to High</option>
+        </select>
+        
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="toggleFilter()"></div>
+
+    <!-- Sidebar -->
+    <div id="categorySidebar">
+      <button id="closeSidebar" onclick="toggleFilter()">❌</button>
+      
+      <h3>Filter by Category</h3>
+      <div id="categoryContainer"></div>
+      <button id="resetFiltersBtn" style="width:100%;margin-bottom:15px;padding:10px 0;background:#f4f4f4;color:#333;border:none;border-radius:6px;font-weight:600;cursor:pointer;transition:background 0.2s;">Reset Filters</button>
+    </div>
+
+
+
+
+    <!-- Product Display -->
+    <div id="filterStatus" style="padding: 10px 5%; font-weight: bold; color: #4caf50;"></div>
+    <div id="productsContainer"></div>
+
+    <!-- PAGINATION  -->
+    <div class="pagination" id="pagination"></div>
+
+       <!-- FOOTER STARTS -->
+       <footer class="footer-container">
+        <div class="newsletter">
+               <div class="newsletter-content">
+                   <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+               </div>
+           </div>
+   
+   
+           <div class="newsletter-btn-container">
+             <input class="email-btn" type="email" placeholder="Email" />
+             <button class="sub-btn" type="button">Submit</button>
+           </div>
+         </div>
+   
+              <div class="footer-option-container">
+              <!-- <div class="footerlogo">
+              <h4><a href="index.html">S2K Sewing </a></h4>
+              </div> -->
+              
+               <div class="payment tut">
+                   <h4>Payment & Shipping</h4>
+                   <ul>
+                       <li><a href="shippingcost.html">Shipping Cost</a></li>
+                       
+                      
+                       <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                   </ul>
+               </div>
+               <div class="Services tut">
+                   <h4>Services</h4>
+                   <ul>
+                     <li><a href="giftcard.html">GiftCards</a></li>
+                   </ul>
+               </div>
+               <div class="Help tut">
+                   <h4>Help & Contact</h4>
+                   <ul>
+                       <li><a href="contact.html">Help & Support</a></li>
+                       
+                       
+                   </ul>
+               </div>
+               <div class="About-Us tut">
+                   <h4>About Us</h4>
+                   <ul>
+                       <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                       <li><a href="contact.html">Contact</a></li>
+                   </ul>
+               </div>
+           </div>
+       </footer>
+       
+           <div class="end-footer">
+               <div class="doc-con">
+                   <span><a href="">Privacy Policy</a></span>
+                   <span><a href="">GTC</a></span>
+               </div>
+       
+               <div class="social-icon">
+                   <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                   <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                   <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+               </div>
+       
+               <div class="copyright">
+                   <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+               </div>
+           </div>
+       
+
+       
+  </body>
+</html>

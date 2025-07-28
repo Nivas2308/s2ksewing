@@ -1,0 +1,123 @@
+body {
+  font-family: Arial, sans-serif;
+
+  background-color: white;
+}
+
+/* Header Section Styles */
+.header-section {
+  padding: 0 20px;
+  margin-top: 30px;
+}
+
+.header-content {
+  width: 90%;
+}
+
+.header-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.9;
+}
+
+.header-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.header-subtitle {
+  font-size: 18px;
+  margin: 0 0 20px 0;
+  opacity: 0.9;
+  font-weight: 300;
+}
+.system-status {
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.main-content {
+  max-width: px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+h1,
+h2 {
+  color: #333;
+}
+.section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+textarea {
+  width: 100%;
+  min-height: 100px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  resize: vertical;
+}
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+button {
+  background-color: #0fbb73;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+button:hover {
+  background-color: #0a9c60;
+}
+.faq-item,
+.bullet-item {
+  background-color: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+.delete-btn {
+  background-color: #ff4d4d;
+}
+.delete-btn:hover {
+  background-color: #e60000;
+}
+.add-btn {
+  margin-top: 10px;
+}
+.status-message {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}

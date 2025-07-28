@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel - Data Management</title>
+    <link rel="stylesheet" href="/assets/css/server/custom.css" />
+    <script defer src="/assets/js/server/custom.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <h1>S2K Sewing Customizing Orders</h1>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="stats-grid" style="display: none">
+        <div class="stat-card">
+          <div class="stat-number" id="totalEntries">-</div>
+          <div class="stat-label">Total Entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="todayEntries">-</div>
+          <div class="stat-label">Today's Entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="weekEntries">-</div>
+          <div class="stat-label">This Week</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input
+          type="text"
+          class="search-box"
+          placeholder="Search by name, email, phone..."
+          id="searchInput"
+        />
+        <div>
+          <button class="btn" onclick="loadData()">Refresh Data</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="loading" id="loadingState">
+          <div class="spinner"></div>
+          <p>Loading data...</p>
+        </div>
+
+        <table id="dataTable" style="display: none">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Fabric Details</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <div class="empty-state" id="emptyState" style="display: none">
+          <h3>No Data Found</h3>
+          <p>
+            No entries match your search criteria or no data has been submitted
+            yet.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Entry Details</h2>
+          <span class="close" onclick="closeModal('viewModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="entryDetails" class="detail-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #f44336">
+          <h2>Confirm Delete</h2>
+          <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 20px; font-size: 1.1rem">
+            Are you sure you want to delete this entry? This action cannot be
+            undone.
+          </p>
+          <div
+            id="deleteEntryPreview"
+            style="
+              background: #f8f9fa;
+              padding: 15px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            "
+          ></div>
+          <div style="display: flex; gap: 15px; justify-content: flex-end">
+            <button
+              class="btn btn-secondary"
+              onclick="closeModal('deleteModal')"
+            >
+              Cancel
+            </button>
+            <button class="btn btn-danger" onclick="confirmDelete()">
+              Delete Entry
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

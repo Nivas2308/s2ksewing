@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/component/index.css" />
+    <link rel="stylesheet" href="/assets/css/public/checkout.css">
+    <script src="https://js.stripe.com/v3/" defer></script>
+    <script src="/assets/component/profile.js" defer></script>
+    <script src="/assets/component/auth.js" defer></script>
+    <script src="/assets/js/public/checkout.js" defer></script>
+  </head>
+  <body>
+     <!-- Loader -->
+     <div id="loader">
+      <div class="spinner"></div>
+    </div>
+
+     <!-- AD BAR STARTS -->
+     <div class="adbar-container">
+      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+    </div>
+
+   <!-- Modified cart icon in the nav section -->
+   <div class="nav-container">
+    <div class="logo" id="logo-container">
+    <a href="index.html">
+      <img id="site-logo" src="" alt="S2K Sewing"  />
+    </a>
+  </div>
+  
+  
+    <div class="nav-icons">
+      <a href="cart.html" id="your-cart-icon-container" style="position: relative; display: inline-block;">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="cart-counter" id="cart-count">0</span>
+      </a>
+      <a href="login.html" id="profile-link">
+        <i class="fa fa-user-circle" id="profile-icon"></i>
+      </a>
+    </div>
+  </div>
+
+    <div class="container">
+      <h1 class="page-title">Checkout</h1>
+
+      <div class="checkout-layout" id="checkoutLayout">
+        <div class="checkout-container">
+          <div class="checkout-header">
+            <h2 class="checkout-title">
+              <i class="fas fa-clipboard-check"></i> Complete Your Order
+            </h2>
+          </div>
+
+          <div id="checkoutForm">
+            <!-- Customer Information Section -->
+            <div class="checkout-section">
+              <h3 class="section-heading">
+                <i class="fas fa-user"></i> Customer Information
+              </h3>
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      required
+                      data-validate="required"
+                    />
+                    <div class="error-message" id="firstNameError">
+                      Please enter your first name
+                    </div>
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      required
+                      data-validate="required"
+                    />
+                    <div class="error-message" id="lastNameError">
+                      Please enter your last name
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      data-validate="email"
+                    />
+                    <div class="error-message" id="emailError">
+                      Please enter a valid email address
+                    </div>
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      required
+                      data-validate="phone"
+                    />
+                    <div class="error-message" id="phoneError">
+                      Please enter a valid phone number
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shipping Information Section -->
+            <div class="checkout-section">
+              <h3 class="section-heading">
+                <i class="fas fa-shipping-fast"></i> Shipping Address
+              </h3>
+              <div class="form-group">
+                <label for="address">Street Address *</label>
+                <input
+                  type="text"
+                  id="address"
+                  required
+                  data-validate="required"
+                />
+                <div class="error-message" id="addressError">
+                  Please enter your address
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="city">City *</label>
+                    <input
+                      type="text"
+                      id="city"
+                      required
+                      data-validate="required"
+                    />
+                    <div class="error-message" id="cityError">
+                      Please enter your city
+                    </div>
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="state">State/Province *</label>
+                    <input
+                      type="text"
+                      id="state"
+                      required
+                      data-validate="required"
+                    />
+                    <div class="error-message" id="stateError">
+                      Please enter your state
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="zip">Zip/Postal Code *</label>
+                    <input
+                      type="text"
+                      id="zip"
+                      required
+                      data-validate="required"
+                    />
+                    <div class="error-message" id="zipError">
+                      Please enter your zip code
+                    </div>
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-group">
+                    <label for="country">Country *</label>
+                    <select id="country" required data-validate="required">
+                      <option value="">Select Country</option>
+                      <option value="US">United States</option>
+                      <option value="CA">Canada</option>
+                      <option value="UK">United Kingdom</option>
+                      <option value="AU">Australia</option>
+                      <option value="FR">France</option>
+                      <option value="DE">Germany</option>
+                      <option value="JP">Japan</option>
+                      
+                    </select>
+                    <div class="error-message" id="countryError">
+                      Please select your country
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+      
+
+            <!-- Payment Section -->
+            <div class="checkout-section">
+              <h3 class="section-heading">
+                <i class="fas fa-credit-card"></i> Payment Information
+              </h3>
+              <div class="payment-methods">
+                <div
+                  class="payment-method"
+                  id="cardPayment"
+                  onclick="selectPaymentMethod('card')"
+                >
+                  <img src="https://logo.svgcdn.com/l/stripe.svg" alt="Stripe Logo" style="height:24px;vertical-align:middle;margin-bottom:4px;" />
+                  <div class="payment-method-name">Online Payment</div>
+                </div>
+                <div
+                  class="payment-method"
+                  id="codPayment"
+                  onclick="selectPaymentMethod('cod')"
+                >
+                  <i class="fas fa-money-bill-wave"></i>
+                  <div class="payment-method-name">Cash on Delivery</div>
+                </div>
+              </div>
+
+              <!-- Online Payment Info (replaces card form) -->
+              <div id="cardPaymentForm">
+                <div class="stripe-info-box">
+                  <div class="stripe-logo-row">
+                    <img src="https://logo.svgcdn.com/l/stripe.svg" alt="Stripe Logo" class="stripe-logo" />
+                  </div>
+                  <div class="stripe-info-content">
+                    <h4>Online Payment via Stripe</h4>
+                    <p>
+                      For your security, you will be redirected to Stripe to complete your payment.<br/>
+                      <span class="stripe-lock"><i class="fas fa-lock"></i> Secure &amp; encrypted checkout</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- COD Payment Form (initially hidden) -->
+              <div id="codPaymentForm" style="display: none">
+                <div class="cod-info-box">
+                  <div class="cod-logo-row">
+                    <i class="fas fa-money-bill-wave cod-cash-icon"></i>
+                  </div>
+                  <div class="cod-info-content">
+                    <h4>Cash on Delivery (COD)</h4>
+                    <p>
+                      Pay with cash when your order is delivered.<br/>
+                      <span class="cod-note"><i class="fas fa-info-circle"></i> Additional charges may apply for COD.</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Success Message (initially hidden) -->
+          <div class="order-success" id="orderSuccess">
+            <i class="fas fa-check-circle"></i>
+            <h2>Thank You for Your Order!</h2>
+            <p>
+              Your order has been successfully placed. We've sent a confirmation
+              email to <span id="confirmationEmail"></span> with your order
+              details.
+            </p>
+            <p>
+              Order Reference:
+              <span class="order-number" id="orderNumber"></span>
+            </p>
+            <a href="index.html" class="btn place-order-btn">
+              Continue Shopping <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="order-summary" id="orderSummary">
+          <div class="summary-header">
+            <h2 class="summary-title">
+              <i class="fas fa-receipt"></i> Order Summary
+            </h2>
+          </div>
+
+          <div class="summary-content">
+            <div class="summary-items" id="summaryItems">
+              <!-- Order items will be loaded here -->
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label">Subtotal</span>
+              <span class="summary-value" id="subtotal">$0.00</span>
+            </div>
+
+            <!-- Discount Row (initially hidden) -->
+            <div
+              class="summary-row discount-row"
+              id="discountRow"
+              style="display: none"
+            >
+              <span class="summary-label">Discount</span>
+              <span class="summary-value" id="discountValue">-$0.00</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label">Shipping</span>
+              <span class="summary-value" id="shipping">$0.00</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label">TAX (%)</span>
+              <span class="summary-value" id="tax">$0.00</span>
+            </div>
+
+            <div class="total-row">
+              <span class="total-label">Total</span>
+              <span class="total-value" id="total">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Add this section right before the "Payment Section" -->
+          <div class="checkout-section">
+            <h3 class="section-heading">
+              <i class="fas fa-tag"></i> Promo Code
+            </h3>
+            <div class="promo-code-section">
+              <div class="form-column" style="flex: 1">
+                <div class="form-group">
+                  <label for="promoCodeInput">Have a promo code?</label>
+                  <input
+                    type="text"
+                    id="promoCodeInput"
+                    placeholder="Enter promo code"
+                  />
+                </div>
+              </div>
+              <div
+                class="form-column"
+                style="flex: 1; display: flex; align-items: flex-end"
+              >
+                <button
+                  type="button"
+                  class="btn place-order-btn"
+                  style="margin-bottom: 5px"
+                  onclick="applyPromoCode()"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+            <div
+              id="promoApplied"
+              style="display: none; color: var(--success); margin-top: 10px"
+            >
+              <i class="fas fa-check-circle"></i>
+              <span id="appliedPromoMessage">Promo code applied!</span>
+              <a
+                href="#"
+                onclick="removePromoCode(); return false;"
+                style="margin-left: 10px; color: var(--accent-color)"
+              >
+                <i class="fas fa-times-circle"></i> Remove
+              </a>
+            </div>
+          </div>
+
+          <div class="summary-footer">
+            <button
+              type="button"
+              class="place-order-btn"
+              id="placeOrderBtn"
+              onclick="placeOrder(),clearCartSimple();"
+            >
+              Place Order <i class="fas fa-lock"></i>
+            </button>
+            <a href="cart.html" class="back-to-cart">
+              <i class="fas fa-arrow-left"></i> Back to Cart
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+      <i class="fas fa-check-circle"></i>
+      <span id="notificationMessage"></span>
+    </div>
+
+
+     <!-- FOOTER STARTS -->
+     <footer class="footer-container">
+      <div class="newsletter">
+             <div class="newsletter-content">
+                 <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+             </div>
+         </div>
+ 
+ 
+         <div class="newsletter-btn-container">
+           <input class="email-btn" type="email" placeholder="Email" />
+           <button class="sub-btn" type="button">Submit</button>
+         </div>
+       </div>
+ 
+            <div class="footer-option-container">
+            <!-- <div class="footerlogo">
+            <h4><a href="index.html">S2K Sewing </a></h4>
+            </div> -->
+            
+             <div class="payment tut">
+                 <h4>Payment & Shipping</h4>
+                 <ul>
+                     <li><a href="shippingcost.html">Shipping Cost</a></li>
+                     
+                    
+                     <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                 </ul>
+             </div>
+             <div class="Services tut">
+                 <h4>Services</h4>
+                 <ul>
+                   <li><a href="giftcard.html">GiftCards</a></li>
+                 </ul>
+             </div>
+             <div class="Help tut">
+                 <h4>Help & Contact</h4>
+                 <ul>
+                     <li><a href="contact.html">Help & Support</a></li>
+                     
+                     
+                 </ul>
+             </div>
+             <div class="About-Us tut">
+                 <h4>About Us</h4>
+                 <ul>
+                     <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                     <li><a href="contact.html">Contact</a></li>
+                 </ul>
+             </div>
+         </div>
+     </footer>
+     
+         <div class="end-footer">
+             <div class="doc-con">
+                 <span><a href="">Privacy Policy</a></span>
+                 <span><a href="">GTC</a></span>
+             </div>
+     
+             <div class="social-icon">
+                 <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                 <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                 <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+             </div>
+     
+             <div class="copyright">
+                 <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+             </div>
+         </div>
+
+  </body>
+</html>

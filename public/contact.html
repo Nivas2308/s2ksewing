@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+ <link
+      rel="stylesheet"
+      href="/assets/component/index.css"
+    />
+    <link rel="stylesheet" href="/assets/css/public/contact.css">
+    <script src="/assets/component/profile.js" defer></script>
+    <script src="/assets/component/auth.js" defer></script>
+    <script src="/assets/js/public/contact.js" defer></script>
+
+</head>
+<body>
+   
+    <!-- Loader -->
+    <div id="loader">
+      <div class="spinner"></div>
+    </div>
+
+     <!-- AD BAR STARTS -->
+     <div class="adbar-container">
+      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+    </div>
+
+   <!-- Modified cart icon in the nav section -->
+   <div class="nav-container">
+    <div class="logo" id="logo-container">
+    <a href="index.html">
+      <img id="site-logo" src="" alt="S2K Sewing"  />
+    </a>
+  </div>
+  
+  
+    <div class="nav-icons">
+      <a href="cart.html" id="your-cart-icon-container" style="position: relative; display: inline-block;">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="cart-counter" id="cart-count">0</span>
+      </a>
+      <a href="login.html" id="profile-link">
+        <i class="fa fa-user-circle" id="profile-icon"></i>
+      </a>
+    </div>
+  </div>
+ 
+
+
+<div class="container">
+        <header>
+            <h1>Contact Us</h1>
+        </header>
+        
+        <div class="content">
+            <!-- Contact Information Section - Now displayed first -->
+            <div class="contact-info">
+                <h2>Ways to Reach Us</h2>
+                
+                <!-- Loading indicator -->
+                <div class="loading-contact" id="contactLoading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading contact information...
+                </div>
+                
+                <!-- Contact details will be populated here -->
+                <div class="contact-details" id="contactDetails" style="display: none;">
+                    <div>
+                        <h3>Customer Support</h3>
+                        <pre id="customerSupportInfo"></pre>
+                    </div>
+                    
+                    <div>
+                        <h3>Main Office</h3>
+                        <pre id="mainOfficeInfo"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success message for form submission -->
+            <div class="success-message" id="successMessage">
+                Thank you for your message! We'll get back to you as soon as possible.
+            </div>
+
+            <!-- Dropdown trigger button -->
+            <button class="form-dropdown-trigger" id="formDropdownTrigger">
+                <span>Send us a Message</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <!-- Form container - hidden by default -->
+            <div class="form-container" id="formContainer">
+                <div class="form-wrapper">
+                    <p>We'd love to hear from you! Please fill out the form below and we'll respond within 24 hours.</p>
+                    
+                    <form class="contact-form" id="contactForm" novalidate>
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" id="name" name="name" required>
+                            <span class="error" id="nameError">Please enter your name</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required>
+                            <span class="error" id="emailError">Please enter a valid email address</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone">
+                            <span class="error" id="phoneError">Please enter a valid phone number</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject *</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">-- Select a subject --</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="support">Technical Support</option>
+                                <option value="billing">Billing Question</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <span class="error" id="subjectError">Please select a subject</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message *</label>
+                            <textarea id="message" name="message" required></textarea>
+                            <span class="error" id="messageError">Please enter your message</span>
+                        </div>
+                        
+                        <button type="submit">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <!-- FOOTER STARTS -->
+        <footer class="footer-container">
+          <div class="newsletter">
+                 <div class="newsletter-content">
+                     <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+                 </div>
+             </div>
+     
+     
+             <div class="newsletter-btn-container">
+               <input class="email-btn" type="email" placeholder="Email" />
+               <button class="sub-btn" type="button">Submit</button>
+             </div>
+           </div>
+     
+                <div class="footer-option-container">
+                <!-- <div class="footerlogo">
+                <h4><a href="index.html">S2K Sewing </a></h4>
+                </div> -->
+                
+                 <div class="payment tut">
+                     <h4>Payment & Shipping</h4>
+                     <ul>
+                         <li><a href="shippingcost.html">Shipping Cost</a></li>
+                         
+                        
+                         <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                     </ul>
+                 </div>
+                 <div class="Services tut">
+                     <h4>Services</h4>
+                     <ul>
+                       <li><a href="giftcard.html">GiftCards</a></li>
+                     </ul>
+                 </div>
+                 <div class="Help tut">
+                     <h4>Help & Contact</h4>
+                     <ul>
+                         <li><a href="contact.html">Help & Support</a></li>
+                         
+                         
+                     </ul>
+                 </div>
+                 <div class="About-Us tut">
+                     <h4>About Us</h4>
+                     <ul>
+                         <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                         <li><a href="contact.html">Contact</a></li>
+                     </ul>
+                 </div>
+             </div>
+         </footer>
+         
+             <div class="end-footer">
+                 <div class="doc-con">
+                     <span><a href="">Privacy Policy</a></span>
+                     <span><a href="">GTC</a></span>
+                 </div>
+         
+                 <div class="social-icon">
+                     <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                     <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                     <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+                 </div>
+         
+                 <div class="copyright">
+                     <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+                 </div>
+             </div>
+</body>
+</html>

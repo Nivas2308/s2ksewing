@@ -1,0 +1,370 @@
+ * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: white;
+        min-height: 100vh;
+      }
+
+      .form-container {
+        max-width: 90%;
+        margin: 30px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        animation: slideUp 0.6s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .form-header {
+        background: #4caf50;
+        color: #4caf50;
+        padding: 40px 30px;
+        text-align: center;
+      }
+
+      .form-header h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        font-weight: 300;
+      }
+
+      .form-header p {
+        opacity: 0.9;
+        font-size: 1.1rem;
+      }
+
+      .form-content {
+        padding: 40px 30px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        position: relative;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .required::after {
+        content: " *";
+        color: #e74c3c;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="file"],
+      textarea {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #fafbfc;
+        font-family: inherit;
+      }
+
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="tel"]:focus,
+      input[type="file"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+      }
+
+      input[type="file"] {
+        padding: 12px 15px;
+        cursor: pointer;
+      }
+
+      .file-upload-info {
+        margin-top: 5px;
+      }
+
+      .file-upload-info small {
+        color: #666;
+        font-size: 0.85rem;
+      }
+
+      .image-preview {
+        margin-top: 15px;
+        text-align: center;
+      }
+
+      .image-preview img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .remove-image {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        margin-top: 10px;
+        transition: background 0.3s ease;
+      }
+
+      .remove-image:hover {
+        background: #c0392b;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+        line-height: 1.5;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 18px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 20px;
+      }
+
+      .cancel-btn {
+        width: 100%;
+        padding: 18px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 20px;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+      }
+
+      .submit-btn:active {
+        transform: translateY(-1px);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .form-note {
+        background: #f8f9fa;
+        border-left: 4px solid #4caf50;
+        padding: 15px 20px;
+        margin-bottom: 30px;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .success-message {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .error-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .form-header {
+          padding: 30px 20px;
+        }
+
+        .form-header h1 {
+          font-size: 1.8rem;
+        }
+
+        .form-content {
+          padding: 30px 20px;
+        }
+
+        .form-group {
+          margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="file"],
+        textarea {
+          padding: 12px 15px;
+          font-size: 16px; /* Prevents zoom on iOS */
+        }
+      }
+
+      @media (max-width: 480px) {
+        .form-header h1 {
+          font-size: 1.5rem;
+        }
+
+        .form-header p {
+          font-size: 1rem;
+        }
+
+        .form-content {
+          padding: 25px 15px;
+        }
+      }
+      /* Product Details Card Styles */
+      #productDetailsContainer {
+        max-width: 800px;
+        margin: 30px 70px;
+        background: #f8f9fa;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 24px 20px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      #productDetailsContainer .product-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background: #fff;
+      }
+      #productDetailsContainer .product-info {
+        flex: 1;
+        min-width: 180px;
+      }
+      #productDetailsContainer .product-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #222;
+      }
+      #productDetailsContainer .product-price {
+        color: #4caf50;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      #productDetailsContainer .product-category {
+        font-size: 0.98rem;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      #productDetailsContainer .product-description {
+        color: #444;
+        font-size: 1rem;
+        margin-bottom: 0;
+      }
+      #productDetailsContainer .product-stock {
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #fff;
+        background: #4caf50;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 8px;
+      }
+      #productDetailsContainer .product-stock.out {
+        background: #e74c3c;
+      }
+      @media (max-width: 700px) {
+        #productDetailsContainer {
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 18px 10px;
+          margin: 30px 20px;
+        }
+        #productDetailsContainer .product-image {
+          width: 100px;
+          height: 100px;
+        }
+      }
+      @media (max-width: 480px) {
+        #productDetailsContainer {
+          padding: 10px 2vw;
+          gap: 12px;
+        }
+        #productDetailsContainer .product-title {
+          font-size: 1.1rem;
+        }
+        #productDetailsContainer .product-description {
+          font-size: 0.95rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .pay-cancel-btns {
+          flex-direction: column;
+          gap: 10px;
+        }
+        .pay-cancel-btns button {
+          width: 100%;
+        }
+      }

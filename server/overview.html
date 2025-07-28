@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewind - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/server/overview.css" />
+    <script src="/assets/js/server/overview.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Header -->
+      <div class="dashboard-header">
+        <h1>S2K Sewing - Dashboard</h1>
+        <p>Site Performances & Product Analytics.</p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card products">
+          <div class="stat-number" id="totalProducts">Loading...</div>
+          <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card customers">
+          <div class="stat-number" id="totalCustomers">Loading...</div>
+          <div class="stat-label">Total Customers</div>
+        </div>
+        <div class="stat-card orders">
+          <div class="stat-number" id="totalOrders">Loading...</div>
+          <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card revenue">
+          <div class="stat-number" id="totalRevenue">Loading...</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <!-- Donut Chart - Product Categories -->
+        <div class="chart-container">
+          <div class="chart-title">Product Categories Distribution</div>
+          <div class="chart-wrapper">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart - Customer Registration Over Time -->
+        <div class="chart-container">
+          <div class="chart-title">Customer Registrations by Month</div>
+          <div class="chart-wrapper">
+            <canvas id="customerChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Chart - Full Width -->
+      <div class="line-chart-section">
+        <div class="chart-title">Sales Overview - Revenue & Orders Trend</div>
+        <div class="line-chart-wrapper">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

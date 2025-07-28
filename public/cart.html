@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/component/index.css" />
+    <link rel="stylesheet" href="/assets/css/public/cart.css" />
+    <script src="/assets/component/profile.js"></script>
+    <script src="/assets/component/auth.js"></script>
+    <script src="/assets/js/public/cart.js" defer></script>
+  </head>
+  <body style="height: 100%">
+    <!-- Loader -->
+    <div id="loader">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- AD BAR STARTS -->
+    <div class="adbar-container">
+      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+    </div>
+
+    <div class="tata">
+      <div>
+        <!-- Modified cart icon in the nav section -->
+        <div class="nav-container">
+          <div class="logo" id="logo-container">
+            <a href="index.html">
+              <img id="site-logo" src="" alt="S2K Sewing" />
+            </a>
+          </div>
+
+          <div class="nav-icons">
+            <a
+              href="cart.html"
+              id="your-cart-icon-container"
+              style="position: relative; display: inline-block"
+            >
+              <i class="fa-solid fa-cart-shopping"></i>
+              <span class="cart-counter" id="cart-count">0</span>
+            </a>
+            <a href="login.html" id="profile-link">
+              <i class="fa fa-user-circle" id="profile-icon"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="container">
+          <h1 class="page-title">Cart</h1>
+
+          <div class="cart-layout">
+            <div class="cart-container">
+              <div class="cart-header">
+                <h2 class="cart-title">
+                  <i class="fas fa-shopping-bag"></i>Items
+                </h2>
+                <span class="cart-count" id="cartCount">0 items</span>
+              </div>
+
+              <div class="cart-content" id="cartContent">
+                <!-- Cart items will be displayed here -->
+              </div>
+            </div>
+
+            <div class="summary-container" id="cartSummary">
+              <div class="summary-header">
+                <h2 class="summary-title">
+                  <i class="fas fa-receipt"></i> Order Summary
+                </h2>
+              </div>
+
+              <div class="summary-content">
+                <div class="summary-row">
+                  <span class="summary-label">Subtotal</span>
+                  <span class="summary-value" id="subtotal">$0.00</span>
+                </div>
+
+                <div class="summary-row">
+                  <span class="summary-label">Tax (%)</span>
+                  <span class="summary-value" id="tax">$0.00</span>
+                </div>
+
+                <!-- Shipping Dropdown -->
+                <div class="summary-row">
+                  <span class="summary-label">Shipping</span>
+                  <select
+                    id="shippingSelect"
+                    onchange="selectShippingOption(this.value)"
+                  >
+                    <option value="domestic">Standard Shipping</option>
+                    <option value="business">Business Delivery</option>
+                    <option value="international">International</option>
+                    <option value="express">Express Delivery</option>
+                  </select>
+                  <div class="shipping-dropdown-container">
+                    <span class="summary-value" id="shipping">$9.99</span>
+                  </div>
+                </div>
+
+                <!-- Delivery date display -->
+                <div class="delivery-info">
+                  <span class="delivery-date-label">Estimated Delivery:</span>
+                  <span class="delivery-date" id="deliveryDate"></span>
+                </div>
+
+                <div class="total-row">
+                  <span class="total-label">Total</span>
+                  <span class="total-value" id="total">$0.00</span>
+                </div>
+              </div>
+
+              <div class="summary-footer">
+                <button class="btn checkout-btn" onclick="checkout()">
+                  Proceed to Checkout <i class="fas fa-arrow-right"></i>
+                </button>
+                <a href="shop.html" class="continue-shopping">
+                  <i class="fas fa-arrow-left"></i> Continue Shopping
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOOTER STARTS -->
+        <footer class="footer-container">
+          <div class="newsletter">
+            <div class="newsletter-content">
+              <p id="newsletter-text">
+                Subscribe to our newsletter for latest updates!
+              </p>
+            </div>
+          </div>
+
+          <div class="newsletter-btn-container">
+            <input class="email-btn" type="email" placeholder="Email" />
+            <button class="sub-btn" type="button">Submit</button>
+          </div>
+
+          <div class="footer-option-container">
+            <!-- <div class="footerlogo">
+            <h4><a href="index.html">S2K Sewing </a></h4>
+            </div> -->
+
+            <div class="payment tut">
+              <h4>Payment & Shipping</h4>
+              <ul>
+                <li><a href="shippingcost.html">Shipping Cost</a></li>
+
+                <li><a href="cancellationpolicy.html">Cancellation </a></li>
+              </ul>
+            </div>
+            <div class="Services tut">
+              <h4>Services</h4>
+              <ul>
+                <li><a href="giftcard.html">GiftCards</a></li>
+              </ul>
+            </div>
+            <div class="Help tut">
+              <h4>Help & Contact</h4>
+              <ul>
+                <li><a href="contact.html">Help & Support</a></li>
+              </ul>
+            </div>
+            <div class="About-Us tut">
+              <h4>About Us</h4>
+              <ul>
+                <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                <li><a href="contact.html">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+        <div class="end-footer">
+          <div class="doc-con">
+            <span><a href="">Privacy Policy</a></span>
+            <span><a href="">GTC</a></span>
+          </div>
+
+          <div class="social-icon">
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+          </div>
+
+          <div class="copyright">
+            <span
+              >Proudly powered by
+              <a href="https://airlinksin.com/">AirLinksin</a></span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

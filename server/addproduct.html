@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Add Product</title>
+    <link rel="stylesheet" href="/assets/css/server/add.css" />
+    <script src="/assets/js/server/add.js"></script>
+  </head>
+  <body>
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="header-title">S2K Sewing - Add Product</h1>
+      </div>
+    </div>
+
+    <!-- Add Product section  -->
+    <div class="main-content">
+      <section id="add-product">
+        <h1>Add Product</h1>
+
+        <!-- Success Message -->
+        <div id="success-message" class="success-message">
+          Product added successfully!
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-message">
+          Error adding product. Please try again.
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">Adding product... Please wait.</div>
+
+        <form id="product-form">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-group">
+              <label for="product-title">Product Title</label>
+              <input
+                type="text"
+                id="product-title"
+                placeholder="Enter product title"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="product-price">Price</label>
+              <input
+                type="number"
+                id="product-price"
+                step="0.01"
+                min="0"
+                placeholder="Enter price"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Product Images</h3>
+            <div class="image-upload-container">
+              <label for="product-image" class="upload-label">
+                <div class="upload-icon">📸</div>
+                <span>Click to upload product images</span>
+                <small
+                  >You can select multiple product images. (Max 5 images)</small
+                >
+              </label>
+              <input
+                type="file"
+                id="product-image"
+                accept="image/*"
+                multiple
+                style="display: none"
+              />
+              <div
+                id="product-image-preview"
+                class="image-preview-container"
+              ></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Categorization</h3>
+            <div class="form-group">
+              <label for="product-category">Category</label>
+              <select id="product-category" required>
+                <option value="">Select Category</option>
+                <option value="Fabrics">Fabrics</option>
+                <option value="Garments">Garments</option>
+                <option value="Sewing Patterns">Sewing Patterns</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="product-subcategory">Subcategory</label>
+              <input
+                type="text"
+                id="product-subcategory"
+                placeholder="Enter subcategory"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Product Description</h3>
+            <div class="form-group">
+              <label for="product-description"
+                >Description
+                <span
+                  >(Your Description must contain short sentences only. Upto 5-7
+                  Words.)</span
+                ></label
+              >
+              <textarea
+                id="product-description"
+                placeholder="Enter product description"
+                required
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="product-detail"
+                >Product Details
+                <span
+                  >(You can Remove/Add Label by Simply Typing and Clearing
+                  it.)</span
+                ></label
+              >
+              <textarea
+                id="product-detail"
+                placeholder="Enter product specifications (e.g., Material: Cotton, Size: Large, etc.)"
+                required
+              >
+Material: 
+Category: 
+Fabric Type: 
+Color: 
+Size:  
+Length: 
+Fit Type: 
+Occasion: 
+Made In:
+Shipping Time Period: 
+</textarea
+              >
+            </div>
+          </div>
+
+          <button type="submit" id="submit-btn">Add Product</button>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+:root {
+  --primary-color: #4caf50;
+  --primary-dark: #45a049;
+  --primary-light: #66bb6a;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.spinner-border-primary {
+  color: var(--primary-color);
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: var(--primary-color);
+  color: #155724;
+}
+
+.btn-outline-green {
+  border: 2px solid #4caf50;
+  background-color: transparent;
+  color: black;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-green:hover {
+  background-color: #4caf50;
+  color: white;
+}

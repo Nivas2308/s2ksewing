@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Contact Admin</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/css/server/contact.css" />
+    <script defer src="/assets/js/server/contact.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>S2K Sewing Contact Admin</h1>
+      </div>
+
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="submissions">
+          <i class="fas fa-inbox"></i> Contact Submissions
+        </button>
+        <button class="nav-tab" data-tab="contact-info">
+          <i class="fas fa-address-card"></i> Contact Information
+        </button>
+      </div>
+
+      <!-- Contact Submissions Tab -->
+      <div class="tab-content active" id="submissions">
+        <button class="refresh-btn" onclick="loadSubmissions()">
+          <i class="fas fa-sync-alt"></i> Refresh Submissions
+        </button>
+
+        <div class="submissions-container">
+          <div class="table-header">
+            <h3><i class="fas fa-list-alt"></i> Contact Form Submissions</h3>
+            <span id="submissionCount">Loading...</span>
+          </div>
+          <div class="table-container">
+            <div id="submissionsTableContainer">
+              <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading contact submissions...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information Tab -->
+      <div class="tab-content" id="contact-info">
+        <div class="contact-info-container">
+          <div class="contact-info-header">
+            <h3><i class="fas fa-cog"></i> Business Contact Information</h3>
+            <p>
+              Update your business contact information that appears on your
+              website
+            </p>
+          </div>
+
+          <div class="success-message" id="contactSuccessMessage"></div>
+          <div class="error-message" id="contactErrorMessage"></div>
+
+          <form id="contactInfoForm">
+            <div class="contact-columns">
+              <div class="contact-column">
+                <h4>
+                  <i class="fas fa-headset"></i>
+                  Customer Support
+                </h4>
+                <textarea
+                  id="customerSupport"
+                  name="customerSupport"
+                  placeholder="Enter customer support information here...
+                                
+Examples:
+• Phone: +1 (555) 123-4567
+• Email: support@s2ksewing.com
+• Hours: Mon-Fri 9AM-6PM EST
+• Live Chat: Available on website"
+                ></textarea>
+              </div>
+
+              <div class="contact-column">
+                <h4>
+                  <i class="fas fa-building"></i>
+                  Main Office
+                </h4>
+                <textarea
+                  id="mainOffice"
+                  name="mainOffice"
+                  placeholder="Enter main office information here...
+                                
+Examples:
+• Address: 123 Sewing Street, Craft City, CC 12345
+• Phone: +1 (555) 987-6543
+• Email: info@s2ksewing.com
+• Hours: Mon-Fri 8AM-5PM EST"
+                ></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="save-btn">
+              <i class="fas fa-save"></i> Save Contact Information
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-envelope-open"></i> Message Details</h2>
+          <span class="close" onclick="closeBtn">&times;</span>
+        </div>
+        <div id="messageDetails"></div>
+      </div>
+    </div>
+  </body>
+</html>

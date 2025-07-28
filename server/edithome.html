@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Edit Branding</title>
+     <link rel="stylesheet" href="/assets/css/server/home.css">
+     <script src="/assets/js/server/home.js"></script>
+  </head>
+  <body>
+    <div class="main-content">
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="header-title">S2K Sewing - Branding</h1>
+      </div>
+      <div id="success-message" class="success-message" style="display: none">
+          Changes saved successfully!
+        </div>
+        </div>
+    </div>
+
+
+        <!-- Logo Management Section - MOVED INSIDE main-content -->
+        <section>
+          <div class="form-section">
+            <h3>Logo Management</h3>
+            <div class="form-group">
+              <label for="logo-upload">Logo Image</label>
+              <div class="file-upload-container">
+                <label for="logo-upload" class="upload-label">
+                  
+                  <span>Upload logo (PNG, JPG, SVG)</span>
+                  <small>Supported formats: PNG, JPG, SVG</small>
+                </label>
+                <input
+                  type="file"
+                  id="logo-upload"
+                  accept=".png,.jpg,.jpeg,.svg"
+                />
+              </div>
+              <div class="preview-container">
+                <img
+                  id="logo-preview"
+                  class="image-preview"
+                  src=""
+                  alt="Logo Preview"
+                  style="display: none; max-width: 150px; margin-top: 10px"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Login Background Section - MOVED INSIDE main-content -->
+          <div class="form-section">
+            <h3>Login Page Background</h3>
+            <div class="form-group">
+              <label for="login-bg">Background Image</label>
+              <div class="file-upload-container">
+                <label for="login-bg" class="upload-label">
+                  
+                  <span>Upload login background image</span>
+                  <small>Recommended size: 1920x1080px</small>
+                </label>
+                <input type="file" id="login-bg" accept="image/*" />
+              </div>
+              <div class="preview-container">
+                <img
+                  id="login-bg-preview"
+                  class="image-preview"
+                  src=""
+                  alt="Login Background Preview"
+                  style="display: none; max-width: 300px; margin-top: 10px"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="save-container">
+            <button id="save-branding">Save Branding Changes</button>
+          </div>
+        </section>
+
+        <!-- Advertisement Bar -->
+        <div class="form-section">
+          <h3>Announcement Bar</h3>
+          <div class="form-group">
+            <label for="scrolling-title">Scrolling Title</label>
+            <input
+              type="text"
+              id="scrolling-title"
+              placeholder="Enter scrolling offer or announcement"
+            />
+            <span class="helper-text"
+              >This text will appear in the scrolling announcement bar at the
+              top of your homepage</span
+            >
+          </div>
+        </div>
+
+        <!-- Header Banner -->
+        <div class="form-section">
+          <h3>Header Banner</h3>
+          <div class="form-group">
+            <label for="header-title">Header Title</label>
+            <input
+              type="text"
+              id="header-title"
+              placeholder="Enter header title"
+            />
+          </div>
+          <div class="form-group">
+            <label for="header-image">Header Image</label>
+            <div class="file-upload-container">
+              <label for="header-image" class="upload-label">
+                <div class="upload-icon"></div>
+                <span>Click to upload header banner image</span>
+                <small>Recommended size: 1920x600px</small>
+              </label>
+              <input type="file" id="header-image" accept="image/*" />
+            </div>
+            <div class="preview-container">
+              <img
+                id="header-image-preview"
+                class="image-preview"
+                src=""
+                alt="Header Banner"
+                style="display: none; max-width: 300px; margin-top: 10px"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Highlighted Banner -->
+        <div class="form-section">
+          <h3>Featured Content</h3>
+          <div class="form-group">
+            <label for="highlighted-title">Highlighted Title</label>
+            <input
+              type="text"
+              id="highlighted-title"
+              placeholder="Enter highlighted section title"
+            />
+          </div>
+          <div class="form-group">
+            <label for="highlighted-image">Highlighted Image</label>
+            <div class="file-upload-container">
+              <label for="highlighted-image" class="upload-label">
+                
+                <span>Click to upload highlighted image</span>
+                <small>Recommended size: 800x600px</small>
+              </label>
+              <input type="file" id="highlighted-image" accept="image/*" />
+            </div>
+            <div class="preview-container">
+              <img
+                id="highlighted-image-preview"
+                class="image-preview"
+                src=""
+                alt="Highlighted Image"
+                style="display: none; max-width: 300px; margin-top: 10px"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Newsletter Section -->
+        <div class="form-section">
+          <h3>Newsletter Section</h3>
+          <div class="form-group">
+            <label for="newsletter-text">Newsletter Text</label>
+            <textarea
+              id="newsletter-text"
+              placeholder="Enter newsletter content or subscription message"
+            ></textarea>
+            <span class="helper-text"
+              >This text will appear in the newsletter subscription area</span
+            >
+          </div>
+        </div>
+
+        <!-- Add FAQ Section -->
+        <div class="form-section">
+          <h3>Frequently Asked Questions</h3>
+          <div class="form-group">
+            <label for="faq-question">Question</label>
+            <input
+              type="text"
+              id="faq-question"
+              placeholder="Enter FAQ question"
+            />
+          </div>
+          <div class="form-group">
+            <label for="faq-answer">Answer</label>
+            <textarea id="faq-answer" placeholder="Enter FAQ answer"></textarea>
+          </div>
+          <button id="add-faq-btn" class="add-btn">Add FAQ</button>
+          <div class="faq-list-container">
+            <h3>Your FAQs</h3>
+            <ul id="faq-list"></ul>
+          </div>
+        </div>
+
+        <div class="save-container">
+          <button id="save-changes">Save All Changes</button>
+        </div>
+      </section>
+    </div>
+
+    
+  </body>
+</html>

@@ -1,0 +1,534 @@
+ /* Basic reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        text-decoration: none;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-position: center;
+        background-size: cover;
+        background-color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      /* Back button styling */
+      .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+        transition: transform 0.2s ease;
+      }
+
+      .back-btn-link {
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .back-btn-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background-color: rgba(76, 175, 80, 0.9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+      }
+
+      .back-btn-button:hover {
+        background-color: rgba(69, 160, 73, 1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .back-btn-button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      .back-icon {
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .back-text {
+        display: inline-block;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .back-btn {
+          top: 15px;
+          left: 15px;
+        }
+
+        .back-btn-button {
+          padding: 8px 12px;
+          font-size: 14px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .back-btn-button {
+          padding: 8px;
+        }
+
+        .back-text {
+          display: none; /* Hide text on very small screens */
+        }
+      }
+
+      .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+      }
+
+      .login-box {
+        background: transparent;
+        backdrop-filter: blur(30px);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        color: white;
+        transition: width 0.3s ease;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+      }
+
+      .textbox {
+        margin-bottom: 20px;
+      }
+
+      .textbox input {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        margin-top: 8px;
+      }
+
+      .textbox input:focus {
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.6);
+      }
+
+      .remember {
+        display: flex;
+        align-items: center;
+        color: #f9f9f9;
+      }
+
+      .remember input {
+        margin-right: 10px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #4caf50;
+        border: none;
+        border-radius: 6px;
+        font-size: 18px;
+        cursor: pointer;
+        color: white;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn:hover {
+        background-color: #45a049;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .footer a {
+        color: #f1f1f1;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+        color: #ff8a00;
+      }
+
+      /* Logout and Shop Now Buttons */
+      .logout-btn {
+        background-color: #e74c3c;
+        margin: 20px 0;
+      }
+
+      .logout-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .shop-btn {
+        background-color: #2ecc71;
+      }
+
+      .shop-btn:hover {
+        background-color: #27ae60;
+      }
+
+      /* Loading indicator */
+      .loader {
+        display: none;
+        margin: 0 auto;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Custom Alert Styles */
+      #custom-alert-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 3000;
+        backdrop-filter: blur(5px);
+      }
+
+      .custom-alert {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 80%;
+        text-align: center;
+        position: relative;
+        animation: alertFadeIn 0.3s ease-out forwards;
+      }
+
+      @keyframes alertFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .custom-alert h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 18px;
+      }
+
+      .custom-alert p {
+        margin: 0 0 20px 0;
+        color: #666;
+      }
+
+      .alert-btn {
+        padding: 10px 25px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      .alert-btn:hover {
+        background-color: #45a049;
+      }
+
+      .alert-success .alert-btn {
+        background-color: #4caf50;
+      }
+      .alert-success .alert-btn:hover {
+        background-color: #45a049;
+      }
+
+      .alert-error .alert-btn {
+        background-color: #e74c3c;
+      }
+      .alert-error .alert-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .alert-success h3 {
+        color: #2ecc71;
+      }
+      .alert-error h3 {
+        color: #e74c3c;
+      }
+
+      /* Employee Verification Modal Styles */
+      #employee-verification-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 2000;
+        backdrop-filter: blur(8px);
+      }
+
+      .employee-modal {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.95),
+          rgba(248, 250, 252, 0.95)
+        );
+        padding: 35px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 90%;
+        text-align: center;
+        position: relative;
+        animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .employee-modal h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 22px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .employee-modal .icon {
+        font-size: 24px;
+        color: #3498db;
+      }
+
+      .employee-modal p {
+        margin: 0 0 25px 0;
+        color: #555;
+        line-height: 1.6;
+        font-size: 15px;
+      }
+
+      .employee-modal .email-input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e1e8ed;
+        border-radius: 10px;
+        font-size: 16px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .employee-modal .email-input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        background: white;
+      }
+
+      .employee-modal .domain-hint {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-bottom: 20px;
+        font-style: italic;
+      }
+
+      .modal-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+
+      .modal-btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        min-width: 100px;
+      }
+
+      .modal-btn-primary {
+        background: #4caf50;
+        color: white;
+      }
+
+      .modal-btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #1f4e79);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      }
+
+      .modal-btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .modal-btn-secondary:hover {
+        background: #7f8c8d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+      }
+
+      .modal-btn:active {
+        transform: translateY(0);
+      }
+
+      /* Close button */
+      .modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #bdc3c7;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        line-height: 1;
+      }
+
+      .modal-close:hover {
+        color: #e74c3c;
+      }
+
+      /* Media Queries for responsiveness */
+
+      /* Mobile Devices */
+      @media (max-width: 767px) {
+        .login-box {
+          padding: 20px;
+          width: 80%;
+        }
+
+        h2 {
+          font-size: 24px;
+        }
+
+        .textbox input {
+          font-size: 14px;
+        }
+
+        .btn {
+          font-size: 16px;
+          padding: 10px;
+        }
+
+        .employee-modal {
+          padding: 25px;
+          width: 95%;
+        }
+
+        .employee-modal h3 {
+          font-size: 20px;
+        }
+
+        .modal-buttons {
+          flex-direction: column;
+        }
+
+        .modal-btn {
+          width: 100%;
+        }
+      }
+
+      /* Tablets and small desktops */
+      @media (min-width: 768px) and (max-width: 1024px) {
+        .login-box {
+          padding: 30px;
+        }
+
+        h2 {
+          font-size: 26px;
+        }
+
+        .textbox input {
+          font-size: 15px;
+        }
+
+        .btn {
+          font-size: 17px;
+          padding: 12px;
+        }
+      }
+
+      /* Larger Desktops */
+      @media (min-width: 1025px) {
+        .login-box {
+          padding: 40px;
+        }
+
+        h2 {
+          font-size: 28px;
+        }
+
+        .textbox input {
+          font-size: 16px;
+        }
+
+        .btn {
+          font-size: 18px;
+          padding: 12px;
+        }
+      }

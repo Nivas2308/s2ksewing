@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Cancellation Policy</title>
+    <link rel="stylesheet" href="/assets/css/server/cancel.css">
+    <script src="/assets/js/server/cancel.js"></script>
+  </head>
+  <body>
+    <div class="container">
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="header-title">S2K Sewing Cancellation</h1>
+      </div>
+    </div>
+    <div class="main-content">
+      <div id="status-message" class="status-message"></div>
+
+      <div class="section">
+        <h2>Cancellation Policy</h2>
+        <textarea
+          id="policy-content"
+          placeholder="Enter the cancellation policy content here..."
+        >
+If you wish to cancel your order or booking, please review our policy below:</textarea
+        >
+      </div>
+
+      <div class="section">
+        <h2>Policy Bullet Points</h2>
+        <div id="bullet-points-container">
+          <!-- Bullet points will be added here dynamically -->
+        </div>
+        <button id="add-bullet" class="add-btn">Add Bullet Point</button>
+      </div>
+
+      <div class="section">
+        <h2>FAQs</h2>
+        <div id="faqs-container">
+          <!-- FAQ items will be added here dynamically -->
+        </div>
+        <button id="add-faq" class="add-btn">Add FAQ</button>
+      </div>
+
+      <button id="save-changes">Save All Changes</button>
+    </div>
+   
+  </body>
+</html>

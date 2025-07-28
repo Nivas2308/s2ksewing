@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Order Tracking</title>
+    <link rel="stylesheet" href="/assets/css/server/tracking.css" />
+    <script src="/assets/js/server/tracking.js"></script>
+  </head>
+  <body>
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="header-title">S2K Sewing Order Tracking Administration</h1>
+      </div>
+    </div>
+    <div class="container">
+      <div class="header">
+        <div class="title" style="font-weight: bold">
+          Track & Update Orders.
+        </div>
+        <input
+          type="text"
+          id="orderSearch"
+          class="search-box"
+          placeholder="Search by Order ID or Customer Name..."
+        />
+      </div>
+
+      <!-- Tabs will be inserted here by JavaScript -->
+
+      <div class="orders-list">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Customer ID</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable">
+            <tr>
+              <td colspan="6" class="loading">Loading orders...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination will be inserted here by JavaScript -->
+
+      <div id="orderDetail" class="order-detail">
+        <div class="detail-header">
+          <div class="detail-title">
+            Order Details: <span id="detailOrderId"></span>
+          </div>
+          <div class="detail-close" onclick="closeOrderDetail()">✕</div>
+        </div>
+
+        <div class="detail-sections">
+          <div class="detail-section">
+            <div class="section-title">Order Information</div>
+            <div class="detail-row">
+              <div class="detail-label">Order Date:</div>
+              <div class="detail-value" id="detailOrderDate"></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Payment Method:</div>
+              <div class="detail-value" id="detailPaymentMethod"></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Status:</div>
+              <div class="detail-value" id="detailOrderStatus"></div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-title">Customer Information</div>
+            <div class="detail-row">
+              <div class="detail-label">Name:</div>
+              <div class="detail-value" id="detailCustomerName"></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Email:</div>
+              <div class="detail-value" id="detailCustomerEmail"></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Phone:</div>
+              <div class="detail-value" id="detailCustomerPhone"></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Address:</div>
+              <div class="detail-value" id="detailCustomerAddress"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="section-title">Order Items</div>
+          <div class="table-responsive">
+            <div class="scroll-hint" id="scrollHint">⇆ Scroll</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Product ID</th>
+                  <th>Price</th>
+                  <th>Qty</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="detailItemsBody">
+                <!-- Order items will be filled here -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4" style="text-align: right">Subtotal:</td>
+                  <td id="detailSubtotal"></td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="text-align: right">Tax:</td>
+                  <td id="detailTax"></td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="text-align: right">Shipping:</td>
+                  <td id="detailShipping"></td>
+                </tr>
+                <tr id="codChargesRow" style="display: none">
+                  <td colspan="4" style="text-align: right; color: #ff9800">
+                    <strong>COD Charges:</strong>
+                  </td>
+                  <td id="detailCODCharges" style="color: #ff9800"></td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="text-align: right">
+                    <strong>Total:</strong>
+                  </td>
+                  <td id="detailTotal"><strong></strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="status-form">
+          <form id="updateStatusForm">
+            <input type="hidden" id="updateOrderId" name="orderId" />
+            <div class="form-group">
+              <label for="orderStatus">Update Status</label>
+              <select id="orderStatus" name="orderStatus" class="form-control">
+                <option value="Order Placed">Order Placed</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="courier">Courier</label>
+              <input
+                type="text"
+                id="courier"
+                name="courier"
+                class="form-control"
+                placeholder="Enter courier name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="trackingId">Tracking ID</label>
+              <input
+                type="text"
+                id="trackingId"
+                name="trackingId"
+                class="form-control"
+                placeholder="Enter tracking number"
+              />
+            </div>
+            <div class="form-group">
+              <label for="comments">Comments/Notes</label>
+              <textarea
+                id="comments"
+                name="comments"
+                class="form-control"
+                placeholder="Add any notes about this order"
+              ></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                Update Order
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

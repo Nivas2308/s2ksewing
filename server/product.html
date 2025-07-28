@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Product Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/server/prod.css" />
+    <script src="/assets/js/server/prod.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="header">
+        <h1><b>Product Analytics</b></h1>
+        <p>Product Performances.</p>
+      </div>
+
+      <div class="overview-section">
+        <h3>Performance Overview</h3>
+        <div class="overview-grid">
+          <div class="overview-item">
+            <h4>Top Performing Product</h4>
+            <div class="overview-value" id="topProductName">Loading...</div>
+            <div class="overview-detail" id="topProductStats">Views & Time</div>
+          </div>
+          <div class="overview-item">
+            <h4>Most Popular Category</h4>
+            <div class="overview-value" id="topCategory">Loading...</div>
+            <div class="overview-detail" id="topCategoryStats">Total views</div>
+          </div>
+          <div class="overview-item">
+            <h4>Best Engagement Product</h4>
+            <div class="overview-value" id="bestEngagementProduct">
+              Loading...
+            </div>
+            <div class="overview-detail" id="bestEngagementStats">
+              Avg time per view
+            </div>
+          </div>
+          <div class="overview-item">
+            <h4>Total Session Time</h4>
+            <div class="overview-value" id="totalSessionTime">Loading...</div>
+            <div class="overview-detail">All products combined</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters-section">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="categoryFilter">Category</label>
+            <select id="categoryFilter" onchange="updateDashboardWithFilters()">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button class="btn-primary" onclick="updateDashboardWithFilters()">
+              Apply Filter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="filterIndicator" class="filter-indicator" style="display: none">
+        <span id="filterText"></span>
+        <button class="clear-filter" onclick="clearFilters()">
+          Clear Filter
+        </button>
+      </div>
+
+      <div id="loadingIndicator" class="loading">
+        <div class="spinner"></div>
+        <p>Loading dashboard data...</p>
+      </div>
+
+      <div id="errorMessage" class="error-message" style="display: none"></div>
+
+      <div id="dashboardContent" style="display: none">
+        <div class="stats-cards">
+          <div class="stat-card">
+            <h3>Total Products</h3>
+            <div class="value" id="totalProducts">0</div>
+            <div class="change" id="totalProductsChange">
+              Active products in catalog
+            </div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Views</h3>
+            <div class="value" id="totalViews">0</div>
+            <div class="change" id="totalViewsChange">Product page visits</div>
+          </div>
+          <div class="stat-card">
+            <h3>Average Time Spent</h3>
+            <div class="value" id="avgTimeSpent">0s</div>
+            <div class="change" id="avgTimeSpentChange">Per product view</div>
+          </div>
+        </div>
+
+        <div class="charts-section">
+          <div class="chart-container">
+            <h3>Product Views by Category</h3>
+            <div class="canvas-container">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-container">
+            <h3>Category Distribution</h3>
+            <div class="canvas-container">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="products-section">
+          <h3 id="productsTableTitle">Individual Product Statistics</h3>
+          <table class="products-table" id="productsTable">
+            <thead>
+              <tr>
+                <th>Product Title</th>
+                <th>Category</th>
+                <th>Sub Category</th>
+                <th>Views</th>
+                <th>Total Time</th>
+                <th>Avg Time</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

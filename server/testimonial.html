@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Testimonials</title>
+    <link rel="stylesheet" href="/assets/css/server/testimonial.css" />
+    <script src="/assets/js/server/teastimonial.js"></script>
+  </head>
+  <body>
+    <div class="admin-container">
+      <div class="admin-header">
+        <h1 class="admin-title">S2K Sewing Testimonials</h1>
+        <div>
+          <button id="refresh-btn" class="btn btn-secondary">
+            <span>↻</span> Refresh
+          </button>
+          <button id="add-testimonial-btn" class="btn">
+            Add New Testimonial
+          </button>
+        </div>
+      </div>
+
+      <div id="status-message" class="status-message"></div>
+
+      <div class="testimonials-list" id="testimonials-list">
+        <!-- Testimonials will be loaded here -->
+      </div>
+
+      <div class="pagination" id="pagination">
+        <!-- Pagination controls will be added here -->
+      </div>
+    </div>
+
+    <!-- Add/Edit Testimonial Modal -->
+    <div class="modal" id="testimonial-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-title">Add New Testimonial</h2>
+          <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+        <form id="testimonial-form">
+          <input type="hidden" id="testimonial-id" />
+          <div class="form-group">
+            <label class="form-label">Photo URL</label>
+            <input
+              type="text"
+              id="photo-url"
+              class="form-control"
+              placeholder="Enter image URL"
+            />
+            <img id="preview-img" class="preview-img" src="" alt="Preview" />
+          </div>
+          <div class="form-group">
+            <label for="client-name" class="form-label">Client Name</label>
+            <input type="text" id="client-name" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="client-position" class="form-label"
+              >Client Position</label
+            >
+            <input
+              type="text"
+              id="client-position"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="testimonial-text" class="form-label"
+              >Testimonial Text</label
+            >
+            <textarea
+              id="testimonial-text"
+              class="form-control"
+              required
+            ></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-btn">
+              Cancel
+            </button>
+            <button type="submit" class="btn" id="save-btn">
+              Save Testimonial
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+      <div class="modal-content confirm-modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Confirm Deletion</h2>
+          <button class="close-btn" id="close-confirm-modal">&times;</button>
+        </div>
+        <p>
+          Are you sure you want to delete this testimonial? This action cannot
+          be undone.
+        </p>
+        <div class="confirm-actions">
+          <button class="btn btn-secondary" id="cancel-delete-btn">
+            Cancel
+          </button>
+          <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

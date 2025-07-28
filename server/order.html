@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sales Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/server/order.css" />
+    <script src="/assets/js/server/order.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h1>Sales Analytics</h1>
+        <p>Sales insights & Performances.</p>
+      </div>
+
+      <div class="controls-section">
+        <div class="controls-row">
+          <div class="control-group">
+            <label for="dateRange">Date Range:</label>
+            <select id="dateRange" onchange="fetchData()">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="message"></div>
+
+      <div id="dashboardContent">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" id="totalOrders">
+              <div class="loading-spinner"></div>
+            </div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="totalRevenue">
+              <div class="loading-spinner"></div>
+            </div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="deliveredProducts">
+              <div class="loading-spinner"></div>
+            </div>
+            <div class="stat-label">Delivered Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="pendingProducts">
+              <div class="loading-spinner"></div>
+            </div>
+            <div class="stat-label">Pending Orders</div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+          <div class="chart-container">
+            <h3 class="chart-title">Sales Overview</h3>
+            <div class="chart-wrapper">
+              <canvas id="salesChart"></canvas>
+              <div id="salesChartLoading" class="loading">
+                <div class="loading-spinner"></div>
+                Loading sales data...
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <h3 class="chart-title">Order Status Distribution</h3>
+            <div class="chart-wrapper">
+              <canvas id="statusChart"></canvas>
+              <div id="statusChartLoading" class="loading">
+                <div class="loading-spinner"></div>
+                Loading status data...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Section -->
+        <div class="performance-grid">
+          <div class="performance-card">
+            <h3 class="performance-title">Top Products</h3>
+            <div id="topProducts">
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading product data...
+              </div>
+            </div>
+          </div>
+          <div class="performance-card">
+            <h3 class="performance-title">Top Customers</h3>
+            <div id="topCustomers">
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading customer data...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

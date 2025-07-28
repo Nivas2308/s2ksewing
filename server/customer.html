@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2K Sewing - Customer Data</title>
+    <link rel="stylesheet" href="/assets/css/server/customer.css" />
+    <script src="/assets/js/server/customer.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>S2K Sewing - Customer Data</h1>
+      </div>
+
+      <div class="controls" id="controlsSection" style="display: none">
+        <div class="controls-left">
+          <input
+            type="text"
+            id="searchBox"
+            class="search-box"
+            placeholder="Search customers..."
+          />
+          <select id="pageSizeSelect" class="page-size-select">
+            <option value="10">10 per page</option>
+            <option value="25" selected>25 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+            <option value="all">Show all</option>
+          </select>
+        </div>
+        <div class="controls-right">
+          <!-- <button id="exportCsvBtn" class="export-btn">📄 Export CSV</button> -->
+          <button id="exportExcelBtn" class="export-btn">
+            📊 Export Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div id="loadingSection" class="loading">Loading customer data...</div>
+
+        <table id="dataTable" style="display: none">
+          <thead id="tableHead">
+            <!-- Headers will be populated here -->
+          </thead>
+          <tbody id="tableBody">
+            <!-- Data will be populated here -->
+          </tbody>
+        </table>
+
+        <div id="noDataSection" class="no-data" style="display: none">
+          No data matches your search criteria.
+        </div>
+
+        <div id="errorSection" style="display: none"></div>
+        <div id="debugSection" style="display: none"></div>
+      </div>
+
+      <div
+        class="pagination-container"
+        id="paginationSection"
+        style="display: none"
+      >
+        <div class="pagination-info" id="paginationInfo">
+          <!-- Pagination info will be populated here -->
+        </div>
+        <div class="pagination" id="paginationControls">
+          <!-- Pagination controls will be populated here -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
