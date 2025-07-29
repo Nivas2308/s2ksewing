@@ -118,7 +118,7 @@ function verifyEmployeeEmail() {
 
     // Redirect to admin login after a short delay
     setTimeout(() => {
-      window.location.href = "/server/adminlogin.html";
+      window.location.href = "adminlogin.html";
     }, 1500);
   } else {
     closeEmployeeModal();
@@ -273,7 +273,7 @@ if (form) {
         // Redirect after a short delay
         setTimeout(() => {
           const urlParams = new URLSearchParams(window.location.search);
-          const redirectUrl = urlParams.get("redirect") || "index.html";
+          const redirectUrl = urlParams.get("redirect") || "/index.html";
           window.location.href = redirectUrl;
         }, 1500);
       } else {
@@ -383,7 +383,7 @@ if (form) {
         setTimeout(() => {
           // Check if there's a redirect URL
           const urlParams = new URLSearchParams(window.location.search);
-          const redirectUrl = urlParams.get("redirect") || "index.html";
+          const redirectUrl = urlParams.get("redirect") || "/index.html";
           window.location.href = redirectUrl;
         }, 1500);
       } else {
