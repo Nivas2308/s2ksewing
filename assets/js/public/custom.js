@@ -184,21 +184,10 @@
       }
 
       // Form submission
-      const paymentPopup = document.getElementById("paymentPopup");
-      const proceedBtn = document.getElementById("proceedBtn");
-      const cancelBtn = document.getElementById("cancelBtn");
       const form = document.getElementById("fabricRequestForm");
-      let allowSubmit = false;
 
-      // Refactored form submission logic
+      // Form submission logic
       form.addEventListener("submit", async function (e) {
-        if (!allowSubmit) {
-          e.preventDefault();
-          paymentPopup.style.display = "flex";
-          return;
-        }
-        // Only allow submission after Proceed is clicked
-        allowSubmit = false; // reset for next time
         e.preventDefault();
         // Hide any previous messages
         hideMessages();
@@ -206,7 +195,7 @@
         // Show loading state
         const submitBtn = document.querySelector(".submit-btn");
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Submitting...";
+        submitBtn.textContent = "Processing...";
         submitBtn.disabled = true;
 
         try {
@@ -215,11 +204,9 @@
 
           // Validate required fields
           const requiredFields = [
-            "fullName",
-            "phone",
-            "email",
             "fabricColor",
             "fabricMaterial",
+            "fabricSize"
           ];
           let isValid = true;
 
@@ -241,9 +228,6 @@
             imageData = await fileToBase64(imageFile);
           }
 
-          // Prepare data for Google Sheets
-          // Get userId from sessionStorage or localStorage
-          let userId = sessionStorage.getItem('userId') || localStorage.getItem('userId') || '';
           // Get product details from the loaded product (if available)
           let productId = '';
           let productTitle = '';
@@ -254,43 +238,56 @@
             productPrice = window.loadedProduct.price || '';
           }
 
-          const submitData = {
-            timestamp: new Date().toISOString(),
-            fullName: formData.get("fullName"),
-            phone: formData.get("phone"),
-            email: formData.get("email"),
-            fabricColor: formData.get("fabricColor"),
-            fabricMaterial: formData.get("fabricMaterial"),
-            referenceDescription: formData.get("referenceDescription") || "",
+          // Create custom fabric object
+          const customFabric = {
+            id: 'custom_fabric_' + Date.now(),
+            title: `Custom Fabric - ${formData.get("fabricColor")} ${formData.get("fabricMaterial")}`,
+            size: parseFloat(formData.get("fabricSize")),
+            color: formData.get("fabricColor"),
+            material: formData.get("fabricMaterial"),
+            description: formData.get("referenceDescription") || "",
+            sewingPatternNotes: formData.get("sewingPatternNotes") || "",
             imageData: imageData,
-            userId: userId,
-            productId: productId,
-            productTitle: productTitle,
-            productPrice: productPrice
+            category: "fabrics",
+            subCategory: "Custom Fabric",
+            isCustom: true,
+            notes: `Custom fabric request: ${formData.get("fabricColor")} ${formData.get("fabricMaterial")}`,
+            image: imageData || "https://via.placeholder.com/250x200/4caf50/ffffff?text=Custom+Fabric"
           };
 
-          // Submit to Google Sheets with no-cors mode
-          const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", // This prevents reading the response but allows the request
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(submitData),
-          });
+          // Store custom fabric in session storage
+          const existingCustomFabrics = JSON.parse(sessionStorage.getItem('customFabrics') || '[]');
+          existingCustomFabrics.push(customFabric);
+          sessionStorage.setItem('customFabrics', JSON.stringify(existingCustomFabrics));
 
-          // With no-cors mode, we can't read response details
-          // But if the fetch doesn't throw an error, assume success
-          console.log("Form submitted successfully");
+          console.log("Custom fabric stored successfully");
+          
+          // Show the newly added fabric
+          showNewlyAddedFabric(customFabric);
+          
           showSuccess(
-            "Thank you! Your custom fabric request has been submitted successfully. We'll contact you within 24-48 hours."
+            "Custom fabric added successfully! Redirecting to product page in 2 seconds..."
           );
+
+          // Reset form for next entry
           this.reset();
           removeImage();
+          
+          // Redirect to product page after a short delay
+          setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get("id");
+            if (productId) {
+              window.location.href = `/public/productpage.html?id=${encodeURIComponent(productId)}`;
+            } else {
+              window.location.href = "/public/productpage.html";
+            }
+          }, 2000); // 2 second delay to show the success message
+
         } catch (error) {
-          console.error("Error submitting form:", error);
+          console.error("Error processing custom fabric:", error);
           showError(
-            "There was an error submitting your request. Please try again or contact us directly."
+            "There was an error processing your custom fabric request. Please try again."
           );
         } finally {
           submitBtn.textContent = originalText;
@@ -298,15 +295,75 @@
         }
       });
 
-      proceedBtn.addEventListener("click", function () {
-        paymentPopup.style.display = "none";
-        allowSubmit = true;
-        form.requestSubmit(); // triggers submit again, now allowed
-      });
+      // Function to show newly added custom fabric
+      function showNewlyAddedFabric(fabric) {
+        const container = document.getElementById("newlyAddedFabrics");
+        const list = document.getElementById("newlyAddedFabricsList");
+        
+        // Show the container
+        container.style.display = "block";
+        
+        // Create fabric card
+        const fabricCard = document.createElement("div");
+        fabricCard.className = "newly-added-fabric-card";
+        fabricCard.innerHTML = `
+          <div class="fabric-card-header">
+            <h4>${fabric.title}</h4>
+            <span class="custom-badge">Custom</span>
+          </div>
+          <div class="fabric-card-details">
+            <div class="fabric-specs">
+              <span><strong>Color:</strong> ${fabric.color}</span>
+              <span><strong>Material:</strong> ${fabric.material}</span>
+              <span><strong>Size:</strong> ${fabric.size} yard(s)</span>
+            </div>
+            ${fabric.description ? `<div class="fabric-description"><strong>Description:</strong> ${fabric.description}</div>` : ''}
+            ${fabric.sewingPatternNotes ? `<div class="fabric-pattern-notes"><strong>Pattern Notes:</strong> ${fabric.sewingPatternNotes}</div>` : ''}
+          </div>
+          <div class="fabric-card-actions">
+            <button onclick="removeNewlyAddedFabric('${fabric.id}')" class="remove-fabric-btn">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+        `;
+        
+        list.appendChild(fabricCard);
+        
+        // Update the cancel button to show "Return to Product"
+        const cancelBtn = document.getElementById("returnToProductBtn");
+        cancelBtn.textContent = "Return to Product";
+        cancelBtn.style.background = "#4caf50";
+        cancelBtn.style.color = "white";
+      }
 
-      cancelBtn.addEventListener("click", function () {
-        paymentPopup.style.display = "none";
-      });
+      // Function to remove newly added fabric
+      function removeNewlyAddedFabric(fabricId) {
+        try {
+          const customFabrics = JSON.parse(sessionStorage.getItem('customFabrics') || '[]');
+          const updatedCustomFabrics = customFabrics.filter(fabric => fabric.id !== fabricId);
+          sessionStorage.setItem('customFabrics', JSON.stringify(updatedCustomFabrics));
+          
+          // Remove from display
+          const fabricCards = document.querySelectorAll('.newly-added-fabric-card');
+          fabricCards.forEach(card => {
+            if (card.querySelector('button').onclick.toString().includes(fabricId)) {
+              card.remove();
+            }
+          });
+          
+          // Hide container if no fabrics left
+          const list = document.getElementById("newlyAddedFabricsList");
+          if (list.children.length === 0) {
+            document.getElementById("newlyAddedFabrics").style.display = "none";
+            const cancelBtn = document.getElementById("returnToProductBtn");
+            cancelBtn.textContent = "Cancel";
+            cancelBtn.style.background = "#e74c3c";
+            cancelBtn.style.color = "white";
+          }
+        } catch (error) {
+          console.error("Error removing newly added fabric:", error);
+        }
+      }
 
       // Cancel and return to product page button logic
       document
@@ -315,11 +372,11 @@
           const urlParams = new URLSearchParams(window.location.search);
           const productId = urlParams.get("id");
           if (productId) {
-            window.location.href = `productpage.html?id=${encodeURIComponent(
+            window.location.href = `/public/productpage.html?id=${encodeURIComponent(
               productId
             )}`;
           } else {
-            window.location.href = "productpage.html";
+            window.location.href = "/public/productpage.html";
           }
         });
 

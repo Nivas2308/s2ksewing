@@ -5,7 +5,8 @@ let currentTab = "all";
 let currentPage = 1;
 const ITEMS_PER_PAGE = 10;
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbxGcDUEGutIXawSapOrWVGC9BcXgJTFSDnYml7HaGFcefQ3DolGTnzRWkyuSaO-hQ/exec";
+  "https://script.google.com/macros/s/AKfycbwspWDvb1lSx_k5PY3ri70ALChOrSoTBdEK0uGjt-90UWDkUhaZsqvpPQcvkHdYLl-w/exec";
+const PRODUCTS_API_URL = "https://script.google.com/macros/s/AKfycby9ucXgMhxRaUyVIP_k-8cela5CJlYrWG7y5YOD3zShvf0OYW2HkeAwr4o4zo0zMC1S/exec";
 
 // Initialize the page
 window.onload = function () {
@@ -513,10 +514,13 @@ function displayOrderDetail(order) {
         subtotal = price * quantities;
       }
 
+      // Generate product URL for clickable product ID
+      const productUrl = productId !== "N/A" ? `../public/productpage.html?id=${productId}` : null;
+
       itemsHtml += `
 <tr>
 <td>${itemName}</td>
-<td>${productId}</td>
+<td>${productId !== "N/A" ? `<span class="product-id-link" onclick="showProductDetailsFromUrl('${productUrl}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">${productId}</span>` : productId}</td>
 <td>$${price.toFixed(2)}</td>
 <td>${quantities}</td>
 <td>$${subtotal.toFixed(2)}</td>
@@ -787,6 +791,616 @@ function verifyOrderUpdate(
 
   attemptVerification();
 }
+
+// Function to show product details in a popup
+function showProductDetails(productId) {
+  console.log("Showing product details for ID:", productId);
+  
+  // Create popup overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'product-details-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+  
+  // Create popup content
+  const popup = document.createElement('div');
+  popup.id = 'product-details-popup';
+  popup.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  `;
+  
+  // Add loading content
+  popup.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div style="margin-bottom: 20px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #007bff;"></i>
+      </div>
+      <div>Loading product details...</div>
+    </div>
+    <button onclick="closeProductDetails()" style="
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    ">&times;</button>
+  `;
+  
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+  
+  // Fetch product details from Google Apps Script
+  fetch(`${APPS_SCRIPT_URL}?action=getProduct&id=${productId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.product) {
+        const product = data.product;
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #333;">Product Details</h3>
+          </div>
+          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 0 0 120px;">
+              <img src="${product.imageUrl || product.image || 'https://via.placeholder.com/120'}" 
+                   alt="${product.title || product.name}" 
+                   style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <strong>Description:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+          </div>
+          ${product.details ? `
+          <div style="margin-bottom: 15px;">
+            <strong>Details:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
+          </div>
+          ` : ''}
+        `;
+      } else {
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="text-align: center; padding: 40px;">
+            <div style="margin-bottom: 20px; color: #dc3545;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+            </div>
+            <div>Product not found or error loading details</div>
+            <div style="margin-top: 10px; font-size: 14px; color: #666;">ID: ${productId}</div>
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching product details:', error);
+      popup.innerHTML = `
+        <button onclick="closeProductDetails()" style="
+          position: absolute;
+          top: 10px;
+          right: 15px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: #666;
+        ">&times;</button>
+        <div style="text-align: center; padding: 40px;">
+          <div style="margin-bottom: 20px; color: #dc3545;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+          </div>
+          <div>Error loading product details</div>
+          <div style="margin-top: 10px; font-size: 14px; color: #666;">Please try again later</div>
+        </div>
+      `;
+    });
+}
+
+// New function to fetch product details from product URL
+function showProductDetailsFromUrl(productUrl) {
+  console.log("Showing product details from URL:", productUrl);
+  
+  if (!productUrl) {
+    console.error("No product URL provided");
+    return;
+  }
+  
+  // Extract product ID from the URL
+  const urlObj = new URL(productUrl, window.location.origin);
+  const productId = urlObj.searchParams.get('id') || 'N/A';
+  
+  // Create popup overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'product-details-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+  
+  // Create popup content
+  const popup = document.createElement('div');
+  popup.id = 'product-details-popup';
+  popup.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  `;
+  
+  // Add loading content
+  popup.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div style="margin-bottom: 20px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #007bff;"></i>
+      </div>
+      <div>Loading product details...</div>
+    </div>
+    <button onclick="closeProductDetails()" style="
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    ">&times;</button>
+  `;
+  
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+  
+  // Try Google Apps Script API first (more reliable)
+  console.log("Trying Google Apps Script API first...");
+  fetchProductDetailsFromScript(productId, popup)
+    .then(success => {
+      if (!success) {
+        // If API fails, try URL approach as fallback
+        console.log("API failed, trying URL approach as fallback...");
+        return fetchProductDetailsFromUrl(productUrl, popup);
+      }
+    })
+    .catch(error => {
+      console.error('Error with API approach:', error);
+      console.log("Trying URL approach as fallback...");
+      return fetchProductDetailsFromUrl(productUrl, popup);
+    });
+}
+
+// Function to fetch product details from URL (as fallback)
+function fetchProductDetailsFromUrl(productUrl, popup) {
+  // Extract product ID from the URL
+  const urlObj = new URL(productUrl, window.location.origin);
+  const productId = urlObj.searchParams.get('id') || 'N/A';
+  
+  return fetch(productUrl)
+    .then(response => {
+      console.log("Response status:", response.status);
+      console.log("Response URL:", response.url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log("HTML content length:", html.length);
+      
+      // Parse the HTML to extract product information
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Extract product details from the parsed HTML
+      const productDetails = extractProductDetailsFromHTML(doc, productId);
+      
+      if (productDetails) {
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #333;">Product Details (from URL)</h3>
+          </div>
+          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 0 0 120px;">
+              <img src="${productDetails.imageUrl || 'https://via.placeholder.com/120'}" 
+                   alt="${productDetails.title || 'Product'}" 
+                   style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 10px 0; color: #333;">${productDetails.title || 'Unknown Product'}</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${productDetails.id || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(productDetails.price || 0).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${productDetails.category || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${productDetails.subCategory || 'N/A'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <strong>Description:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${productDetails.description || 'No description available'}</div>
+          </div>
+          ${productDetails.details ? `
+          <div style="margin-bottom: 15px;">
+            <strong>Details:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${productDetails.details}</div>
+          </div>
+          ` : ''}
+        `;
+        return true;
+      } else {
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="text-align: center; padding: 40px;">
+            <div style="margin-bottom: 20px; color: #dc3545;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+            </div>
+            <div>Could not extract product details from URL</div>
+            <div style="margin-top: 10px; font-size: 14px; color: #666;">URL: ${productUrl}</div>
+            <div style="margin-top: 10px; font-size: 12px; color: #999;">Product ID: ${productId}</div>
+          </div>
+        `;
+        return false;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching product details from URL:', error);
+      popup.innerHTML = `
+        <button onclick="closeProductDetails()" style="
+          position: absolute;
+          top: 10px;
+          right: 15px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: #666;
+        ">&times;</button>
+        <div style="text-align: center; padding: 40px;">
+          <div style="margin-bottom: 20px; color: #dc3545;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+          </div>
+          <div>Error loading product details from URL</div>
+          <div style="margin-top: 10px; font-size: 14px; color: #666;">${error.message}</div>
+          <div style="margin-top: 10px; font-size: 12px; color: #999;">URL: ${productUrl}</div>
+        </div>
+      `;
+      return false;
+    });
+}
+
+// Fallback function to fetch product details from Google Apps Script
+function fetchProductDetailsFromScript(productId, popup) {
+  return fetch(PRODUCTS_API_URL)
+    .then(response => response.json())
+    .then(data => {
+      // Check if this is a single product response or all products response
+      if (data.success && data.product) {
+        // Single product response (existing format)
+        const product = data.product;
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #333;">Product Details</h3>
+          </div>
+          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 0 0 120px;">
+              <img src="${product.imageUrl || product.image || product.mainImage || 'https://via.placeholder.com/120'}" 
+                   alt="${product.title || product.name}" 
+                   style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${product.sku || 'N/A'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <strong>Description:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+          </div>
+          ${product.details ? `
+          <div style="margin-bottom: 15px;">
+            <strong>Details:</strong>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
+          </div>
+          ` : ''}
+        `;
+        return true;
+      } else if (Array.isArray(data)) {
+        // All products response - find the specific product by ID
+        const product = data.find(p => p.id == productId);
+        if (product) {
+          popup.innerHTML = `
+            <button onclick="closeProductDetails()" style="
+              position: absolute;
+              top: 10px;
+              right: 15px;
+              background: none;
+              border: none;
+              font-size: 20px;
+              cursor: pointer;
+              color: #666;
+            ">&times;</button>
+            <div style="margin-bottom: 20px;">
+              <h3 style="margin: 0 0 15px 0; color: #333;">Product Details</h3>
+            </div>
+            <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+              <div style="flex: 0 0 120px;">
+                <img src="${product.mainImage || product.image || product.imageUrl || 'https://via.placeholder.com/120'}" 
+                     alt="${product.title || product.name}" 
+                     style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+              </div>
+              <div style="flex: 1;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
+                <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
+                <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
+                <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${product.sku || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>Stock:</strong> ${product.inStock ? 'In Stock' : 'Out of Stock'}</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>Description:</strong>
+              <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+            </div>
+            ${product.details ? `
+            <div style="margin-bottom: 15px;">
+              <strong>Details:</strong>
+              <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
+            </div>
+            ` : ''}
+            ${product.images && product.images.length > 1 ? `
+            ` : ''}
+          `;
+          return true;
+        } else {
+          popup.innerHTML = `
+            <button onclick="closeProductDetails()" style="
+              position: absolute;
+              top: 10px;
+              right: 15px;
+              background: none;
+              border: none;
+              font-size: 20px;
+              cursor: pointer;
+              color: #666;
+            ">&times;</button>
+            <div style="text-align: center; padding: 40px;">
+              <div style="margin-bottom: 20px; color: #dc3545;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+              </div>
+              <div>Product not found</div>
+              <div style="margin-top: 10px; font-size: 14px; color: #666;">ID: ${productId}</div>
+            </div>
+          `;
+          return false;
+        }
+      } else {
+        popup.innerHTML = `
+          <button onclick="closeProductDetails()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+          ">&times;</button>
+          <div style="text-align: center; padding: 40px;">
+            <div style="margin-bottom: 20px; color: #dc3545;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+            </div>
+            <div>Product not found or error loading details</div>
+            <div style="margin-top: 10px; font-size: 14px; color: #666;">ID: ${productId}</div>
+          </div>
+        `;
+        return false;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching product details from script:', error);
+      popup.innerHTML = `
+        <button onclick="closeProductDetails()" style="
+          position: absolute;
+          top: 10px;
+          right: 15px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: #666;
+        ">&times;</button>
+        <div style="text-align: center; padding: 40px;">
+          <div style="margin-bottom: 20px; color: #dc3545;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+          </div>
+          <div>Error loading product details</div>
+          <div style="margin-top: 10px; font-size: 14px; color: #666;">Please try again later</div>
+          <div style="margin-top: 10px; font-size: 12px; color: #999;">Product ID: ${productId}</div>
+        </div>
+      `;
+      return false;
+    });
+}
+
+// Helper function to extract product details from HTML
+function extractProductDetailsFromHTML(doc, productId) {
+  try {
+    console.log("Extracting product details from HTML for ID:", productId);
+    
+    // Extract product information based on the actual product page structure
+    
+    // Look for product title
+    const titleElement = doc.querySelector('.product-title');
+    const title = titleElement ? titleElement.textContent.trim() : 'Unknown Product';
+    console.log("Found title:", title);
+    
+    // Look for product price
+    const priceElement = doc.querySelector('.product-price');
+    let price = 0;
+    if (priceElement) {
+      const priceText = priceElement.textContent.trim();
+      console.log("Found price text:", priceText);
+      const priceMatch = priceText.match(/\$?(\d+(?:\.\d{2})?)/);
+      if (priceMatch) {
+        price = parseFloat(priceMatch[1]);
+        console.log("Extracted price:", price);
+      }
+    }
+    
+    // Look for product image
+    const imageElement = doc.querySelector('.main-image');
+    const imageUrl = imageElement ? imageElement.src : 'https://via.placeholder.com/120';
+    console.log("Found image URL:", imageUrl);
+    
+    // Look for product description
+    const descElement = doc.querySelector('.product-description');
+    const description = descElement ? descElement.textContent.trim() : 'No description available';
+    console.log("Found description:", description);
+    
+    // Look for category information
+    const categoryElements = doc.querySelectorAll('.category-tag');
+    let category = 'N/A';
+    let subCategory = 'N/A';
+    
+    if (categoryElements.length > 0) {
+      category = categoryElements[0].textContent.trim();
+      console.log("Found category:", category);
+      if (categoryElements.length > 1) {
+        subCategory = categoryElements[1].textContent.trim();
+        console.log("Found subcategory:", subCategory);
+      }
+    }
+    
+    // Look for additional details
+    const detailsElement = doc.querySelector('.product-details');
+    let details = '';
+    if (detailsElement) {
+      // Get the content inside product-details, excluding the h3 title
+      const detailsContent = detailsElement.querySelector('div');
+      details = detailsContent ? detailsContent.textContent.trim() : '';
+      console.log("Found details:", details);
+    }
+    
+    // Check if we found meaningful data
+    const hasValidData = title !== 'Unknown Product' || price > 0 || description !== 'No description available';
+    console.log("Has valid data:", hasValidData);
+    
+    if (!hasValidData) {
+      console.log("No valid product data found in HTML, will use fallback");
+      return null;
+    }
+    
+    return {
+      id: productId,
+      title: title,
+      price: price,
+      imageUrl: imageUrl,
+      description: description,
+      category: category,
+      subCategory: subCategory,
+      details: details
+    };
+  } catch (error) {
+    console.error('Error extracting product details from HTML:', error);
+    return null;
+  }
+}
+
+// Function to close product details popup
+function closeProductDetails() {
+  const overlay = document.getElementById('product-details-overlay');
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
 // Add scroll hint for table-responsive on mobile
 document.addEventListener("DOMContentLoaded", function () {
   var tableWrappers = document.querySelectorAll(".table-responsive");

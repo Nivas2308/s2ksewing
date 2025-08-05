@@ -266,6 +266,8 @@ function renderOrderItems(order) {
       const itemElement = document.createElement("div");
       itemElement.className = "product-item complementary-item";
       const imageUrl = item.imageUrl || item.image || "https://via.placeholder.com/80";
+      const productId = item.id || item.productId || "N/A";
+      
       itemElement.innerHTML = `
         <img src="${imageUrl}" alt="${item.name}" class="product-image">
         <div class="product-info">
@@ -275,7 +277,10 @@ function renderOrderItems(order) {
                 ${item.size ? ` | Size: ${item.size}` : ""}
                 ${item.parentItem ? ` | With: ${item.parentItem}` : ""}
             </div>
-            <div class="product-meta">Qty: 1</div>
+            <div class="product-meta">
+                Qty: 1
+                ${productId !== "N/A" ? ` | <span class="product-id-link" onclick="showProductDetails('${productId}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">ID: ${productId}</span>` : ""}
+            </div>
         </div>
         <div class="product-price">Free</div>
       `;

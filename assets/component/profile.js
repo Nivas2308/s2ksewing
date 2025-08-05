@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
         profileIcon.classList.add("user-initial");
 
         // Update href to point to account page instead of login
-        profileLink.href = "cp.html"; // Customer profile/account page
+        profileLink.href = "/public/cp.html"; // Customer profile/account page
 
         console.log(`Profile updated for logged-in user: ${userInfo.name}`);
         return;
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
     profileIcon.classList.remove("user-initial");
 
     // Set link to login page
-    profileLink.href = "login.html";
+    profileLink.href = "/public/login.html";
 
     console.log("Profile updated for guest user");
   }
@@ -218,7 +218,7 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = this.dataset.redirect;
         } else {
           // Default redirect to login page
-          window.location.href = "login.html";
+          window.location.href = "/public/login.html";
         }
       }
     });
@@ -295,3 +295,11 @@ document.addEventListener("DOMContentLoaded", function () {
     updateCartCount();
   });
 });
+
+
+const favicon = document.createElement('link');
+favicon.rel = 'icon';
+favicon.type = 'image/png';
+favicon.href = '/assets/img/logo.png';
+
+document.head.appendChild(favicon);

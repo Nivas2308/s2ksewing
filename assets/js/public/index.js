@@ -304,6 +304,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let headerImg = document.getElementById("header-image");
         let highlightImg = document.getElementById("highlighted-image");
 
+        // Show banner skeletons while loading
+        showBannerSkeleton('header-container', 'header');
+        showBannerSkeleton('highhead-container', 'highlighted');
+
         // Set image URLs directly without conversion
         if (data.headerImage) {
           // Force HTTPS and add cachebuster parameter
@@ -314,6 +318,14 @@ document.addEventListener("DOMContentLoaded", function () {
             "cb=" +
             new Date().getTime();
           console.log("Applied header image URL:", headerImg.src);
+          
+          // Hide skeleton when image loads
+          headerImg.onload = () => {
+            hideBannerSkeleton('header-container');
+          };
+        } else {
+          // Hide skeleton immediately if no image
+          hideBannerSkeleton('header-container');
         }
 
         if (data.highlightedImage) {
@@ -325,6 +337,14 @@ document.addEventListener("DOMContentLoaded", function () {
             "cb=" +
             new Date().getTime();
           console.log("Applied highlighted image URL:", highlightImg.src);
+          
+          // Hide skeleton when image loads
+          highlightImg.onload = () => {
+            hideBannerSkeleton('highhead-container');
+          };
+        } else {
+          // Hide skeleton immediately if no image
+          hideBannerSkeleton('highhead-container');
         }
       }
     })
@@ -411,6 +431,9 @@ document.addEventListener("DOMContentLoaded", function () {
           `category-${containerID}-subcategories`
         );
         if (!categoryContainer) return;
+
+        // Hide skeleton loading first
+        hideSkeletonLoading(`category-${containerID}-subcategories`);
 
         // Clear previous content
         categoryContainer.innerHTML = "";
@@ -1338,3 +1361,223 @@ function enhanceAccessibility() {
 addLoadingAnimation();
 addTransitionAnimations();
 enhanceAccessibility();
+
+// Skeleton Loading Functions
+function createSkeletonCard(cardType = 'default') {
+  const skeletonCard = document.createElement('div');
+  skeletonCard.className = `product-card-skeleton loading skeleton-${cardType}-card`;
+  
+  skeletonCard.innerHTML = `
+    <div class="skeleton-image"></div>
+    <div class="skeleton-content">
+      <div class="skeleton-badge"></div>
+      <div class="skeleton-title"></div>
+      <div class="skeleton-price"></div>
+      <div class="skeleton-description"></div>
+      <div class="skeleton-description"></div>
+      <div class="skeleton-button"></div>
+    </div>
+  `;
+  
+  return skeletonCard;
+}
+
+function createSubcategorySkeletonCard(cardType = 'default') {
+  const skeletonCard = document.createElement('div');
+  skeletonCard.className = `subcategory-skeleton loading skeleton-${cardType}-card`;
+  
+  skeletonCard.innerHTML = `
+    <div class="subcategory-skeleton-image"></div>
+    <div class="subcategory-skeleton-title"></div>
+  `;
+  
+  return skeletonCard;
+}
+
+function createBannerSkeleton(bannerType = 'header') {
+  const skeletonBanner = document.createElement('div');
+  skeletonBanner.className = `banner-skeleton loading ${bannerType}-skeleton`;
+  
+  skeletonBanner.innerHTML = `
+    <div class="banner-skeleton-image">
+      <div class="banner-skeleton-content">
+        <div class="banner-skeleton-title"></div>
+        <div class="banner-skeleton-subtitle"></div>
+      </div>
+    </div>
+  `;
+  
+  return skeletonBanner;
+}
+
+function showBannerSkeleton(bannerId, bannerType = 'header') {
+  const banner = document.getElementById(bannerId);
+  if (!banner) return;
+  
+  // Store original content
+  banner.setAttribute('data-original-content', banner.innerHTML);
+  
+  // Clear and show skeleton
+  banner.innerHTML = '';
+  const skeletonBanner = createBannerSkeleton(bannerType);
+  banner.appendChild(skeletonBanner);
+}
+
+function hideBannerSkeleton(bannerId) {
+  const banner = document.getElementById(bannerId);
+  if (!banner) return;
+  
+  // Restore original content
+  const originalContent = banner.getAttribute('data-original-content');
+  if (originalContent) {
+    banner.innerHTML = originalContent;
+    banner.removeAttribute('data-original-content');
+  }
+  
+  // Remove skeleton
+  const skeletonBanner = banner.querySelector('.banner-skeleton');
+  if (skeletonBanner) {
+    skeletonBanner.remove();
+  }
+}
+
+function showSkeletonLoading(containerId, count = 6, cardType = 'default') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // Clear existing content
+  container.innerHTML = '';
+  
+  // Check if this is a subcategory container
+  const isSubcategoryContainer = container.classList.contains('subcategory-container');
+  
+  if (isSubcategoryContainer) {
+    // Add subcategory skeleton grid class
+    container.classList.add('subcategory-skeleton-grid');
+    
+    // Create subcategory skeleton cards
+    for (let i = 0; i < count; i++) {
+      const skeletonCard = createSubcategorySkeletonCard(cardType);
+      container.appendChild(skeletonCard);
+    }
+  } else {
+    // Add skeleton grid class
+    container.classList.add('skeleton-grid');
+    
+    // Create skeleton cards
+    for (let i = 0; i < count; i++) {
+      const skeletonCard = createSkeletonCard(cardType);
+      container.appendChild(skeletonCard);
+    }
+  }
+}
+
+function hideSkeletonLoading(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // Check if this is a subcategory container
+  const isSubcategoryContainer = container.classList.contains('subcategory-container');
+  
+  if (isSubcategoryContainer) {
+    // Remove subcategory skeleton grid class
+    container.classList.remove('subcategory-skeleton-grid');
+    
+    // Remove all subcategory skeleton cards
+    const skeletonCards = container.querySelectorAll('.subcategory-skeleton');
+    skeletonCards.forEach(card => card.remove());
+  } else {
+    // Remove skeleton grid class
+    container.classList.remove('skeleton-grid');
+    
+    // Remove all skeleton cards
+    const skeletonCards = container.querySelectorAll('.product-card-skeleton');
+    skeletonCards.forEach(card => card.remove());
+  }
+}
+
+// Enhanced loading with skeleton for different sections
+function loadCategoryWithSkeleton(categoryId, cardType = 'default') {
+  const container = document.getElementById(categoryId);
+  if (!container) return;
+  
+  // Show skeleton loading
+  showSkeletonLoading(categoryId, 4, cardType);
+  
+  // Simulate loading delay (remove this in production)
+  setTimeout(() => {
+    hideSkeletonLoading(categoryId);
+    // Your actual content loading logic here
+  }, 2000);
+}
+
+// Skeleton loading for search results
+function showSearchSkeleton() {
+  const searchResults = document.getElementById('searchResults');
+  if (!searchResults) return;
+  
+  searchResults.innerHTML = '';
+  searchResults.style.display = 'block';
+  
+  // Create skeleton search results
+  for (let i = 0; i < 3; i++) {
+    const skeletonItem = document.createElement('div');
+    skeletonItem.className = 'search-result-item skeleton-loading';
+    skeletonItem.innerHTML = `
+      <div class="search-item-content">
+        <div class="search-item-image">
+          <div class="skeleton-image" style="width: 60px; height: 60px; border-radius: 8px;"></div>
+        </div>
+        <div class="search-item-details">
+          <div class="skeleton-title" style="width: 70%; height: 16px; margin-bottom: 8px;"></div>
+          <div class="skeleton-description" style="width: 50%; height: 12px;"></div>
+        </div>
+      </div>
+    `;
+    searchResults.appendChild(skeletonItem);
+  }
+}
+
+// Add skeleton loading to existing functions
+function enhanceSearchWithSkeleton() {
+  const searchBar = document.getElementById('searchBar');
+  if (!searchBar) return;
+  
+  let searchTimeout;
+  
+  searchBar.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    if (query.length < 2) {
+      document.getElementById('searchResults').style.display = 'none';
+      return;
+    }
+    
+    // Show skeleton loading
+    showSearchSkeleton();
+    
+    // Simulate search delay
+    searchTimeout = setTimeout(() => {
+      // Your actual search logic here
+      searchProducts();
+    }, 500);
+  });
+}
+
+// Initialize skeleton loading
+document.addEventListener('DOMContentLoaded', function() {
+  // Add skeleton loading to search
+  enhanceSearchWithSkeleton();
+  
+  // Show skeleton loading for categories on page load
+  const categoryContainers = document.querySelectorAll('.subcategory-container');
+  categoryContainers.forEach((container, index) => {
+    const cardType = index === 0 ? 'fabric' : index === 1 ? 'pattern' : 'garment';
+    showSkeletonLoading(container.id, 4, cardType);
+  });
+});

@@ -762,6 +762,11 @@ async function fetchProductData() {
       );
       renderProductPage(product);
       
+      // Load custom fabrics after product page is rendered
+      setTimeout(() => {
+        addCustomFabricsToSelection();
+      }, 200);
+      
       // Load recommended products
       loadRecommendedProducts(products, product);
     } else {
@@ -996,6 +1001,9 @@ function openFabricsPopup() {
   selectedComplementaryItems = [];
   updateSelectedItemsView();
 
+  // Add custom fabrics to selection
+  addCustomFabricsToSelection();
+
   // Populate subcategory filter with fabric subcategories
   populateSubcategoryFilter();
 
@@ -1091,6 +1099,23 @@ function renderProductsGrid(products) {
 
   let html = "";
 
+  // Add custom fabric card at the beginning
+  const productId = getProductIdFromUrl();
+  html += `
+    <div class="product-card custom-fabric-card">
+      <span class="badge custom-badge">Custom Fabric</span>
+      <div class="custom-fabric-image">
+        <i class="fas fa-palette"></i>
+      </div>
+      <div class="product-card-body">
+        <h4 class="product-card-title">Custom Fabric Design</h4>
+        
+        <p class="product-card-description">Create your own unique fabric design with our custom fabric service. Perfect for special projects and personal touches.</p>
+        <button class="custom-fabric-btn" onclick="goToCustomFabric()">Design Custom Fabric</button>
+      </div>
+    </div>
+  `;
+
   products.forEach((item) => {
     const itemImage = item.images
       ? item.images[0]
@@ -1161,9 +1186,27 @@ function addComplementaryItem(itemId) {
 
 // Remove a complementary item from selection
 function removeComplementaryItem(itemId) {
+  const removedItem = selectedComplementaryItems.find(
+    (item) => item.id.toString() === itemId.toString()
+  );
+
   selectedComplementaryItems = selectedComplementaryItems.filter(
     (item) => item.id.toString() !== itemId.toString()
   );
+
+  // If it's a custom fabric, also remove it from session storage
+  if (removedItem && removedItem.isCustom) {
+    try {
+      const customFabrics = JSON.parse(sessionStorage.getItem('customFabrics') || '[]');
+      const updatedCustomFabrics = customFabrics.filter(
+        fabric => fabric.id !== itemId
+      );
+      sessionStorage.setItem('customFabrics', JSON.stringify(updatedCustomFabrics));
+      console.log("Custom fabric removed from session storage");
+    } catch (error) {
+      console.error("Error removing custom fabric from session storage:", error);
+    }
+  }
 
   // Update views
   updateSelectedItemsView();
@@ -1200,12 +1243,35 @@ function updateSelectedItemsView() {
       ? item.images[0]
       : item.mainImage || item.image || "https://via.placeholder.com/60";
 
+    // Enhanced custom fabric information display for popup
+    let customFabricDetails = '';
+    if (item.isCustom) {
+      customFabricDetails = `
+        <div class="custom-fabric-details">
+          <div class="custom-fabric-specs">
+            <span class="spec-item"><strong>Color:</strong> ${item.color || 'Not specified'}</span>
+            <span class="spec-item"><strong>Material:</strong> ${item.material || 'Not specified'}</span>
+            <span class="spec-item"><strong>Size:</strong> ${item.size || 1} yard(s)</span>
+          </div>
+          ${item.description ? `<div class="custom-fabric-description"><strong>Description:</strong> ${item.description}</div>` : ''}
+          ${item.sewingPatternNotes ? `<div class="custom-fabric-description"><strong>Pattern Notes:</strong> ${item.sewingPatternNotes}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // Add custom fabric indicator
+    const customIndicator = item.isCustom ? '<span class="custom-fabric-indicator">Custom</span>' : '';
+
     html += `
-      <div class="selected-item" data-id="${item.id}">
+      <div class="selected-item ${item.isCustom ? 'custom-fabric-item' : ''}" data-id="${item.id}">
         <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
         <div class="selected-item-info">
-          <div class="selected-item-title">${item.title}</div>
-          <div class="selected-item-price">$${item.price}</div>
+          <div class="selected-item-title">
+            ${item.title}
+            ${customIndicator}
+          </div>
+          <div class="selected-item-price">${item.isCustom ? 'Custom Pricing' : `$${item.price}`}</div>
+          ${customFabricDetails}
           ${
             item.category && item.category.toLowerCase() === "fabrics"
               ? `<div class="selected-item-size">
@@ -1504,6 +1570,12 @@ function renderSelectedComplementaryItems() {
     "selectedComplementaryContainer"
   );
 
+  // Check if container exists
+  if (!container) {
+    console.warn("selectedComplementaryContainer not found");
+    return;
+  }
+
   if (!selectedComplementaryItems.length) {
     container.innerHTML = "";
     // Update button status
@@ -1529,18 +1601,45 @@ function renderSelectedComplementaryItems() {
       item.category.toLowerCase() === "fabrics" &&
       item.size
     ) {
-      priceText = `$${(item.price * item.size).toFixed(2)} (${
-        item.size
-      } yard × $${item.price})`;
+      if (item.isCustom) {
+        priceText = `Custom Pricing (${item.size} yard)`;
+      } else {
+        priceText = `$${(item.price * item.size).toFixed(2)} (${
+          item.size
+        } yard × $${item.price})`;
+      }
+    }
+
+    // Add custom fabric indicator
+    const customIndicator = item.isCustom ? '<span class="custom-fabric-indicator">Custom</span>' : '';
+
+    // Enhanced custom fabric information display
+    let customFabricDetails = '';
+    if (item.isCustom) {
+      customFabricDetails = `
+        <div class="custom-fabric-details">
+          <div class="custom-fabric-specs">
+            <span class="spec-item"><strong>Color:</strong> ${item.color || 'Not specified'}</span>
+            <span class="spec-item"><strong>Material:</strong> ${item.material || 'Not specified'}</span>
+            <span class="spec-item"><strong>Size:</strong> ${item.size || 1} yard(s)</span>
+          </div>
+          ${item.description ? `<div class="custom-fabric-description"><strong>Description:</strong> ${item.description}</div>` : ''}
+          ${item.sewingPatternNotes ? `<div class="custom-fabric-description"><strong>Pattern Notes:</strong> ${item.sewingPatternNotes}</div>` : ''}
+        </div>
+      `;
     }
 
     html += `
-      <div class="selected-item">
+      <div class="selected-item ${item.isCustom ? 'custom-fabric-item' : ''}">
         <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
         <div class="selected-item-info">
-          <div class="selected-item-title">${item.title}</div>
+          <div class="selected-item-title">
+            ${item.title}
+            ${customIndicator}
+          </div>
           <div class="selected-item-price">${priceText}</div>
-          ${item.notes ? `<div class="selected-item-notes"><small>Notes: ${item.notes}</small></div>` : ''}
+          ${customFabricDetails}
+          ${item.sewingPatternNotes ? `<div class="selected-item-notes"><small>Pattern Notes: ${item.sewingPatternNotes}</small></div>` : ''}
         </div>
         <div class="selected-item-actions">
           <button class="selected-item-edit" onclick="editItemDetails('${item.id}')">
@@ -2544,15 +2643,52 @@ function toggleSection(id) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const productId = new URLSearchParams(window.location.search).get("id");
+// Function to navigate to custom fabric page
+function goToCustomFabric() {
+  const productId = getProductIdFromUrl();
+  if (productId) {
+    window.location.href = `custom.html?id=${productId}`;
+  } else {
+    window.location.href = `custom.html`;
+  }
+}
 
-    document.getElementById("customFabricLink").addEventListener("click", function (e) {
-      e.preventDefault(); // Prevent default anchor behavior
-      if (productId) {
-        window.location.href = `custom.html?id=${productId}`;
-      } else {
-        window.location.href = `custom.html`;
-      }
-    });
+// Function to load custom fabrics from session storage
+function loadCustomFabrics() {
+  try {
+    const customFabrics = JSON.parse(sessionStorage.getItem('customFabrics') || '[]');
+    return customFabrics;
+  } catch (error) {
+    console.error("Error loading custom fabrics:", error);
+    return [];
+  }
+}
+
+// Function to add custom fabrics to selected items
+function addCustomFabricsToSelection() {
+  const customFabrics = loadCustomFabrics();
+  
+  customFabrics.forEach(fabric => {
+    // Check if this custom fabric is already selected
+    const isAlreadySelected = selectedComplementaryItems.some(
+      item => item.id === fabric.id
+    );
+    
+    if (!isAlreadySelected) {
+      // Add custom fabric to selected items
+      selectedComplementaryItems.push({
+        ...fabric,
+        size: fabric.size || 1,
+        notes: fabric.notes || `Custom fabric: ${fabric.color} ${fabric.material}`,
+        sewingPatternNotes: fabric.sewingPatternNotes || "",
+        image: fabric.image || "https://via.placeholder.com/250x200/4caf50/ffffff?text=Custom+Fabric"
+      });
+    }
   });
+  
+  // Update the display
+  if (customFabrics.length > 0) {
+    renderSelectedComplementaryItems();
+    updateComplementaryButtonStatus();
+  }
+}

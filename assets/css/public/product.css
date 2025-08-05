@@ -889,6 +889,199 @@ body {
         background-color: #c0392b;
       }
 
+      /* Custom Fabric Card Styles */
+      .custom-fabric-card {
+        border: 2px solid var(--accent-color);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .custom-fabric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent-color), #45a049, var(--accent-color));
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+
+      .custom-badge {
+        background: linear-gradient(45deg, var(--accent-color), #45a049);
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .custom-fabric-image {
+        height: 200px;
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .custom-fabric-image::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="fabric" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%234caf50" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23fabric)"/></svg>');
+        opacity: 0.1;
+      }
+
+      .custom-fabric-image i {
+        font-size: 4rem;
+        color: var(--accent-color);
+        z-index: 1;
+        position: relative;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+
+      .custom-fabric-btn {
+        width: 100%;
+        padding: 12px 0;
+        background: linear-gradient(45deg, var(--accent-color), #45a049);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .custom-fabric-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .custom-fabric-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .custom-fabric-btn:hover::before {
+        left: 100%;
+      }
+
+      .custom-fabric-card .product-card-title {
+        color: var(--accent-color);
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+
+      .custom-fabric-card .product-card-price {
+        color: #666;
+        font-style: italic;
+      }
+
+      .custom-fabric-card .product-card-description {
+        color: #555;
+        line-height: 1.5;
+      }
+
+      /* Custom Fabric Item Styles */
+      .custom-fabric-item {
+        border: 2px solid var(--accent-color);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      }
+
+      .custom-fabric-indicator {
+        background: linear-gradient(45deg, var(--accent-color), #45a049);
+        color: white;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+
+      /* Custom Fabric Details Styles */
+      .custom-fabric-details {
+        margin: 8px 0;
+        padding: 8px;
+        background: rgba(76, 175, 80, 0.1);
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+      }
+
+      .custom-fabric-specs {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+
+      .spec-item {
+        font-size: 12px;
+        color: #555;
+        display: flex;
+        align-items: center;
+      }
+
+      .spec-item strong {
+        color: #333;
+        margin-right: 4px;
+        min-width: 60px;
+      }
+
+      .custom-fabric-description {
+        font-size: 12px;
+        color: #666;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(76, 175, 80, 0.2);
+      }
+
+      .custom-fabric-description strong {
+        color: #333;
+      }
+
+      /* Responsive adjustments for custom fabric details */
+      @media (max-width: 768px) {
+        .custom-fabric-specs {
+          gap: 2px;
+        }
+        
+        .spec-item {
+          font-size: 11px;
+        }
+        
+        .custom-fabric-description {
+          font-size: 11px;
+        }
+      }
+
       .popup-footer {
         padding: 15px 20px;
         background-color: #f8f9fa;
@@ -1601,6 +1794,23 @@ body {
       @media (max-width: 480px) {
         .product-grid {
           grid-template-columns: repeat(2,1fr);
+        }
+
+        .custom-fabric-card {
+          margin-bottom: 20px;
+        }
+
+        .custom-fabric-image {
+          height: 150px;
+        }
+
+        .custom-fabric-image i {
+          font-size: 3rem;
+        }
+
+        .custom-fabric-btn {
+          padding: 10px 0;
+          font-size: 14px;
         }
 
         .product-container{

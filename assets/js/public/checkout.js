@@ -103,7 +103,7 @@ async function loadPricingConfig() {
 
     // If not in session storage, fetch from Google Sheets
     const scriptUrl =
-      "https://script.google.com/macros/s/AKfycbzxBXFHLC8IRvB1FGQ5a2Zi_zXctN8ISD2yEu6yE4zzo7XK4_tno-VVb37NxjA0PrAk/exec";
+      "https://script.google.com/macros/s/AKfycbxFQGWg83k7nTxCRfqezwQUNl5fU85tGpEVd1m1ARqOiPxskPzmPiLD1oi7giX5v5syRw/exec";
 
     const response = await fetch(`${scriptUrl}?action=getPricingConfig`);
     if (!response.ok) {
@@ -327,6 +327,8 @@ function getComplementaryItems() {
     if (item.complementaryItems && item.complementaryItems.length > 0) {
       item.complementaryItems.forEach((comp) => {
         complementaryItems.push({
+          id: comp.id || comp.productId || generateItemId(comp.title), // Ensure ID is included
+          productId: comp.productId || comp.id || generateItemId(comp.title), // Ensure productId is also set
           parentItem: item.title,
           name: comp.title,
           price: comp.price,
@@ -1253,7 +1255,7 @@ async function processOrder(order) {
   try {
     // Get the Google Script URL from your configuration
     const scriptUrl =
-      "https://script.google.com/macros/s/AKfycbzxBXFHLC8IRvB1FGQ5a2Zi_zXctN8ISD2yEu6yE4zzo7XK4_tno-VVb37NxjA0PrAk/exec";
+      "https://script.google.com/macros/s/AKfycbztjf8Xi6C_kqDZq_9A3BI14KLzav4MMmDcLKU3KIMZm28tcwGednk0XA4Y8ujqX4Zu/exec";
 
     // Ensure standardized image URLs for all items (main and complementary)
     const standardizedOrder = {
