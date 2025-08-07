@@ -91,7 +91,8 @@ function normalizeOrderData(order) {
       trackingId: order.trackingId || order["Tracking ID"] || "",
       comments: order["Comments"] || order.comments || "",
       // Always extract Payment Method from the sheet row if present
-      paymentMethod: order["Payment Method"] || order.paymentMethod || "Credit Card",
+      paymentMethod:
+        order["Payment Method"] || order.paymentMethod || "Credit Card",
     };
   }
   // Normalize all possible fields
@@ -103,11 +104,28 @@ function normalizeOrderData(order) {
     courier: order.courier || order["Courier"] || "",
     trackingId: order.trackingId || order["Tracking ID"] || "",
     customer: extractCustomerInfo(order),
-    address: (order.customer && order.customer.address) || order.address || order["Address"] || "",
-    city: (order.customer && order.customer.city) || order.city || order["City"] || "",
-    state: (order.customer && order.customer.state) || order.state || order["State"] || "",
-    zip: (order.customer && order.customer.zip) || order.zip || order["ZIP"] || "",
-    country: (order.customer && order.customer.country) || order.country || order["Country"] || "",
+    address:
+      (order.customer && order.customer.address) ||
+      order.address ||
+      order["Address"] ||
+      "",
+    city:
+      (order.customer && order.customer.city) ||
+      order.city ||
+      order["City"] ||
+      "",
+    state:
+      (order.customer && order.customer.state) ||
+      order.state ||
+      order["State"] ||
+      "",
+    zip:
+      (order.customer && order.customer.zip) || order.zip || order["ZIP"] || "",
+    country:
+      (order.customer && order.customer.country) ||
+      order.country ||
+      order["Country"] ||
+      "",
     items: extractItems(order),
     complementaryItems: extractComplementaryItems(order),
     subtotal: parseFloat(order.subtotal || order["Subtotal"] || 0),
@@ -116,18 +134,22 @@ function normalizeOrderData(order) {
     discount: parseFloat(order.discount || order["Discount"] || 0),
     codCharges: parseFloat(order.codCharges || order["COD Charges"] || 0),
     total: parseFloat(order.total || order["Total"] || 0),
-    paymentMethod: order["Payment Method"] || order.paymentMethod || "Credit Card",
+    paymentMethod:
+      order["Payment Method"] || order.paymentMethod || "Credit Card",
     paymentLastFour: order.paymentLastFour || "0000",
-    processingTimestamp: order["Processing Timestamp"] || order.processingTimestamp,
+    processingTimestamp:
+      order["Processing Timestamp"] || order.processingTimestamp,
     shippedTimestamp: order["Shipped Timestamp"] || order.shippedTimestamp,
-    deliveredTimestamp: order["Delivered Timestamp"] || order.deliveredTimestamp,
+    deliveredTimestamp:
+      order["Delivered Timestamp"] || order.deliveredTimestamp,
     comments: order["Comments"] || order.comments || "",
   };
 }
 
 function extractCustomerInfo(order) {
   if (order.customer) return order.customer;
-  let firstName = "", lastName = "";
+  let firstName = "",
+    lastName = "";
   if (order["Customer Name"]) {
     const nameParts = order["Customer Name"].split(" ");
     firstName = nameParts[0] || "";
@@ -151,7 +173,11 @@ function extractItems(order) {
   let items = [];
   if (order.items && Array.isArray(order.items)) {
     items = order.items;
-  } else if (order.order && order.order.items && Array.isArray(order.order.items)) {
+  } else if (
+    order.order &&
+    order.order.items &&
+    Array.isArray(order.order.items)
+  ) {
     items = order.order.items;
   } else if (order["Items JSON"]) {
     try {
@@ -182,7 +208,7 @@ function extractItems(order) {
       imageUrl: processedImageUrl || "https://placehold.co/80x80",
       sku: item.sku || item["Product ID"] || "",
       options: item.options || item["Options"] || {},
-      subtotal: item.subtotal || (item.price * (item.quantity || 1)),
+      subtotal: item.subtotal || item.price * (item.quantity || 1),
     };
   });
 }
@@ -191,7 +217,11 @@ function extractComplementaryItems(order) {
   if (order.complementaryItems && Array.isArray(order.complementaryItems)) {
     return order.complementaryItems;
   }
-  if (order.order && order.order.complementaryItems && Array.isArray(order.order.complementaryItems)) {
+  if (
+    order.order &&
+    order.order.complementaryItems &&
+    Array.isArray(order.order.complementaryItems)
+  ) {
     return order.order.complementaryItems;
   }
   return [];
@@ -202,15 +232,23 @@ function renderOrderDetails(order) {
   document.getElementById("loading").style.display = "none";
   document.getElementById("order-content").style.display = "block";
   const processedOrder = normalizeOrderData(order);
-  document.getElementById("order-id").textContent = `Order #${processedOrder.id}`;
-  document.getElementById("order-date").textContent = `Placed on: ${formatDate(processedOrder.date)}`;
+  document.getElementById(
+    "order-id"
+  ).textContent = `Order #${processedOrder.id}`;
+  document.getElementById("order-date").textContent = `Placed on: ${formatDate(
+    processedOrder.date
+  )}`;
   updateOrderStatus(processedOrder);
   renderOrderItems(processedOrder);
   updateShippingInfo(processedOrder);
   updatePaymentSummary(processedOrder);
   // Set up event listeners for action buttons
-  document.getElementById("print-receipt").addEventListener("click", () => window.print());
-  document.getElementById("contact-support").href = `mailto:support@s2ksewing.com?subject=Question about Order ${processedOrder.id}`;
+  document
+    .getElementById("print-receipt")
+    .addEventListener("click", () => window.print());
+  document.getElementById(
+    "contact-support"
+  ).href = `mailto:support@s2ksewing.com?subject=Question about Order ${processedOrder.id}`;
   document.getElementById("continue-shopping").href = "/";
 }
 
@@ -225,7 +263,8 @@ function renderOrderItems(order) {
   items.forEach((item) => {
     const itemElement = document.createElement("div");
     itemElement.className = "product-item";
-    const imageUrl = item.imageUrl || item.image || "https://via.placeholder.com/80";
+    const imageUrl =
+      item.imageUrl || item.image || "https://via.placeholder.com/80";
     const price = parseFloat(item.price || 0);
     const quantity = parseInt(item.quantity || 1, 10);
     const subtotal = parseFloat(item.subtotal || price * quantity);
@@ -260,14 +299,16 @@ function renderOrderItems(order) {
   if (complementaryItems.length > 0) {
     const separator = document.createElement("div");
     separator.className = "complementary-items-separator";
-    separator.innerHTML = "<h4>Complementary Items</h4>";
+    separator.innerHTML = "<h4>Additional Items</h4>";
     container.appendChild(separator);
     complementaryItems.forEach((item) => {
       const itemElement = document.createElement("div");
       itemElement.className = "product-item complementary-item";
-      const imageUrl = item.imageUrl || item.image || "https://via.placeholder.com/80";
+      const imageUrl =
+        item.imageUrl || item.image || "https://via.placeholder.com/80";
       const productId = item.id || item.productId || "N/A";
-      
+      const price = parseFloat(item.price || 0);
+
       itemElement.innerHTML = `
         <img src="${imageUrl}" alt="${item.name}" class="product-image">
         <div class="product-info">
@@ -279,10 +320,12 @@ function renderOrderItems(order) {
             </div>
             <div class="product-meta">
                 Qty: 1
-                ${productId !== "N/A" ? ` | <span class="product-id-link" onclick="showProductDetails('${productId}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">ID: ${productId}</span>` : ""}
+                
             </div>
         </div>
-        <div class="product-price">Free</div>
+        <div class="product-price">${formatPrice(price)} * ${
+        item.size
+      }Yard(s)</div>
       `;
       container.appendChild(itemElement);
     });
@@ -346,9 +389,9 @@ function updateOrderStatus(order) {
       deliveredDate = formatDate(delivDate);
     }
     // Change the success message to indicate delivery
-    const successMsgP = document.querySelector('.success-message p');
+    const successMsgP = document.querySelector(".success-message p");
     if (successMsgP) {
-      successMsgP.textContent = 'Your order has been delivered.';
+      successMsgP.textContent = "Your order has been delivered.";
     }
   } else {
     document.getElementById("step-delivered").classList.add("step-pending");
@@ -362,30 +405,30 @@ function updateOrderStatus(order) {
 }
 
 function updateProgressLine(status) {
-  const statusLine = document.querySelector('.status-line');
+  const statusLine = document.querySelector(".status-line");
   if (!statusLine) return;
-  let progressWidth = '0%';
-  switch(status) {
-    case 'Pending':
-    case 'Order Placed':
-      progressWidth = '0%';
+  let progressWidth = "0%";
+  switch (status) {
+    case "Pending":
+    case "Order Placed":
+      progressWidth = "0%";
       break;
-    case 'Processing':
-      progressWidth = '33%';
+    case "Processing":
+      progressWidth = "33%";
       break;
-    case 'Shipped':
-      progressWidth = '66%';
+    case "Shipped":
+      progressWidth = "66%";
       break;
-    case 'Delivered':
-      progressWidth = '100%';
+    case "Delivered":
+      progressWidth = "100%";
       break;
     default:
-      progressWidth = '0%';
+      progressWidth = "0%";
   }
-  let progressFill = statusLine.querySelector('.status-line-fill');
+  let progressFill = statusLine.querySelector(".status-line-fill");
   if (!progressFill) {
-    progressFill = document.createElement('div');
-    progressFill.className = 'status-line-fill';
+    progressFill = document.createElement("div");
+    progressFill.className = "status-line-fill";
     statusLine.appendChild(progressFill);
   }
   progressFill.style.cssText = `
@@ -403,34 +446,45 @@ function updateProgressLine(status) {
 function updateShippingInfo(order) {
   let customerName = "";
   if (order.customer) {
-    customerName = `${order.customer.firstName || ""} ${order.customer.lastName || ""}`.trim();
+    customerName = `${order.customer.firstName || ""} ${
+      order.customer.lastName || ""
+    }`.trim();
   }
-  document.getElementById("customer-name").textContent = customerName || "Customer";
+  document.getElementById("customer-name").textContent =
+    customerName || "Customer";
   document.getElementById("address-line1").textContent = order.address;
-  document.getElementById("address-line2").textContent = `${order.city}, ${order.state} ${order.zip}`;
+  document.getElementById(
+    "address-line2"
+  ).textContent = `${order.city}, ${order.state} ${order.zip}`;
   document.getElementById("address-country").textContent = order.country;
 
   // Remove Estimated Delivery and show Comment instead
-  const shippingMeta = document.querySelector('.shipping-meta');
+  const shippingMeta = document.querySelector(".shipping-meta");
   if (shippingMeta) {
     shippingMeta.innerHTML = `
       <div class="shipping-meta-item">
         
         <div>
-          <strong>Delivery Notes:</strong> <span id="order-comment">${order.comments ? order.comments : 'No comment provided.'}</span>
+          <strong>Delivery Notes:</strong> <span id="order-comment">${
+            order.comments ? order.comments : "No comment provided."
+          }</span>
         </div>
       </div>
       <div class="shipping-meta-item">
         
         <div>
-          <strong>Courier:</strong> <span id="carrier">${order.courier || 'Not available'}</span></div>
+          <strong>Courier:</strong> <span id="carrier">${
+            order.courier || "Not available"
+          }</span></div>
       </div>
       <div class="shipping-meta-item">
         
         <div>
-          <strong>Tracking ID:</strong> <span id="tracking-number">${order.trackingId
-            ? `<a href=\"https://track.aftership.com/${order.courier}/${order.trackingId}\" target=\"_blank\" style=\"color: var(--primary-color);\">${order.trackingId}</a>`
-            : 'Not available'}</span>
+          <strong>Tracking ID:</strong> <span id="tracking-number">${
+            order.trackingId
+              ? `<a href=\"https://track.aftership.com/${order.courier}/${order.trackingId}\" target=\"_blank\" style=\"color: var(--primary-color);\">${order.trackingId}</a>`
+              : "Not available"
+          }</span>
         </div>
       </div>
     `;
@@ -438,7 +492,9 @@ function updateShippingInfo(order) {
 }
 
 function updatePaymentSummary(order) {
-  const paymentSummaryContainer = document.getElementById("payment-summary-container");
+  const paymentSummaryContainer = document.getElementById(
+    "payment-summary-container"
+  );
   paymentSummaryContainer.innerHTML = "";
   const subtotal = order.subtotal || 0;
   const discount = order.discount || 0;

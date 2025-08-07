@@ -448,6 +448,53 @@
         transform: translateY(-2px);
       }
 
+      /* Custom fabric item styling */
+      .complementary-item.custom-fabric-item {
+        position: relative;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      .custom-fabric-badge {
+        position: absolute;
+        top: -8px;
+        right: 12px;
+        background: #ffc107;
+        color: #333;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .custom-fabric-details {
+        margin-top: 8px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 6px;
+        border-left: 3px solid #ffc107;
+      }
+
+      .custom-detail {
+        font-size: 12px;
+        margin-bottom: 4px;
+        color: #555;
+      }
+
+      .custom-detail:last-child {
+        margin-bottom: 0;
+      }
+
+      .custom-detail strong {
+        color: #333;
+        font-weight: 600;
+      }
+
       .complementary-image {
         width: clamp(50px, 12vw, 60px);
         height: clamp(50px, 12vw, 60px);

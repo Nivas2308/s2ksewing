@@ -3,18 +3,40 @@ const ORDERS_SHEET_NAME = "Orders";
 const ORDER_ITEMS_SHEET_NAME = "Order Items";
 const SHEET_ID = "1DS_ycmVO8GPIQpvyEIeiwyU4SQtG2OkV_enVJDT4wuc";
 
+
 function doPost(e) {
   try {
-    // Log the entire event object for debugging
-    console.log("doPost event object:", JSON.stringify(e));
+    // First check if e is undefined (direct function call)
+    if (typeof e === 'undefined') {
+      console.error("doPost called directly without event object");
+      return createResponse(false, 'This function must be called via HTTP POST');
+    }
     
-    // Check if postData exists
-    if (!e || !e.postData) {
+    // Then check for postData
+    if (!e.postData) {
       console.error("No postData found in request");
       return createResponse(false, 'No POST data received. Make sure to send data in the request body.');
     }
     
-    // Check if postData.contents exists
+    // Rest of your existing doPost implementation...
+    console.log("doPost event object:", JSON.stringify(e));
+    
+    // Handle URL-encoded form data (for updateOrderAmount)
+    if (e.postData.type === 'application/x-www-form-urlencoded') {
+      const params = e.parameter;
+      const action = params.action;
+      
+      console.log("doPost received URL-encoded action:", action);
+      console.log("doPost received URL-encoded params:", JSON.stringify(params));
+      
+      if (action === 'updateOrderAmount') {
+        return updateOrderAmount(params);
+      }
+      
+      return createResponse(false, 'Invalid action for URL-encoded request');
+    }
+    
+    // Handle JSON data (existing functionality)
     if (!e.postData.contents) {
       console.error("No contents found in postData");
       return createResponse(false, 'No content found in POST data.');
@@ -22,7 +44,7 @@ function doPost(e) {
     
     console.log("Raw POST data:", e.postData.contents);
     
-    // Parse incoming data
+    // Parse incoming JSON data
     let data;
     try {
       data = JSON.parse(e.postData.contents);
@@ -54,7 +76,7 @@ function doPost(e) {
       }
       return updateOrderStatusWithDetails(data.data);
     } else {
-      return createResponse(false, 'Invalid action specified. Supported actions: submitOrder, updateOrderStatus');
+      return createResponse(false, 'Invalid action specified. Supported actions: submitOrder, updateOrderStatus, updateOrderAmount');
     }
   } catch (error) {
     console.error("doPost error:", error);
@@ -62,7 +84,6 @@ function doPost(e) {
     return createResponse(false, 'Error processing request: ' + error.toString());
   }
 }
-
 function doGet(e) {
   try {
     // Log the entire event object for debugging
@@ -112,6 +133,130 @@ function doGet(e) {
     return createResponse(false, 'Error processing request: ' + error.toString());
   }
 }
+
+
+function updateOrderAmount(params) {
+  try {
+    const orderId = params.orderId;
+    const extraAmount = parseFloat(params.extraAmount || 0);
+    const newTotal = parseFloat(params.newTotal || 0);
+    
+    console.log(`Updating order ${orderId} with extra amount: ${extraAmount}, new total: ${newTotal}`);
+    
+    if (!orderId) {
+      return createResponse(false, 'Order ID is required');
+    }
+    
+    if (extraAmount < 0) {
+      return createResponse(false, 'Extra amount cannot be negative');
+    }
+    
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
+    
+    if (!ordersSheet) {
+      return createResponse(false, 'Orders sheet not found');
+    }
+    
+    // Get headers to map column indices
+    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
+    const orderIdIndex = headers.indexOf('Order ID');
+    const totalIndex = headers.indexOf('Total');
+    const additionalCostIndex = headers.indexOf('Additional Cost');
+    const lastUpdatedIndex = headers.indexOf('Last Updated');
+    const fullJsonIndex = headers.indexOf('Full Order JSON');
+    
+    if (orderIdIndex === -1) {
+      return createResponse(false, 'Order ID column not found in sheet');
+    }
+    
+    if (totalIndex === -1) {
+      return createResponse(false, 'Total column not found in sheet');
+    }
+    
+    // Get all data to find the order
+    const lastRow = ordersSheet.getLastRow();
+    if (lastRow <= 1) {
+      return createResponse(false, 'No orders found in sheet');
+    }
+    
+    const allData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    
+    // Find the row with matching order ID
+    let targetRowIndex = -1;
+    for (let i = 0; i < allData.length; i++) {
+      if (allData[i][orderIdIndex] === orderId) {
+        targetRowIndex = i + 2; // +2 because sheet rows are 1-indexed and we start from row 2
+        break;
+      }
+    }
+    
+    if (targetRowIndex === -1) {
+      return createResponse(false, `Order ${orderId} not found in sheet`);
+    }
+    
+    // Create Additional Cost column if it doesn't exist
+    if (additionalCostIndex === -1) {
+      const lastCol = headers.length;
+      ordersSheet.getRange(1, lastCol + 1).setValue('Additional Cost');
+      ordersSheet.getRange(targetRowIndex, lastCol + 1).setValue(extraAmount);
+    } else {
+      // Update existing Additional Cost column
+      const currentAdditionalCost = parseFloat(allData[targetRowIndex - 2][additionalCostIndex] || 0);
+      const newAdditionalCost = currentAdditionalCost + extraAmount;
+      ordersSheet.getRange(targetRowIndex, additionalCostIndex + 1).setValue(newAdditionalCost);
+    }
+    
+    // Update the total
+    ordersSheet.getRange(targetRowIndex, totalIndex + 1).setValue(newTotal);
+    
+    // Update Last Updated timestamp
+    const now = new Date();
+    if (lastUpdatedIndex !== -1) {
+      ordersSheet.getRange(targetRowIndex, lastUpdatedIndex + 1).setValue(now);
+    }
+    
+    // Update Full Order JSON if it exists
+    if (fullJsonIndex !== -1) {
+      try {
+        const currentFullJson = allData[targetRowIndex - 2][fullJsonIndex];
+        if (currentFullJson) {
+          const fullOrderData = JSON.parse(currentFullJson);
+          
+          // Update the order object in the JSON
+          if (fullOrderData.order) {
+            fullOrderData.order.extraAmount = (fullOrderData.order.extraAmount || 0) + extraAmount;
+            fullOrderData.order.total = newTotal;
+          }
+          
+          // Update root level fields
+          fullOrderData.extraAmount = (fullOrderData.extraAmount || 0) + extraAmount;
+          fullOrderData.total = newTotal;
+          fullOrderData.lastUpdated = now.toISOString();
+          
+          ordersSheet.getRange(targetRowIndex, fullJsonIndex + 1).setValue(JSON.stringify(fullOrderData));
+        }
+      } catch (jsonError) {
+        console.error('Error updating Full Order JSON:', jsonError);
+        // Don't fail the entire operation if JSON update fails
+      }
+    }
+    
+    console.log(`Successfully updated order ${orderId}`);
+    
+    return createResponse(true, 'Order amount updated successfully', {
+      orderId: orderId,
+      extraAmount: extraAmount,
+      newTotal: newTotal,
+      updatedAt: now.toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Error updating order amount:', error);
+    return createResponse(false, 'Failed to update order amount: ' + error.message);
+  }
+}
+
 
 /**
  * Get ALL orders from ALL users for dashboard analytics
@@ -238,17 +383,24 @@ function processOrderSubmission(orderData) {
   // Standardize image URLs across the entire order object
   orderData = standardizeImageUrls(orderData);
 
-  // --- COD Charges Logic ---
-  let codCharges = 0;
-  if (orderData.paymentMethod === 'cod') {
-    // Accept 0 as a valid value, not just truthy
-    codCharges = (orderData.order.codCharges !== undefined && orderData.order.codCharges !== null)
-      ? parseFloat(orderData.order.codCharges) || 0
-      : 0;
-    // Add to total if not already included
-    if (!orderData.order.total || orderData.order.total < (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + codCharges - 0.01)) {
-      orderData.order.total = (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + codCharges);
-    }
+  // --- Additional Cost Logic (formerly COD charges) ---
+  let additionalCost = 0;
+  // Accept additional cost from any payment method, not just COD
+  if (orderData.order.additionalCost !== undefined && orderData.order.additionalCost !== null) {
+    additionalCost = parseFloat(orderData.order.additionalCost) || 0;
+  } else if (orderData.order.codCharges !== undefined && orderData.order.codCharges !== null) {
+    // Backward compatibility: if old codCharges field is used
+    additionalCost = parseFloat(orderData.order.codCharges) || 0;
+  }
+  
+  // Add extra amount if provided (for dynamic updates)
+  if (orderData.order.extraAmount !== undefined && orderData.order.extraAmount !== null) {
+    additionalCost += parseFloat(orderData.order.extraAmount) || 0;
+  }
+  
+  // Add to total if not already included
+  if (!orderData.order.total || orderData.order.total < (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + additionalCost - 0.01)) {
+    orderData.order.total = (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + additionalCost);
   }
 
   const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -260,38 +412,39 @@ function processOrderSubmission(orderData) {
     
     // Set up headers with reorganized columns and Last Updated column after Comments
     const headers = [
-      'Order ID', 
-      'Date', 
-      'User ID',
-      'Customer Name', 
-      'Email', 
-      'Phone', 
-      'Address', 
-      'City', 
-      'State', 
-      'ZIP', 
-      'Country', 
-      'Payment Method', 
-      'Payment Status',
-      'Shipping Method',
-      'Subtotal', 
-      'Tax', 
-      'Shipping', 
-      'Discount', 
-      'COD Charges', // <-- Add COD Charges column
-      'Total',
-      'Order Status',
-      'Courier',
-      'Tracking ID',
-      'Comments',
-      'Last Updated', // Added after Comments
-      'Processing Timestamp',
-      'Shipped Timestamp',
-      'Delivered Timestamp',
-      'Notes',
-      'Items JSON',
-      'Full Order JSON'
-    ];
+  'Order ID', 
+  'Date', 
+  'User ID',
+  'Customer Name', 
+  'Email', 
+  'Phone', 
+  'Address', 
+  'City', 
+  'State', 
+  'ZIP', 
+  'Country', 
+  'Payment Method', 
+  'Payment Status',
+  'Shipping Method',
+  'Subtotal', 
+  'Tax', 
+  'Shipping', 
+  'Discount', 
+  'Additional Cost',
+  'Extra Amount', // Add this new column
+  'Total',
+  'Order Status',
+  'Courier',
+  'Tracking ID',
+  'Comments',
+  'Last Updated',
+  'Processing Timestamp',
+  'Shipped Timestamp',
+  'Delivered Timestamp',
+  'Notes',
+  'Items JSON',
+  'Full Order JSON'
+];
     
     ordersSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     ordersSheet.setFrozenRows(1);
@@ -329,38 +482,39 @@ function processOrderSubmission(orderData) {
   
   // Prepare order data for insertion
   const orderRow = [
-    orderData.id,
-    new Date(orderData.date),
-    userId, // This will now be "GUEST" if not provided
-    `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-    orderData.customer.email,
-    orderData.customer.phone || '',
-    orderData.customer.address,
-    orderData.customer.city,
-    orderData.customer.state || '',
-    orderData.customer.zip,
-    orderData.customer.country,
-    orderData.paymentMethod,
-    paymentStatus, // Updated payment status logic
-    orderData.shippingMethod || orderData.order.shippingMethod || 'domestic',
-    orderData.order.subtotal,
-    orderData.order.tax,
-    orderData.order.shipping,
-    orderData.order.discount || 0,
-    codCharges, // Store COD Charges
-    orderData.order.total,
-    orderData.status, // Will always be "Order Placed"
-    '', // Courier
-    '', // Tracking ID
-    '', // Comments
-    currentTimestamp, // Last Updated - set when order is placed
-    '', // Processing Timestamp
-    '', // Shipped Timestamp
-    '', // Delivered Timestamp
-    orderData.customer.notes || '', // Notes
-    JSON.stringify([...(orderData.order.items || []), ...(orderData.order.complementaryItems || [])]),
-    JSON.stringify(orderData)
-  ];
+  orderData.id,
+  new Date(orderData.date),
+  userId,
+  `${orderData.customer.firstName} ${orderData.customer.lastName}`,
+  orderData.customer.email,
+  orderData.customer.phone || '',
+  orderData.customer.address,
+  orderData.customer.city,
+  orderData.customer.state || '',
+  orderData.customer.zip,
+  orderData.customer.country,
+  orderData.paymentMethod,
+  paymentStatus,
+  orderData.shippingMethod || orderData.order.shippingMethod || 'domestic',
+  orderData.order.subtotal,
+  orderData.order.tax,
+  orderData.order.shipping,
+  orderData.order.discount || 0,
+  additionalCost, // Additional Cost (base COD charges)
+  orderData.order.extraAmount || 0, // Extra Amount (dynamic updates)
+  orderData.order.total,
+  orderData.status,
+  '', // Courier
+  '', // Tracking ID
+  '', // Comments
+  currentTimestamp,
+  '', // Processing Timestamp
+  '', // Shipped Timestamp
+  '', // Delivered Timestamp
+  orderData.customer.notes || '',
+  JSON.stringify([...(orderData.order.items || []), ...(orderData.order.complementaryItems || [])]),
+  JSON.stringify(orderData)
+];
   
   // Insert order data
   ordersSheet.appendRow(orderRow);
@@ -370,7 +524,7 @@ function processOrderSubmission(orderData) {
   
   // Send email confirmation if email is provided
   if (orderData.customer.email) {
-    sendOrderConfirmationEmail(orderData, codCharges);
+    sendOrderConfirmationEmail(orderData, additionalCost);
   }
   
   // Return success response with order ID
@@ -424,9 +578,19 @@ function storeOrderItems(orderData, userId) {
   }
   
   // Add regular items
-  if (orderData.order.items && orderData.order.items.length > 0) {
+  if (orderData.order && Array.isArray(orderData.order.items)) {
     orderData.order.items.forEach(item => {
       const imageUrl = item.imageUrl || item.image || 'https://via.placeholder.com/60';
+      
+      const optionsObj = {
+        ...item.options,
+        size: item.size,
+        notes: item.notes,
+        color: item.color,
+        material: item.material,
+        description: item.description,
+        sewingPatternNotes: item.sewingPatternNotes
+      };
       
       const itemRow = [
         orderData.id,
@@ -438,7 +602,7 @@ function storeOrderItems(orderData, userId) {
         item.quantity,
         item.price,
         item.subtotal || (item.price * item.quantity),
-        JSON.stringify(item.options || {}),
+        JSON.stringify(optionsObj),
         imageUrl,
         '',
         false
@@ -448,10 +612,27 @@ function storeOrderItems(orderData, userId) {
     });
   }
   
-  // Add complementary items if they exist
-  if (orderData.order.complementaryItems && orderData.order.complementaryItems.length > 0) {
+    // Add complementary items if they exist
+  if (orderData.order && Array.isArray(orderData.order.complementaryItems)) {
+    console.log('Processing complementary items:', JSON.stringify(orderData.order.complementaryItems));
+    
     orderData.order.complementaryItems.forEach(item => {
       const imageUrl = item.imageUrl || item.image || 'https://via.placeholder.com/60';
+      
+      // Use item.id if available, otherwise fall back to item.productId
+      const itemId = item.id || item.productId || '';
+      
+      console.log('Saving complementary item with ID:', itemId, 'for item:', item.name);
+      
+      const optionsObj = {
+        ...item.options,
+        size: item.size,
+        notes: item.notes,
+        color: item.color,
+        material: item.material,
+        description: item.description,
+        sewingPatternNotes: item.sewingPatternNotes
+      };
       
       const itemRow = [
         orderData.id,
@@ -459,11 +640,11 @@ function storeOrderItems(orderData, userId) {
         finalUserId, // Will be "GUEST" if not provided
         `${orderData.customer.firstName} ${orderData.customer.lastName}`,
         item.name,
-        item.productId || '',
+        itemId, // Save the complimentary item ID
         1,
         item.price || 0,
         item.subtotal || item.price || 0,
-        JSON.stringify(item.options || { size: item.size, notes: item.notes }),
+        JSON.stringify(optionsObj),
         imageUrl,
         item.parentItem || '',
         true
@@ -761,6 +942,8 @@ function standardizeImageUrls(orderData) {
       
       return {
         ...item,
+        id: item.id || item.productId, // Ensure ID is preserved
+        productId: item.productId || item.id, // Ensure productId is also set
         imageUrl: item.imageUrl || item.image || 'https://via.placeholder.com/60'
       };
     });
@@ -777,6 +960,8 @@ function generateOrderId() {
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
   return `ORD-${timestamp}-${random}`;
 }
+
+
 
 /**
  * Create a standardized API response
@@ -1088,7 +1273,7 @@ function sendOrderConfirmationEmail(orderData, codCharges) {
           <div style="background-color: #f5f5f5; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;"><strong>Order ID:</strong> ${orderId}</p>
             <p style="margin: 10px 0 0;"><strong>Order Date:</strong> ${new Date(orderData.date).toLocaleDateString()}</p>
-            <p style="margin: 10px 0 0;"><strong>Payment Method:</strong> ${orderData.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Card Payment'}</p>
+            <p style="margin: 10px 0 0;"><strong>Payment Method:</strong> ${orderData.paymentMethod === 'cod' ? 'Cash Before Delivery (CBD)' : 'Card Payment'}</p>
           </div>
           
           <h3>Order Details:</h3>

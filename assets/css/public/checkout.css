@@ -1173,3 +1173,66 @@
       color: #b8860b;
       font-size: 1.2em;
     }
+
+/* Custom Fabric Items in Order Summary */
+.summary-item.custom-fabric-item {
+  background: linear-gradient(135deg, #fff9c4 0%, #fffde7 100%);
+  border: 2px solid #ffd54f;
+  border-radius: 12px;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.custom-fabric-badge {
+  background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
+.custom-fabric-detail {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+.custom-fabric-detail strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.summary-item.custom-fabric-item .summary-item-title {
+  color: #d84315;
+  font-weight: 600;
+}
+
+.summary-item.custom-fabric-item .summary-item-price {
+  color: #e65100;
+  font-weight: 700;
+}
+
+/* Responsive adjustments for custom fabric items */
+@media (max-width: 480px) {
+  .summary-item.custom-fabric-item {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .custom-fabric-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    margin-left: 6px;
+  }
+  
+  .custom-fabric-detail {
+    font-size: 0.8rem;
+  }
+}

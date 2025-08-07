@@ -269,9 +269,13 @@ function loadSummaryItems() {
 
       item.complementaryItems.forEach((comp) => {
         // Calculate complementary item price
-        let compPrice = comp.price;
-        if (comp.size && typeof comp.size === "number") {
+        let compPrice = 0;
+        if (comp.isCustom) {
+          compPrice = 1.0;
+        } else if (comp.size && typeof comp.size === "number") {
           compPrice = comp.price * comp.size;
+        } else {
+          compPrice = typeof comp.price === "number" ? comp.price : 0;
         }
 
         // Add to summary HTML
@@ -357,9 +361,13 @@ function calculateOrderSummary() {
   cart.forEach((item) => {
     if (item.complementaryItems && item.complementaryItems.length > 0) {
       item.complementaryItems.forEach((comp) => {
-        let compPrice = comp.price;
-        if (comp.size && typeof comp.size === "number") {
+        let compPrice = 0;
+        if (comp.isCustom) {
+          compPrice = 1.0;
+        } else if (comp.size && typeof comp.size === "number") {
           compPrice = comp.price * comp.size;
+        } else {
+          compPrice = typeof comp.price === "number" ? comp.price : 0;
         }
         complementaryTotal += compPrice;
       });
@@ -990,8 +998,7 @@ async function placeOrder() {
       return;
     }
 
-    // Create comprehensive order object
-    const codCharges = getCODCharges(); // Always get the value, regardless of payment method
+    // Always get the value, regardless of payment method
     const order = {
       id: generateOrderNumber(),
       date: new Date().toISOString(),
@@ -999,7 +1006,7 @@ async function placeOrder() {
       customer: customerInfo,
       order: {
         ...orderDetails,
-        codCharges: codCharges, // Always include the actual value
+
         items: orderDetails.items.map((item) => ({
           ...item,
           imageUrl:
@@ -1255,7 +1262,7 @@ async function processOrder(order) {
   try {
     // Get the Google Script URL from your configuration
     const scriptUrl =
-      "https://script.google.com/macros/s/AKfycbztjf8Xi6C_kqDZq_9A3BI14KLzav4MMmDcLKU3KIMZm28tcwGednk0XA4Y8ujqX4Zu/exec";
+      "https://script.google.com/macros/s/AKfycbxXBgS76lCOYor2UvWmXLlx9o5EBQrYDz-HSajTYLkyPC93EvRyNTZe0k0_TS7oa3_8/exec";
 
     // Ensure standardized image URLs for all items (main and complementary)
     const standardizedOrder = {
@@ -1430,72 +1437,26 @@ function updatePaymentMethodAvailability() {
   }
 }
 
-// Helper to get the current COD charges (from sessionStorage or global)
-function getCODCharges() {
-  let config = null;
-  try {
-    const stored = sessionStorage.getItem("pricingConfig");
-    if (stored) {
-      config = JSON.parse(stored);
-    } else if (typeof pricingConfig === "object") {
-      config = pricingConfig;
-    }
-  } catch (e) {
-    config = null;
-  }
-  return config && config.codCharges ? parseFloat(config.codCharges) : 0;
-}
-
-// Update order summary to show COD charges if COD is selected
-function updateCODChargesRow(show) {
-  let codRow = document.getElementById("codChargesRow");
-  const summaryContent = document.querySelector(".summary-content");
-  if (show) {
-    const codCharges = getCODCharges();
-    if (!codRow) {
-      codRow = document.createElement("div");
-      codRow.className = "summary-row";
-      codRow.id = "codChargesRow";
-      codRow.innerHTML =
-        '<span class="summary-label">COD Charges</span><span class="summary-value" id="codChargesValue"></span>';
-      // Insert before total row
-      const totalRow = document.querySelector(".total-row");
-      if (totalRow && totalRow.parentNode) {
-        totalRow.parentNode.insertBefore(codRow, totalRow);
-      } else if (summaryContent) {
-        summaryContent.appendChild(codRow);
-      }
-    }
-    document.getElementById(
-      "codChargesValue"
-    ).textContent = `$${codCharges.toFixed(2)}`;
-  } else {
-    if (codRow) codRow.remove();
-  }
-}
-
-// Patch selectPaymentMethod to update COD charges row and recalculate total
-const originalSelectPaymentMethod = window.selectPaymentMethod;
 window.selectPaymentMethod = function (method) {
-  // Remove all active classes
   document.querySelectorAll(".payment-method").forEach((el) => {
     el.classList.remove("active");
   });
-  // Add active to selected
+
   const selectedPayment = document.getElementById(`${method}Payment`);
   if (selectedPayment) selectedPayment.classList.add("active");
-  // Show/hide payment forms
+
+  const cardForm = document.getElementById("cardPaymentForm");
+  const codForm = document.getElementById("codPaymentForm");
+
   if (method === "card") {
-    document.getElementById("cardPaymentForm").style.display = "block";
-    document.getElementById("codPaymentForm").style.display = "none";
-    updateCODChargesRow(false);
-  } else if (method === "cod") {
-    document.getElementById("cardPaymentForm").style.display = "none";
-    document.getElementById("codPaymentForm").style.display = "block";
-    updateCODChargesRow(true);
+    if (cardForm) cardForm.style.display = "block";
+    if (codForm) codForm.style.display = "none";
+  } else {
+    if (cardForm) cardForm.style.display = "none";
+    if (codForm) codForm.style.display = "block";
   }
-  // Recalculate order summary
-  calculateOrderSummary();
+
+  calculateOrderSummary(); // recalculate without COD charges
 };
 
 // Patch calculateOrderSummary to include COD charges if needed
@@ -1503,17 +1464,8 @@ const originalCalculateOrderSummary = window.calculateOrderSummary;
 window.calculateOrderSummary = function () {
   originalCalculateOrderSummary && originalCalculateOrderSummary();
   // If COD is selected, add COD charges to total
-  const codSelected = document
-    .getElementById("codPayment")
-    ?.classList.contains("active");
-  let total = orderTotal;
-  if (codSelected) {
-    const codCharges = getCODCharges();
-    total += codCharges;
-    // Update total display
-    const totalElement = document.getElementById("total");
-    if (totalElement) {
-      totalElement.textContent = `$${total.toFixed(2)}`;
-    }
+  const totalElement = document.getElementById("total");
+  if (totalElement) {
+    totalElement.textContent = `$${orderTotal.toFixed(2)}`;
   }
 };

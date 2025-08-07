@@ -1,4 +1,3 @@
-
       
 
   function openSizeChart() {
@@ -507,6 +506,7 @@ function calculateAverageRating(reviews) {
 }
 
 // Display review summary
+// Display review summary - FIXED VERSION
 function displayReviewSummary(reviews) {
     let summaryContainer = document.getElementById("review-summary");
     if (!summaryContainer) {
@@ -529,6 +529,11 @@ function displayReviewSummary(reviews) {
     
     const avgRating = calculateAverageRating(reviews);
     
+    // ratingCounts[0] = count of 1-star reviews
+    // ratingCounts[1] = count of 2-star reviews  
+    // ratingCounts[2] = count of 3-star reviews
+    // ratingCounts[3] = count of 4-star reviews
+    // ratingCounts[4] = count of 5-star reviews
     const ratingCounts = [0, 0, 0, 0, 0];
     reviews.forEach(review => {
         const rating = parseInt(review.rating) || 0;
@@ -551,20 +556,24 @@ function displayReviewSummary(reviews) {
                 <div class="review-count">Based on ${reviews.length} review${reviews.length !== 1 ? 's' : ''}</div>
             </div>
             <div class="rating-breakdown">
-                ${ratingCounts.map((count, index) => `
-                    <div class="rating-bar-row">
-                        <span class="star-level">${5-index} stars</span>
-                        <div class="rating-bar-container">
-                            <div class="rating-bar" style="width: ${percentages[4-index]}%"></div>
+                ${[5, 4, 3, 2, 1].map(starLevel => {
+                    const arrayIndex = starLevel - 1; // Convert star level to array index
+                    const count = ratingCounts[arrayIndex];
+                    const percentage = percentages[arrayIndex];
+                    return `
+                        <div class="rating-bar-row">
+                            <span class="star-level">${starLevel} stars</span>
+                            <div class="rating-bar-container">
+                                <div class="rating-bar" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="rating-count">(${count})</span>
                         </div>
-                        <span class="rating-count">(${count})</span>
-                    </div>
-                `).reverse().join('')}  
+                    `;
+                }).join('')}
             </div>
         </div>
     `;
 }
-
 // Show all reviews in modal
 function showAllReviews(reviews) {
     let modal = document.getElementById("all-reviews-modal");
@@ -1099,22 +1108,24 @@ function renderProductsGrid(products) {
 
   let html = "";
 
-  // Add custom fabric card at the beginning
-  const productId = getProductIdFromUrl();
-  html += `
-    <div class="product-card custom-fabric-card">
-      <span class="badge custom-badge">Custom Fabric</span>
-      <div class="custom-fabric-image">
-        <i class="fas fa-palette"></i>
+  // Add custom fabric card at the beginning only for fabrics popup
+  if (popupType === "fabrics") {
+    const productId = getProductIdFromUrl();
+    html += `
+      <div class="product-card custom-fabric-card">
+        <span class="badge custom-badge">Custom Fabric</span>
+        <div class="custom-fabric-image">
+          <i class="fas fa-palette"></i>
+        </div>
+        <div class="product-card-body">
+          <h4 class="product-card-title">Custom Fabric Design</h4>
+          
+          <p class="product-card-description">Create your own unique fabric design with our custom fabric service. Perfect for special projects and personal touches.</p>
+          <button class="custom-fabric-btn" onclick="goToCustomFabric()">Design Custom Fabric</button>
+        </div>
       </div>
-      <div class="product-card-body">
-        <h4 class="product-card-title">Custom Fabric Design</h4>
-        
-        <p class="product-card-description">Create your own unique fabric design with our custom fabric service. Perfect for special projects and personal touches.</p>
-        <button class="custom-fabric-btn" onclick="goToCustomFabric()">Design Custom Fabric</button>
-      </div>
-    </div>
-  `;
+    `;
+  }
 
   products.forEach((item) => {
     const itemImage = item.images
@@ -1237,16 +1248,23 @@ function updateSelectedItemsView() {
   // Show the container and render selected items
   selectedItemsContainer.style.display = "block";
 
-  let html = "";
-  selectedComplementaryItems.forEach((item) => {
-    const itemImage = item.images
-      ? item.images[0]
-      : item.mainImage || item.image || "https://via.placeholder.com/60";
+  // Separate custom fabrics from complementary items
+  const customFabrics = selectedComplementaryItems.filter(item => item.isCustom);
+  const complementaryItems = selectedComplementaryItems.filter(item => !item.isCustom);
 
-    // Enhanced custom fabric information display for popup
-    let customFabricDetails = '';
-    if (item.isCustom) {
-      customFabricDetails = `
+  let html = "";
+
+  // Render custom fabrics section if any exist
+  if (customFabrics.length > 0) {
+    html += `<div class="custom-fabrics-section"><h4>Customized Fabrics</h4>`;
+    
+    customFabrics.forEach((item) => {
+      const itemImage = item.images
+        ? item.images[0]
+        : item.mainImage || item.image || "https://via.placeholder.com/60";
+
+      // Enhanced custom fabric information display for popup
+      let customFabricDetails = `
         <div class="custom-fabric-details">
           <div class="custom-fabric-specs">
             <span class="spec-item"><strong>Color:</strong> ${item.color || 'Not specified'}</span>
@@ -1257,49 +1275,97 @@ function updateSelectedItemsView() {
           ${item.sewingPatternNotes ? `<div class="custom-fabric-description"><strong>Pattern Notes:</strong> ${item.sewingPatternNotes}</div>` : ''}
         </div>
       `;
-    }
 
-    // Add custom fabric indicator
-    const customIndicator = item.isCustom ? '<span class="custom-fabric-indicator">Custom</span>' : '';
+      // Fetch and use the default amount for custom fabrics
+      fetchCustomFabricDefaultAmount().then(defaultAmount => {
+        const customPriceDisplay = `$${defaultAmount.toFixed(2)} (Custom Pricing)`;
+        
+        // Update the price display in the popup if it exists
+        const priceElement = document.querySelector(`[data-id="${item.id}"] .selected-item-price`);
+        if (priceElement) {
+          priceElement.textContent = customPriceDisplay;
+        }
+      });
 
-    html += `
-      <div class="selected-item ${item.isCustom ? 'custom-fabric-item' : ''}" data-id="${item.id}">
-        <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
-        <div class="selected-item-info">
-          <div class="selected-item-title">
-            ${item.title}
-            ${customIndicator}
-          </div>
-          <div class="selected-item-price">${item.isCustom ? 'Custom Pricing' : `$${item.price}`}</div>
-          ${customFabricDetails}
-          ${
-            item.category && item.category.toLowerCase() === "fabrics"
-              ? `<div class="selected-item-size">
+      html += `
+        <div class="selected-item custom-fabric-item" data-id="${item.id}">
+          <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
+          <div class="selected-item-info">
+            <div class="selected-item-title">
+              ${item.title}
+              <span class="custom-fabric-indicator">Custom</span>
+            </div>
+            <div class="selected-item-price">$${1.00} (Custom Pricing)</div>
+            ${customFabricDetails}
+            <div class="selected-item-size">
               <label>Size in Yard:</label>
               <input type="number" min="0.5" step="0.5" value="${item.size || 1}" 
                      onchange="updateItemSize('${item.id}', this.value)">
-            </div>`
-              : ""
-          }
-          <div class="selected-item-notes">
-            <label>Notes:</label>
-            <textarea placeholder="Add notes here..." onchange="updateItemNotes('${item.id}', this.value)">${item.notes || ""}</textarea>
+            </div>
+          </div>
+          <div class="selected-item-actions">
+            <button class="selected-item-preview" onclick="previewItem('${item.id}')">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="selected-item-remove" onclick="removeComplementaryItem('${item.id}')">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           </div>
         </div>
-        <div class="selected-item-actions">
-          <button class="selected-item-edit" onclick="editItemDetails('${item.id}')">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="selected-item-preview" onclick="previewItem('${item.id}')">
-            <i class="fas fa-eye"></i>
-          </button>
-          <button class="selected-item-remove" onclick="removeComplementaryItem('${item.id}')">
-            <i class="fas fa-trash-alt"></i>
-          </button>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+
+  // Render complementary items section if any exist
+  if (complementaryItems.length > 0) {
+    html += `<div class="complementary-items-section"><h4>Selected ${popupType === "pattern" ? "Sewing Patterns" : "Fabrics"}</h4>`;
+    
+    complementaryItems.forEach((item) => {
+      const itemImage = item.images
+        ? item.images[0]
+        : item.mainImage || item.image || "https://via.placeholder.com/60";
+
+      html += `
+        <div class="selected-item" data-id="${item.id}">
+          <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
+          <div class="selected-item-info">
+            <div class="selected-item-title">
+              ${item.title}
+            </div>
+            <div class="selected-item-price">$${item.price}</div>
+            ${
+              item.category && item.category.toLowerCase() === "fabrics"
+                ? `<div class="selected-item-size">
+                <label>Size in Yard:</label>
+                <input type="number" min="0.5" step="0.5" value="${item.size || 1}" 
+                       onchange="updateItemSize('${item.id}', this.value)">
+              </div>`
+                : ""
+            }
+            <div class="selected-item-notes">
+              <label>Notes:</label>
+              <textarea placeholder="Add notes here..." onchange="updateItemNotes('${item.id}', this.value)">${item.notes || ""}</textarea>
+            </div>
+          </div>
+          <div class="selected-item-actions">
+            <button class="selected-item-edit" onclick="editItemDetails('${item.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="selected-item-preview" onclick="previewItem('${item.id}')">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="selected-item-remove" onclick="removeComplementaryItem('${item.id}')">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
         </div>
-      </div>
-    `;
-  });
+      `;
+    });
+    
+    html += `</div>`;
+  }
 
   selectedItemsList.innerHTML = html;
 }
@@ -1393,7 +1459,21 @@ function previewItem(itemId) {
   
   // Calculate price based on fabric size if applicable
   let priceDisplay = `$${item.price}`;
-  if (item.category && item.category.toLowerCase() === "fabrics" && item.size) {
+  if (item.isCustom) {
+    // Fetch and use the default amount for custom fabrics
+    fetchCustomFabricDefaultAmount().then(defaultAmount => {
+      const customPriceDisplay = `$${defaultAmount.toFixed(2)} (Amount differs based on market price)`;
+      
+      // Update the price display in the popup if it exists
+      const priceElement = document.querySelector('.preview-price');
+      if (priceElement) {
+        priceElement.textContent = customPriceDisplay;
+      }
+    });
+    
+    // Set initial display with default $1.00, will be updated when fetch completes
+    priceDisplay = `$${1.00} (Amount differs based on market price)`;
+  } else if (item.category && item.category.toLowerCase() === "fabrics" && item.size) {
     priceDisplay = `$${(item.price * item.size).toFixed(2)} (${item.size} yard × $${item.price})`;
   }
   
@@ -1433,10 +1513,12 @@ function previewItem(itemId) {
               </div>` : ''
             }
             
-            <div class="preview-description">
-              <h4>Description</h4>
-              <p>${item.description || 'No description available.'}</p>
-            </div>
+            ${!item.isCustom ? 
+              `<div class="preview-description">
+                <h4>Description</h4>
+                <p>${item.description || 'No description available.'}</p>
+              </div>` : ''
+            }
             
             ${item.details ? 
               `<div class="preview-extra-details">
@@ -1445,17 +1527,30 @@ function previewItem(itemId) {
               </div>` : ''
             }
             
-            ${item.size ? 
+            ${item.size && !item.isCustom ? 
               `<div class="preview-size">
                 <h4>Size</h4>
                 <p>${item.size} Yard</p>
               </div>` : ''
             }
             
-            ${item.notes ? 
+            ${item.notes && !item.isCustom ? 
               `<div class="preview-notes">
                 <h4>Your Notes</h4>
                 <p>${item.notes}</p>
+              </div>` : ''
+            }
+            
+            ${item.isCustom ? 
+              `<div class="preview-custom-fabric-details">
+                <h4>Custom Fabric Details</h4>
+                <div class="custom-fabric-specs">
+                  ${item.color ? `<div class="custom-spec"><strong>Color:</strong> ${item.color}</div>` : ''}
+                  ${item.material ? `<div class="custom-spec"><strong>Material:</strong> ${item.material}</div>` : ''}
+                  ${item.size ? `<div class="custom-spec"><strong>Size:</strong> ${item.size} yard(s)</div>` : ''}
+                  ${item.description ? `<div class="custom-spec"><strong>Description:</strong> ${item.description}</div>` : ''}
+                  ${item.sewingPatternNotes ? `<div class="custom-spec"><strong>Pattern Notes:</strong> ${item.sewingPatternNotes}</div>` : ''}
+                </div>
               </div>` : ''
             }
           </div>
@@ -1583,40 +1678,42 @@ function renderSelectedComplementaryItems() {
     return;
   }
 
-  let html = `
-    <div class="selected-complementary">
-      <h3 class="selected-complementary-title">
-        Selected ${popupType === "pattern" ? "Sewing Patterns" : "Fabrics"}
-      </h3>
-  `;
+  // Separate custom fabrics from complementary items
+  const customFabrics = selectedComplementaryItems.filter(item => item.isCustom);
+  const complementaryItems = selectedComplementaryItems.filter(item => !item.isCustom);
 
-  selectedComplementaryItems.forEach((item) => {
-    const itemImage = item.images
-      ? item.images[0]
-      : item.mainImage || item.image || "https://via.placeholder.com/60";
+  let html = "";
 
-    let priceText = `$${item.price}`;
-    if (
-      item.category &&
-      item.category.toLowerCase() === "fabrics" &&
-      item.size
-    ) {
-      if (item.isCustom) {
-        priceText = `Custom Pricing (${item.size} yard)`;
-      } else {
-        priceText = `$${(item.price * item.size).toFixed(2)} (${
-          item.size
-        } yard × $${item.price})`;
-      }
-    }
+  // Render custom fabrics section if any exist
+  if (customFabrics.length > 0) {
+    html += `
+      <div class="selected-customized">
+        <h3 class="selected-customized-title">
+          Customized Fabrics
+        </h3>
+    `;
 
-    // Add custom fabric indicator
-    const customIndicator = item.isCustom ? '<span class="custom-fabric-indicator">Custom</span>' : '';
+    customFabrics.forEach((item) => {
+      const itemImage = item.images
+        ? item.images[0]
+        : item.mainImage || item.image || "https://via.placeholder.com/60";
 
-    // Enhanced custom fabric information display
-    let customFabricDetails = '';
-    if (item.isCustom) {
-      customFabricDetails = `
+      // Fetch and use the default amount for custom fabrics
+      fetchCustomFabricDefaultAmount().then(defaultAmount => {
+        const customPriceDisplay = `$${defaultAmount.toFixed(2)} (Custom Pricing)`;
+        
+        // Update the price display in the main page if it exists
+        const priceElement = document.querySelector(`[data-id="${item.id}"] .selected-item-price`);
+        if (priceElement) {
+          priceElement.textContent = customPriceDisplay;
+        }
+      });
+      
+      // Set initial display with default $1.00, will be updated when fetch completes
+      let priceText = `$${1.00} (Custom Pricing)`;
+
+      // Enhanced custom fabric information display
+      let customFabricDetails = `
         <div class="custom-fabric-details">
           <div class="custom-fabric-specs">
             <span class="spec-item"><strong>Color:</strong> ${item.color || 'Not specified'}</span>
@@ -1627,36 +1724,86 @@ function renderSelectedComplementaryItems() {
           ${item.sewingPatternNotes ? `<div class="custom-fabric-description"><strong>Pattern Notes:</strong> ${item.sewingPatternNotes}</div>` : ''}
         </div>
       `;
-    }
 
-    html += `
-      <div class="selected-item ${item.isCustom ? 'custom-fabric-item' : ''}">
-        <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
-        <div class="selected-item-info">
-          <div class="selected-item-title">
-            ${item.title}
-            ${customIndicator}
+      html += `
+        <div class="selected-item custom-fabric-item" data-id="${item.id}">
+          <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
+          <div class="selected-item-info">
+            <div class="selected-item-title">
+             Custom Fabric Details
+              <span class="custom-fabric-indicator">Custom</span>
+            </div>
+            <div class="selected-item-price">${priceText}</div>
+            ${customFabricDetails}
           </div>
-          <div class="selected-item-price">${priceText}</div>
-          ${customFabricDetails}
-          ${item.sewingPatternNotes ? `<div class="selected-item-notes"><small>Pattern Notes: ${item.sewingPatternNotes}</small></div>` : ''}
+          <div class="selected-item-actions">
+            <button class="selected-item-preview" onclick="previewItem('${item.id}')">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="selected-item-delete" onclick="removeComplementaryItem('${item.id}')">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
         </div>
-        <div class="selected-item-actions">
-          <button class="selected-item-edit" onclick="editItemDetails('${item.id}')">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="selected-item-preview" onclick="previewItem('${item.id}')">
-            <i class="fas fa-eye"></i>
-          </button>
-          <button class="selected-item-delete" onclick="removeComplementaryItem('${item.id}')">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-        </div>
-      </div>
-    `;
-  });
+      `;
+    });
 
-  html += `</div>`;
+    html += `</div>`;
+  }
+
+  // Render complementary items section if any exist
+  if (complementaryItems.length > 0) {
+    html += `
+      <div class="selected-complementary">
+        <h3 class="selected-complementary-title">
+          Selected ${popupType === "pattern" ? "Sewing Patterns" : "Fabrics"}
+        </h3>
+    `;
+
+    complementaryItems.forEach((item) => {
+      const itemImage = item.images
+        ? item.images[0]
+        : item.mainImage || item.image || "https://via.placeholder.com/60";
+
+      let priceText = `$${item.price}`;
+      if (
+        item.category &&
+        item.category.toLowerCase() === "fabrics" &&
+        item.size
+      ) {
+        priceText = `$${(item.price * item.size).toFixed(2)} (${
+          item.size
+        } yard × $${item.price})`;
+      }
+
+      html += `
+        <div class="selected-item" data-id="${item.id}">
+          <img src="${itemImage}" alt="${item.title}" class="selected-item-image">
+          <div class="selected-item-info">
+            <div class="selected-item-title">
+              ${item.title}
+            </div>
+            <div class="selected-item-price">${priceText}</div>
+            ${item.sewingPatternNotes ? `<div class="selected-item-notes"><small>Pattern Notes: ${item.sewingPatternNotes}</small></div>` : ''}
+          </div>
+          <div class="selected-item-actions">
+            <button class="selected-item-edit" onclick="editItemDetails('${item.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="selected-item-preview" onclick="previewItem('${item.id}')">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="selected-item-delete" onclick="removeComplementaryItem('${item.id}')">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  }
+
   container.innerHTML = html;
   
   // Update button status
@@ -1865,7 +2012,8 @@ function addToCart() {
     image: imageUrl,
     options: options,
     complementaryItems: selectedComplementaryItems.map((item) => {
-      return {
+      // Base item structure
+      const cartComplementaryItem = {
         id: item.id,
         title: item.title,
         price: item.price,
@@ -1875,6 +2023,21 @@ function addToCart() {
           ? item.images[0]
           : item.mainImage || item.image || "https://via.placeholder.com/60",
       };
+
+      // If this is a custom fabric, add custom-specific details
+      if (item.isCustom) {
+        cartComplementaryItem.isCustom = true;
+        cartComplementaryItem.color = item.color || "";
+        cartComplementaryItem.material = item.material || "";
+        cartComplementaryItem.description = item.description || "";
+        cartComplementaryItem.sewingPatternNotes = item.sewingPatternNotes || "";
+        cartComplementaryItem.category = item.category || "fabrics";
+        cartComplementaryItem.subCategory = item.subCategory || "Custom Fabric";
+        // Set custom pricing display
+        cartComplementaryItem.priceDisplay = "Custom Pricing";
+      }
+
+      return cartComplementaryItem;
     }),
   };
   
@@ -2073,13 +2236,36 @@ function areComplementaryItemsEqual(items1, items2) {
   // If different number of items, they're not equal
   if (items1.length !== items2.length) return false;
   
-  // Compare each item - this is a simplified check
-  // For a more thorough check, you would need to compare all properties
-  const itemIds1 = items1.map(item => item.id).sort();
-  const itemIds2 = items2.map(item => item.id).sort();
+  // Sort items by ID for consistent comparison
+  const sortedItems1 = [...items1].sort((a, b) => a.id.localeCompare(b.id));
+  const sortedItems2 = [...items2].sort((a, b) => a.id.localeCompare(b.id));
   
-  for (let i = 0; i < itemIds1.length; i++) {
-    if (itemIds1[i] !== itemIds2[i]) return false;
+  // Compare each item
+  for (let i = 0; i < sortedItems1.length; i++) {
+    const item1 = sortedItems1[i];
+    const item2 = sortedItems2[i];
+    
+    // Compare basic properties
+    if (item1.id !== item2.id) return false;
+    if (item1.title !== item2.title) return false;
+    if (item1.price !== item2.price) return false;
+    if (item1.size !== item2.size) return false;
+    if (item1.notes !== item2.notes) return false;
+    
+    // For custom fabrics, compare custom-specific properties
+    if (item1.isCustom || item2.isCustom) {
+      if (item1.isCustom !== item2.isCustom) return false;
+      
+      if (item1.isCustom) {
+        // Compare custom fabric properties
+        if (item1.color !== item2.color) return false;
+        if (item1.material !== item2.material) return false;
+        if (item1.description !== item2.description) return false;
+        if (item1.sewingPatternNotes !== item2.sewingPatternNotes) return false;
+        if (item1.category !== item2.category) return false;
+        if (item1.subCategory !== item2.subCategory) return false;
+      }
+    }
   }
   
   return true;
@@ -2690,5 +2876,45 @@ function addCustomFabricsToSelection() {
   if (customFabrics.length > 0) {
     renderSelectedComplementaryItems();
     updateComplementaryButtonStatus();
+  }
+}
+
+// Function to fetch default amount for customized products
+async function fetchCustomFabricDefaultAmount() {
+  try {
+    // Try to get from session storage first
+    const storedAmount = sessionStorage.getItem("customFabricDefaultAmount");
+    if (storedAmount) {
+      console.log("Using cached custom fabric default amount:", storedAmount);
+      return parseFloat(storedAmount);
+    }
+
+    console.log("Fetching custom fabric default amount from server...");
+    
+    // Fetch from server
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbxFQGWg83k7nTxCRfqezwQUNl5fU85tGpEVd1m1ARqOiPxskPzmPiLD1oi7giX5v5syRw/exec";
+    const response = await fetch(`${scriptUrl}?action=getCustomFabricDefaultAmount`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    const defaultAmount = parseFloat(data.defaultAmount || 1.00);
+    console.log("Fetched custom fabric default amount:", defaultAmount);
+    
+    // Save to session storage for future use
+    sessionStorage.setItem("customFabricDefaultAmount", defaultAmount.toString());
+    
+    return defaultAmount;
+  } catch (error) {
+    console.error("Error fetching custom fabric default amount:", error);
+    console.log("Using fallback default amount of $1.00");
+    // Return default amount of $1.00 if fetch fails
+    return 1.00;
   }
 }

@@ -1106,8 +1106,8 @@ body {
 }
 
 .selected-item-image {
-  width: 26px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   object-fit: cover;
   border-radius: 4px;
   margin-right: 12px;
@@ -1145,7 +1145,7 @@ body {
   width: 70px;
   padding: 4px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 10px;
 }
 
 .selected-item-notes {
@@ -1158,11 +1158,21 @@ body {
   margin-bottom: 4px;
 }
 
-.selected-item-notes textarea
+.selected-item-notes textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
       .badge {
         position: absolute;
         top: 10px;
-        right: 10px;
+        
         background-color: #3498db;
         color: white;
         padding: 5px 10px;
@@ -1434,10 +1444,46 @@ body {
 .preview-description h4,
 .preview-extra-details h4,
 .preview-size h4,
-.preview-notes h4 {
+.preview-notes h4,
+.preview-custom-fabric-details h4 {
   margin-bottom: 5px;
   font-size: 1.1rem;
   color: #444;
+}
+
+.preview-custom-fabric-details {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+}
+
+.preview-custom-fabric-details h4 {
+  color: #856404;
+  border-bottom: 1px solid #f39c12;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.custom-fabric-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-spec {
+  padding: 8px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.custom-spec:last-child {
+  border-bottom: none;
+}
+
+.custom-spec strong {
+  color: #856404;
+  font-weight: 600;
 }
 
 /* Edit popup styles */
@@ -1536,6 +1582,47 @@ body {
   font-size: 1.2rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
+}
+
+.selected-customized {
+  margin-top: 20px;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 15px;
+  background-color: #fff3cd;
+}
+
+.selected-customized-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #856404;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #f39c12;
+  padding-bottom: 10px;
+}
+
+.custom-fabrics-section,
+.complementary-items-section {
+  margin-bottom: 20px;
+}
+
+.custom-fabrics-section h4,
+.complementary-items-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #ddd;
+}
+
+.custom-fabrics-section h4 {
+  color: #856404;
+  border-bottom-color: #f39c12;
+}
+
+.complementary-items-section h4 {
+  color: #333;
+  border-bottom-color: #e67e22;
 }
 
 /* Button status styling */
