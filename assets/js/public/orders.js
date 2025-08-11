@@ -76,6 +76,7 @@ async function loadOrderDetails(retryCount = 0) {
 }
 
 // --- DATA NORMALIZATION ---
+// Add this field to the return object in your normalizeOrderData function:
 function normalizeOrderData(order) {
   // If the backend returned a nested order object, flatten it
   if (order.order && typeof order.order === "object") {
@@ -93,6 +94,8 @@ function normalizeOrderData(order) {
       // Always extract Payment Method from the sheet row if present
       paymentMethod:
         order["Payment Method"] || order.paymentMethod || "Credit Card",
+      // Add Extra Amount field
+      extraAmount: order["Extra Amount"] || order.extraAmount || 0,
     };
   }
   // Normalize all possible fields
@@ -133,6 +136,7 @@ function normalizeOrderData(order) {
     shipping: parseFloat(order.shipping || order["Shipping"] || 0),
     discount: parseFloat(order.discount || order["Discount"] || 0),
     codCharges: parseFloat(order.codCharges || order["COD Charges"] || 0),
+    extraAmount: parseFloat(order.extraAmount || order["Extra Amount"] || 0), // Add this line
     total: parseFloat(order.total || order["Total"] || 0),
     paymentMethod:
       order["Payment Method"] || order.paymentMethod || "Credit Card",
@@ -227,6 +231,21 @@ function extractComplementaryItems(order) {
   return [];
 }
 
+// --- HELPER FUNCTIONS TO CHECK ITEM TYPES ---
+function isCustomFabric(item) {
+  const itemName = (item.name || "").toLowerCase();
+  const itemNotes = (item.notes || "").toLowerCase();
+  return (
+    itemName.includes("custom fabric") || itemNotes.includes("custom fabric")
+  );
+}
+
+function isPattern(item) {
+  const itemName = (item.name || "").toLowerCase();
+  const itemNotes = (item.notes || "").toLowerCase();
+  return itemName.includes("pattern") || itemNotes.includes("pattern");
+}
+
 // --- RENDERING FUNCTIONS ---
 function renderOrderDetails(order) {
   document.getElementById("loading").style.display = "none";
@@ -307,7 +326,31 @@ function renderOrderItems(order) {
       const imageUrl =
         item.imageUrl || item.image || "https://via.placeholder.com/80";
       const productId = item.id || item.productId || "N/A";
-      const price = parseFloat(item.price || 0);
+
+      // Check item type
+      const isCustom = isCustomFabric(item);
+      const isPatternItem = isPattern(item);
+
+      let priceDisplay = "";
+      if (isCustom) {
+        priceDisplay = "$1.00 Custom";
+      } else if (isPatternItem) {
+        const price = parseFloat(item.price || 0);
+        priceDisplay = formatPrice(price);
+      } else {
+        const price = parseFloat(item.price || 0);
+        // Check if size exists and is not null/undefined/empty
+        if (
+          item.size &&
+          item.size !== null &&
+          item.size !== undefined &&
+          item.size !== ""
+        ) {
+          priceDisplay = `${formatPrice(price)} * ${item.size}Yard(s)`;
+        } else {
+          priceDisplay = formatPrice(price);
+        }
+      }
 
       itemElement.innerHTML = `
         <img src="${imageUrl}" alt="${item.name}" class="product-image">
@@ -315,7 +358,11 @@ function renderOrderItems(order) {
             <div class="product-name">${item.name || "Complementary Item"}</div>
             <div class="product-meta">
                 ${item.notes ? `Notes: ${item.notes}` : ""}
-                ${item.size ? ` | Size: ${item.size}` : ""}
+                ${
+                  item.size && !isCustom && !isPatternItem
+                    ? ` | Size: ${item.size}`
+                    : ""
+                }
                 ${item.parentItem ? ` | With: ${item.parentItem}` : ""}
             </div>
             <div class="product-meta">
@@ -323,9 +370,7 @@ function renderOrderItems(order) {
                 
             </div>
         </div>
-        <div class="product-price">${formatPrice(price)} * ${
-        item.size
-      }Yard(s)</div>
+        <div class="product-price">${priceDisplay}</div>
       `;
       container.appendChild(itemElement);
     });
@@ -501,7 +546,9 @@ function updatePaymentSummary(order) {
   const tax = order.tax || 0;
   const shipping = order.shipping || 0;
   const codCharges = order.codCharges || 0;
+  const extraAmount = order.extraAmount || order["Extra Amount"] || 0; // Get extra amount from sheet
   const total = order.total || 0;
+
   // Subtotal
   const subtotalRow = document.createElement("div");
   subtotalRow.className = "summary-row";
@@ -510,6 +557,7 @@ function updatePaymentSummary(order) {
     <div>${formatPrice(subtotal)}</div>
   `;
   paymentSummaryContainer.appendChild(subtotalRow);
+
   // Discount
   if (discount > 0) {
     const discountRow = document.createElement("div");
@@ -520,6 +568,7 @@ function updatePaymentSummary(order) {
     `;
     paymentSummaryContainer.appendChild(discountRow);
   }
+
   // Tax
   if (tax > 0) {
     const taxRow = document.createElement("div");
@@ -530,6 +579,7 @@ function updatePaymentSummary(order) {
     `;
     paymentSummaryContainer.appendChild(taxRow);
   }
+
   // Shipping
   if (shipping > 0) {
     const shippingRow = document.createElement("div");
@@ -540,6 +590,7 @@ function updatePaymentSummary(order) {
     `;
     paymentSummaryContainer.appendChild(shippingRow);
   }
+
   // COD Charges
   if (codCharges > 0) {
     const codChargesRow = document.createElement("div");
@@ -550,14 +601,30 @@ function updatePaymentSummary(order) {
     `;
     paymentSummaryContainer.appendChild(codChargesRow);
   }
+
+  // Extra Amount - Display before total
+  if (extraAmount > 0) {
+    const extraAmountRow = document.createElement("div");
+    extraAmountRow.className = "summary-row";
+    extraAmountRow.innerHTML = `
+      <div>Extra Amount</div>
+      <div>${formatPrice(extraAmount)}</div>
+    `;
+    paymentSummaryContainer.appendChild(extraAmountRow);
+  }
+
+  // Calculate final total including extra amount
+  const finalTotal = total;
+
   // Total
   const totalRow = document.createElement("div");
   totalRow.className = "summary-row total-row";
   totalRow.innerHTML = `
     <div>Total</div>
-    <div>${formatPrice(total)}</div>
+    <div>${formatPrice(finalTotal)}</div>
   `;
   paymentSummaryContainer.appendChild(totalRow);
+
   // Payment Method
   const paymentMethodRow = document.createElement("div");
   paymentMethodRow.className = "payment-method";
@@ -574,6 +641,7 @@ function updatePaymentSummary(order) {
     <div>${paymentMethodText}</div>
   `;
   paymentSummaryContainer.appendChild(paymentMethodRow);
+
   // Action Buttons
   const actionButtons = document.createElement("div");
   actionButtons.className = "action-buttons";

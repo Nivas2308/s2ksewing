@@ -128,6 +128,13 @@
                   <td colspan="4" style="text-align: right">Shipping:</td>
                   <td id="detailShipping"></td>
                 </tr>
+                <tr>
+                  <td colspan="4" style="text-align: right">
+                    Additional Cost:
+                  </td>
+                  <td id="detailExtraAmount"></td>
+                </tr>
+
                 <tr id="codChargesRow" style="display: none">
                   <td colspan="4" style="text-align: right; color: #ff9800">
                     <strong>COD Charges:</strong>
@@ -158,6 +165,17 @@
               </select>
             </div>
             <div class="form-group">
+              <label for="extraAmount">Additional Cost</label>
+              <input
+                type="number"
+                step="0.01"
+                id="extraAmount"
+                name="extraAmount"
+                class="form-control"
+                placeholder="Enter additional cost"
+              />
+            </div>
+            <div class="form-group">
               <label for="courier">Courier</label>
               <input
                 type="text"
@@ -167,6 +185,7 @@
                 placeholder="Enter courier name"
               />
             </div>
+
             <div class="form-group">
               <label for="trackingId">Tracking ID</label>
               <input

@@ -5,8 +5,9 @@ let currentTab = "all";
 let currentPage = 1;
 const ITEMS_PER_PAGE = 10;
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwspWDvb1lSx_k5PY3ri70ALChOrSoTBdEK0uGjt-90UWDkUhaZsqvpPQcvkHdYLl-w/exec";
-const PRODUCTS_API_URL = "https://script.google.com/macros/s/AKfycby9ucXgMhxRaUyVIP_k-8cela5CJlYrWG7y5YOD3zShvf0OYW2HkeAwr4o4zo0zMC1S/exec";
+  "https://script.google.com/macros/s/AKfycbxVcYsfFWqMeaYbFYJZuNpaA2hFnLGsSOcGhyDDhmGFJhkZqKhutDd9mzflBmmNMjyq/exec";
+const PRODUCTS_API_URL =
+  "https://script.google.com/macros/s/AKfycby9ucXgMhxRaUyVIP_k-8cela5CJlYrWG7y5YOD3zShvf0OYW2HkeAwr4o4zo0zMC1S/exec";
 
 // Initialize the page
 window.onload = function () {
@@ -178,6 +179,74 @@ function displayFilteredOrders() {
 
   // Update pagination controls
   updatePagination(currentPage, totalPages, filteredOrders.length);
+}
+function showCustomItemDetails(itemIndex) {
+  if (!fullOrderData || !fullOrderData.order || !fullOrderData.order.items) {
+    alert("No custom item details found.");
+    return;
+  }
+
+  const fullItem = fullOrderData.order.items[itemIndex];
+  if (!fullItem) {
+    alert("Custom item not found.");
+    return;
+  }
+
+  // Create popup overlay
+  const overlay = document.createElement("div");
+  overlay.id = "product-details-overlay";
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: flex;
+    justify-content: center; align-items: center; z-index: 10000;
+  `;
+
+  // Create popup content
+  const popup = document.createElement("div");
+  popup.id = "product-details-popup";
+  popup.style.cssText = `
+    background: white; border-radius: 8px; padding: 20px;
+    max-width: 500px; max-height: 80vh; overflow-y: auto;
+    position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  `;
+
+  const details = [];
+  if (fullItem.material)
+    details.push(`<strong>Material:</strong> ${fullItem.material}`);
+  if (fullItem.color) details.push(`<strong>Color:</strong> ${fullItem.color}`);
+  if (fullItem.size) details.push(`<strong>Size:</strong> ${fullItem.size}`);
+  if (fullItem.sewingPatternNotes)
+    details.push(
+      `<strong>Pattern Notes:</strong> ${fullItem.sewingPatternNotes}`
+    );
+  if (fullItem.notes) details.push(`<strong>Notes:</strong> ${fullItem.notes}`);
+  if (fullItem.description)
+    details.push(`<strong>Description:</strong> ${fullItem.description}`);
+  if (fullItem.options) {
+    Object.keys(fullItem.options).forEach((key) => {
+      if (fullItem.options[key]) {
+        details.push(`<strong>${key}:</strong> ${fullItem.options[key]}`);
+      }
+    });
+  }
+
+  popup.innerHTML = `
+    <button onclick="closeProductDetails()" style="
+      position: absolute; top: 10px; right: 15px;
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: #666;">&times;</button>
+    <h3 style="margin-bottom: 15px; color: #28a745;">Custom Item Details</h3>
+    ${
+      details.length
+        ? details
+            .map((d) => `<div style="margin-bottom: 5px;">${d}</div>`)
+            .join("")
+        : "<em>No extra details available.</em>"
+    }
+  `;
+
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
 }
 
 // Display orders in the table - UPDATED to show User ID
@@ -383,9 +452,10 @@ function showDetailLoading() {
     '<tr><td colspan="5" class="loading">Loading order details...</td></tr>';
 }
 
-// Display order details with improved data handling - UPDATED to show User ID
+// Display order details with improved data handling - UPDATED to show User ID and Custom Fabric Details
+// Enhanced function to display order details with improved custom fabric handling
 function displayOrderDetail(order) {
-  console.log("Displaying order detail:", order); // Debug log
+  console.log("Displaying order detail:", order);
 
   // Show order detail section
   document.getElementById("orderDetail").style.display = "block";
@@ -418,7 +488,7 @@ function displayOrderDetail(order) {
     }
   }
 
-  // Fill in customer information with fallbacks
+  // Fill in customer information
   const customerName =
     order["Customer Name"] ||
     (order.customer
@@ -437,7 +507,7 @@ function displayOrderDetail(order) {
     order["Phone"] || (order.customer ? order.customer.phone : "") || "N/A";
   document.getElementById("detailCustomerPhone").textContent = customerPhone;
 
-  // Build address from available fields
+  // Build address
   const addressParts = [];
   const address =
     order["Address"] || (order.customer ? order.customer.address : "");
@@ -456,10 +526,44 @@ function displayOrderDetail(order) {
   const fullAddress = addressParts.length > 0 ? addressParts.join(", ") : "N/A";
   document.getElementById("detailCustomerAddress").textContent = fullAddress;
 
-  // Handle items with multiple possible sources
+  // Enhanced Custom Fabric Details Handling
   let items = [];
+  let fullOrderData = null;
 
-  // Try different possible item sources
+  // Store fullOrderData globally for custom item details popup
+  window.fullOrderData = null;
+
+  // Try to get full order data from multiple sources
+  if (
+    order["Full Order JSON"] &&
+    typeof order["Full Order JSON"] === "string"
+  ) {
+    try {
+      fullOrderData = JSON.parse(order["Full Order JSON"]);
+      window.fullOrderData = fullOrderData;
+      console.log("Parsed full order data:", fullOrderData);
+    } catch (e) {
+      console.error("Error parsing Full Order JSON:", e);
+    }
+  }
+
+  // If Full Order JSON not available, try Items JSON or other sources
+  if (
+    !fullOrderData &&
+    order["Items JSON"] &&
+    typeof order["Items JSON"] === "string"
+  ) {
+    try {
+      const itemsData = JSON.parse(order["Items JSON"]);
+      fullOrderData = { order: { items: itemsData } };
+      window.fullOrderData = fullOrderData;
+      console.log("Created full order data from Items JSON:", fullOrderData);
+    } catch (e) {
+      console.error("Error parsing Items JSON:", e);
+    }
+  }
+
+  // Get items from various sources
   if (order.items && Array.isArray(order.items)) {
     items = order.items;
   } else if (
@@ -476,18 +580,17 @@ function displayOrderDetail(order) {
     }
   }
 
-  console.log("Items found:", items); // Debug log
+  console.log("Items found:", items);
 
-  // Fill in order items
+  // Fill in order items with enhanced custom fabric support
   const itemsBody = document.getElementById("detailItemsBody");
   if (!items || items.length === 0) {
     itemsBody.innerHTML =
-      '<tr><td colspan="5">No items found for this order</td></tr>';
+      '<tr><td colspan="6">No items found for this order</td></tr>';
   } else {
     let itemsHtml = "";
 
-    items.forEach((item) => {
-      // Handle different possible field names for items
+    items.forEach((item, index) => {
       const itemName = item["Item Name"] || item.name || item.itemName || "N/A";
       const productId =
         item["Product ID"] || item.productId || item.id || item["ID"] || "N/A";
@@ -514,24 +617,297 @@ function displayOrderDetail(order) {
         subtotal = price * quantities;
       }
 
-      // Generate product URL for clickable product ID
-      const productUrl = productId !== "N/A" ? `../public/productpage.html?id=${productId}` : null;
+      // Enhanced Custom Fabric Detection
+      const isCustomFabric = detectCustomFabric(
+        item,
+        itemName,
+        fullOrderData,
+        index
+      );
+
+      // If custom and price is 0, set it to $1
+      if (isCustomFabric && price === 0) {
+        price = 1;
+        subtotal = price * quantities;
+      }
+
+      const productUrl =
+        productId !== "N/A"
+          ? `../public/productpage.html?id=${productId}`
+          : null;
+
+      // Get custom fabric details
+      let customFabricDetails = "";
+      if (isCustomFabric) {
+        customFabricDetails = buildCustomFabricDetailsHTML(
+          item,
+          fullOrderData,
+          index
+        );
+      }
 
       itemsHtml += `
-<tr>
-<td>${itemName}</td>
-<td>${productId !== "N/A" ? `<span class="product-id-link" onclick="showProductDetailsFromUrl('${productUrl}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">${productId}</span>` : productId}</td>
-<td>$${price.toFixed(2)}</td>
-<td>${quantities}</td>
-<td>$${subtotal.toFixed(2)}</td>
-</tr>
-`;
+        <tr>
+          <td>
+            <div>
+              ${itemName}
+              ${
+                isCustomFabric
+                  ? '<span style="color: #007bff; font-weight: bold; font-size: 11px; background: #e3f2fd; padding: 2px 6px; border-radius: 10px; margin-left: 5px;">CUSTOM</span>'
+                  : ""
+              }
+            </div>
+            ${customFabricDetails}
+          </td>
+          <td>${
+            isCustomFabric
+              ? `<span class="product-id-link" onclick="showCustomItemDetails(${index})" style="color: #28a745; cursor: pointer; text-decoration: underline;">${productId}</span>`
+              : productId !== "N/A"
+              ? `<span class="product-id-link" onclick="showProductDetailsFromUrl('${productUrl}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">${productId}</span>`
+              : productId
+          }</td>
+          <td>$${price.toFixed(2)}</td>
+          <td>${quantities}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+        </tr>
+      `;
     });
 
     itemsBody.innerHTML = itemsHtml;
   }
 
-  // Fill in order totals with multiple fallback options
+  // Fill in order totals
+  fillOrderTotals(order);
+
+  // Set up update form
+  setupUpdateForm(order);
+
+  // Scroll to details
+  document.getElementById("orderDetail").scrollIntoView({ behavior: "smooth" });
+}
+
+// Enhanced function to detect custom fabric items
+function detectCustomFabric(item, itemName, fullOrderData, index) {
+  // Method 1: Check item name for custom fabric keywords
+  const nameIndicators = [
+    "custom fabric",
+    "custom",
+    "fabric",
+    "personalized",
+    "bespoke",
+    "custom design",
+    "made to order",
+    "tailored",
+  ];
+
+  const nameHasCustomIndicator = nameIndicators.some((indicator) =>
+    itemName.toLowerCase().includes(indicator.toLowerCase())
+  );
+
+  // Method 2: Check if item has custom properties
+  const customProperties = [
+    "material",
+    "color",
+    "size",
+    "sewingPatternNotes",
+    "notes",
+    "description",
+    "isCustomFabric",
+    "customization",
+    "fabric",
+  ];
+
+  const hasCustomProperties = customProperties.some(
+    (prop) => item[prop] && item[prop] !== "" && item[prop] !== null
+  );
+
+  // Method 3: Check if fullOrderData has custom details for this item
+  let hasFullOrderCustomDetails = false;
+  if (
+    fullOrderData &&
+    fullOrderData.order &&
+    fullOrderData.order.items &&
+    fullOrderData.order.items[index]
+  ) {
+    const fullItem = fullOrderData.order.items[index];
+    hasFullOrderCustomDetails = customProperties.some(
+      (prop) =>
+        fullItem[prop] && fullItem[prop] !== "" && fullItem[prop] !== null
+    );
+
+    // Also check options object
+    if (fullItem.options && typeof fullItem.options === "object") {
+      hasFullOrderCustomDetails =
+        hasFullOrderCustomDetails ||
+        Object.keys(fullItem.options).some(
+          (key) =>
+            fullItem.options[key] &&
+            fullItem.options[key] !== "" &&
+            fullItem.options[key] !== null
+        );
+    }
+  }
+
+  // Method 4: Check for explicit custom fabric flag
+  const hasCustomFlag = item.isCustomFabric === true || item.custom === true;
+
+  // Return true if any method indicates this is a custom fabric item
+  const isCustom =
+    nameHasCustomIndicator ||
+    hasCustomProperties ||
+    hasFullOrderCustomDetails ||
+    hasCustomFlag;
+
+  console.log(`Item ${index} "${itemName}" custom detection:`, {
+    nameHasCustomIndicator,
+    hasCustomProperties,
+    hasFullOrderCustomDetails,
+    hasCustomFlag,
+    isCustom,
+  });
+
+  return isCustom;
+}
+
+// Enhanced function to build custom fabric details HTML - SIMPLIFIED for table display
+function buildCustomFabricDetailsHTML(item, fullOrderData, index) {
+  // Only show a simple indicator in the table - all details will be in popup
+  return `
+    <div class="custom-fabric-details" style="margin-top: 10px; padding: 8px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+      <strong>Custom Fabric Item:</strong><br>
+      <span style="display: block; margin: 2px 0; font-size: 12px; color: #856404; font-style: italic;">Click Product ID to view full details</span>
+    </div>
+  `;
+}
+
+// Enhanced function to show custom item details in popup
+function showCustomItemDetails(itemIndex) {
+  console.log("Showing custom item details for index:", itemIndex);
+
+  if (
+    !window.fullOrderData ||
+    !window.fullOrderData.order ||
+    !window.fullOrderData.order.items
+  ) {
+    alert("No custom item details found in order data.");
+    return;
+  }
+
+  const fullItem = window.fullOrderData.order.items[itemIndex];
+  if (!fullItem) {
+    alert("Custom item not found at index " + itemIndex);
+    return;
+  }
+
+  console.log("Full item data:", fullItem);
+
+  // Create popup overlay
+  const overlay = document.createElement("div");
+  overlay.id = "product-details-overlay";
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: flex;
+    justify-content: center; align-items: center; z-index: 10000;
+  `;
+
+  // Create popup content
+  const popup = document.createElement("div");
+  popup.id = "product-details-popup";
+  popup.style.cssText = `
+    background: white; border-radius: 8px; padding: 20px;
+    max-width: 500px; max-height: 80vh; overflow-y: auto;
+    position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  `;
+
+  // Collect only the specific fields requested
+  const details = [];
+
+  // Only show these specific fields
+  const fieldsToShow = {
+    "Item Name": fullItem["Item Name"] || fullItem.name || fullItem.itemName,
+    Size: fullItem["Size"] || fullItem.size,
+    Id: fullItem["Id"] || fullItem.id || fullItem["ID"],
+    "Parent Item": fullItem["Parent Item"] || fullItem.parentItem,
+    "Parent Item Id":
+      fullItem["Parent Item Id"] ||
+      fullItem.parentItemId ||
+      fullItem["Parent Item ID"],
+
+    "Fabric Color":
+      fullItem["Fabric Color"] || fullItem.fabricColor || fullItem.color,
+    "Fabric Material":
+      fullItem["Fabric Material"] ||
+      fullItem.fabricMaterial ||
+      fullItem.material,
+    "Fabric Description":
+      fullItem["Fabric Description"] ||
+      fullItem.fabricDescription ||
+      fullItem.description,
+    "Fabric Pattern Notes":
+      fullItem["Fabric Pattern Notes"] ||
+      fullItem.fabricPatternNotes ||
+      fullItem.sewingPatternNotes,
+  };
+
+  Object.keys(fieldsToShow).forEach((fieldName) => {
+    const value = fieldsToShow[fieldName];
+    if (value && value !== "" && value !== null && value !== "undefined") {
+      details.push(`<strong>${fieldName}:</strong> ${value}`);
+    }
+  });
+
+  // Handle image separately
+  let imageHtml = "";
+  const imageUrl = fullItem["Image Url"] || fullItem.imageUrl || fullItem.image;
+  if (imageUrl && imageUrl !== "" && imageUrl !== null) {
+    imageHtml = `
+      <div style="margin: 15px 0; text-align: center;">
+        <strong>Custom Fabric Image:</strong><br>
+        <img src="${imageUrl}" alt="Custom Fabric" style="max-width: 300px; max-height: 300px; border-radius: 8px; border: 2px solid #007bff; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div style="display: none; color: #dc3545; font-style: italic; margin-top: 10px;">Image could not be loaded</div>
+      </div>
+    `;
+  }
+
+  popup.innerHTML = `
+    <button onclick="closeProductDetails()" style="
+      position: absolute; top: 10px; right: 15px;
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: #666;">&times;</button>
+    <h3 style="margin-bottom: 15px; color: #28a745;">
+      <i class="fas fa-cut" style="margin-right: 8px;"></i>
+      Custom Fabric Item Details
+    </h3>
+    ${imageHtml}
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+      ${
+        details.length
+          ? details
+              .map(
+                (d) =>
+                  `<div style="margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">${d}</div>`
+              )
+              .join("")
+              .replace(
+                /(<div[^>]*>.*?<\/div>)(?!.*<div)/,
+                "$1".replace("border-bottom: 1px solid #e9ecef;", "")
+              )
+          : '<em style="color: #6c757d;">No specific details available for this custom item.</em>'
+      }
+    </div>
+    <div style="text-align: center; margin-top: 15px;">
+      <small style="color: #6c757d; font-style: italic;">
+        Custom fabric items are made to order based on the specifications above.
+      </small>
+    </div>
+  `;
+
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+}
+
+// Helper function to fill order totals (extracted for better organization)
+function fillOrderTotals(order) {
   let subtotal = 0,
     tax = 0,
     shipping = 0,
@@ -564,25 +940,34 @@ function displayOrderDetail(order) {
     shipping = order.shipping;
   }
 
-  // Try to get COD Charges
-  let codCharges = 0;
-  if (typeof order["COD Charges"] === "number") {
-    codCharges = order["COD Charges"];
+  // Handle Additional Cost (formerly COD Charges)
+  let additionalCost = 0;
+  if (typeof order["Additional Cost"] === "number") {
+    additionalCost = order["Additional Cost"];
+  } else if (typeof order["COD Charges"] === "number") {
+    additionalCost = order["COD Charges"];
+  } else if (order.order && typeof order.order.additionalCost === "number") {
+    additionalCost = order.order.additionalCost;
   } else if (order.order && typeof order.order.codCharges === "number") {
-    codCharges = order.order.codCharges;
-  } else if (typeof order.codCharges === "number") {
-    codCharges = order.codCharges;
+    additionalCost = order.order.codCharges;
   }
 
-  // Show or hide the COD Charges row
-  const codChargesRow = document.getElementById("codChargesRow");
-  const codChargesCell = document.getElementById("detailCODCharges");
-  if (codCharges && codCharges > 0) {
-    codChargesRow.style.display = "";
-    codChargesCell.textContent = `$${codCharges.toFixed(2)}`;
-  } else {
-    codChargesRow.style.display = "none";
-    codChargesCell.textContent = "";
+  // Try to get Extra Amount
+  let extraAmount = 0;
+  if (typeof order["Extra Amount"] === "number") {
+    extraAmount = order["Extra Amount"];
+  } else if (order.order && typeof order.order.extraAmount === "number") {
+    extraAmount = order.order.extraAmount;
+  } else if (typeof order.extraAmount === "number") {
+    extraAmount = order.extraAmount;
+  }
+
+  // Show Additional Cost row
+  const additionalCostRow = document.getElementById("additionalCostRow");
+  const additionalCostCell = document.getElementById("detailAdditionalCost");
+  if (additionalCostRow && additionalCostCell) {
+    additionalCostRow.style.display = "";
+    additionalCostCell.textContent = `$${additionalCost.toFixed(2)}`;
   }
 
   // Try to get total
@@ -593,7 +978,7 @@ function displayOrderDetail(order) {
   } else if (typeof order.total === "number") {
     total = order.total;
   } else {
-    total = subtotal + tax + shipping;
+    total = subtotal + tax + shipping + additionalCost + extraAmount;
   }
 
   document.getElementById("detailSubtotal").textContent = `$${subtotal.toFixed(
@@ -603,9 +988,20 @@ function displayOrderDetail(order) {
   document.getElementById("detailShipping").textContent = `$${shipping.toFixed(
     2
   )}`;
+  document.getElementById(
+    "detailExtraAmount"
+  ).textContent = `$${extraAmount.toFixed(2)}`;
   document.getElementById("detailTotal").textContent = `$${total.toFixed(2)}`;
+}
 
-  // Set up update form with current values
+// Helper function to setup update form (extracted for better organization)
+function setupUpdateForm(order) {
+  const extraAmount =
+    order["Extra Amount"] ||
+    order.extraAmount ||
+    (order.order ? order.order.extraAmount : 0) ||
+    0;
+
   document.getElementById("updateOrderId").value = selectedOrderId;
   document.getElementById("orderStatus").value =
     order["Order Status"] || order.status || "Order Placed";
@@ -615,11 +1011,48 @@ function displayOrderDetail(order) {
     order["Tracking ID"] || order.trackingId || "";
   document.getElementById("comments").value =
     order["Comments"] || order.comments || "";
-
-  // Scroll to details
-  document.getElementById("orderDetail").scrollIntoView({ behavior: "smooth" });
+  document.getElementById("extraAmount").value = extraAmount || 0;
 }
 
+// Helper function to extract custom fabric details from full order JSON
+function getCustomFabricDetails(fullOrderData, itemIndex) {
+  if (!fullOrderData || !fullOrderData.order || !fullOrderData.order.items) {
+    return null;
+  }
+
+  const item = fullOrderData.order.items[itemIndex];
+  if (!item) return null;
+
+  // Check if this item has custom fabric properties
+  const customProperties = {};
+
+  const fabricProperties = [
+    "material",
+    "color",
+    "size",
+    "sewingPatternNotes",
+    "notes",
+    "description",
+    "isCustomFabric",
+  ];
+
+  fabricProperties.forEach((prop) => {
+    if (item[prop]) {
+      customProperties[prop] = item[prop];
+    }
+  });
+
+  // Also check options object
+  if (item.options && typeof item.options === "object") {
+    Object.keys(item.options).forEach((key) => {
+      if (item.options[key]) {
+        customProperties[key] = item.options[key];
+      }
+    });
+  }
+
+  return Object.keys(customProperties).length > 0 ? customProperties : null;
+}
 // Close order detail view
 function closeOrderDetail() {
   document.getElementById("orderDetail").style.display = "none";
@@ -636,9 +1069,10 @@ function updateOrderStatus(event) {
     courier: document.getElementById("courier").value,
     trackingId: document.getElementById("trackingId").value,
     comments: document.getElementById("comments").value,
+    extraAmount: parseFloat(document.getElementById("extraAmount").value) || 0,
   };
 
-  console.log("Updating order with data:", formData); // Debug log
+  console.log("Updating order with data:", formData);
 
   // Validate form
   if (!formData.orderId || !formData.orderStatus) {
@@ -658,7 +1092,7 @@ function updateOrderStatus(event) {
     data: formData,
   };
 
-  console.log("Sending request:", requestBody); // Debug log
+  console.log("Sending request:", requestBody);
 
   // Use a more robust approach for the API call
   fetch(APPS_SCRIPT_URL, {
@@ -670,10 +1104,7 @@ function updateOrderStatus(event) {
     body: JSON.stringify(requestBody),
   })
     .then((response) => {
-      console.log("Response status:", response.status); // Debug log
-
-      // For Google Apps Script, we might get an opaque response due to CORS
-      // But if the request completes without error, it likely succeeded
+      console.log("Response status:", response.status);
       submitButton.textContent = "Verifying...";
 
       // Wait briefly then verify the update
@@ -795,10 +1226,10 @@ function verifyOrderUpdate(
 // Function to show product details in a popup
 function showProductDetails(productId) {
   console.log("Showing product details for ID:", productId);
-  
+
   // Create popup overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'product-details-overlay';
+  const overlay = document.createElement("div");
+  overlay.id = "product-details-overlay";
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -811,10 +1242,10 @@ function showProductDetails(productId) {
     align-items: center;
     z-index: 10000;
   `;
-  
+
   // Create popup content
-  const popup = document.createElement('div');
-  popup.id = 'product-details-popup';
+  const popup = document.createElement("div");
+  popup.id = "product-details-popup";
   popup.style.cssText = `
     background: white;
     border-radius: 8px;
@@ -825,7 +1256,7 @@ function showProductDetails(productId) {
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   `;
-  
+
   // Add loading content
   popup.innerHTML = `
     <div style="text-align: center; padding: 40px;">
@@ -845,14 +1276,14 @@ function showProductDetails(productId) {
       color: #666;
     ">&times;</button>
   `;
-  
+
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
-  
+
   // Fetch product details from Google Apps Script
   fetch(`${APPS_SCRIPT_URL}?action=getProduct&id=${productId}`)
-    .then(response => response.json())
-    .then(data => {
+    .then((response) => response.json())
+    .then((data) => {
       if (data.success && data.product) {
         const product = data.product;
         popup.innerHTML = `
@@ -871,28 +1302,48 @@ function showProductDetails(productId) {
           </div>
           <div style="display: flex; gap: 20px; margin-bottom: 20px;">
             <div style="flex: 0 0 120px;">
-              <img src="${product.imageUrl || product.image || 'https://via.placeholder.com/120'}" 
+              <img src="${
+                product.imageUrl ||
+                product.image ||
+                "https://via.placeholder.com/120"
+              }" 
                    alt="${product.title || product.name}" 
                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
             </div>
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
-              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
-              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
-              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
+              <h4 style="margin: 0 0 10px 0; color: #333;">${
+                product.title || product.name || "Unknown Product"
+              }</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${
+                product.id || productId
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(
+                product.price || 0
+              ).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${
+                product.category || "N/A"
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${
+                product.subCategory || "N/A"
+              }</div>
             </div>
           </div>
           <div style="margin-bottom: 15px;">
             <strong>Description:</strong>
-            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${
+              product.description || "No description available"
+            }</div>
           </div>
-          ${product.details ? `
+          ${
+            product.details
+              ? `
           <div style="margin-bottom: 15px;">
             <strong>Details:</strong>
             <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
           </div>
-          ` : ''}
+          `
+              : ""
+          }
         `;
       } else {
         popup.innerHTML = `
@@ -916,8 +1367,8 @@ function showProductDetails(productId) {
         `;
       }
     })
-    .catch(error => {
-      console.error('Error fetching product details:', error);
+    .catch((error) => {
+      console.error("Error fetching product details:", error);
       popup.innerHTML = `
         <button onclick="closeProductDetails()" style="
           position: absolute;
@@ -943,19 +1394,19 @@ function showProductDetails(productId) {
 // New function to fetch product details from product URL
 function showProductDetailsFromUrl(productUrl) {
   console.log("Showing product details from URL:", productUrl);
-  
+
   if (!productUrl) {
     console.error("No product URL provided");
     return;
   }
-  
+
   // Extract product ID from the URL
   const urlObj = new URL(productUrl, window.location.origin);
-  const productId = urlObj.searchParams.get('id') || 'N/A';
-  
+  const productId = urlObj.searchParams.get("id") || "N/A";
+
   // Create popup overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'product-details-overlay';
+  const overlay = document.createElement("div");
+  overlay.id = "product-details-overlay";
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -968,10 +1419,10 @@ function showProductDetailsFromUrl(productUrl) {
     align-items: center;
     z-index: 10000;
   `;
-  
+
   // Create popup content
-  const popup = document.createElement('div');
-  popup.id = 'product-details-popup';
+  const popup = document.createElement("div");
+  popup.id = "product-details-popup";
   popup.style.cssText = `
     background: white;
     border-radius: 8px;
@@ -982,7 +1433,7 @@ function showProductDetailsFromUrl(productUrl) {
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   `;
-  
+
   // Add loading content
   popup.innerHTML = `
     <div style="text-align: center; padding: 40px;">
@@ -1002,22 +1453,22 @@ function showProductDetailsFromUrl(productUrl) {
       color: #666;
     ">&times;</button>
   `;
-  
+
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
-  
+
   // Try Google Apps Script API first (more reliable)
   console.log("Trying Google Apps Script API first...");
   fetchProductDetailsFromScript(productId, popup)
-    .then(success => {
+    .then((success) => {
       if (!success) {
         // If API fails, try URL approach as fallback
         console.log("API failed, trying URL approach as fallback...");
         return fetchProductDetailsFromUrl(productUrl, popup);
       }
     })
-    .catch(error => {
-      console.error('Error with API approach:', error);
+    .catch((error) => {
+      console.error("Error with API approach:", error);
       console.log("Trying URL approach as fallback...");
       return fetchProductDetailsFromUrl(productUrl, popup);
     });
@@ -1027,28 +1478,30 @@ function showProductDetailsFromUrl(productUrl) {
 function fetchProductDetailsFromUrl(productUrl, popup) {
   // Extract product ID from the URL
   const urlObj = new URL(productUrl, window.location.origin);
-  const productId = urlObj.searchParams.get('id') || 'N/A';
-  
+  const productId = urlObj.searchParams.get("id") || "N/A";
+
   return fetch(productUrl)
-    .then(response => {
+    .then((response) => {
       console.log("Response status:", response.status);
       console.log("Response URL:", response.url);
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+        throw new Error(
+          `HTTP error! status: ${response.status} - ${response.statusText}`
+        );
       }
       return response.text();
     })
-    .then(html => {
+    .then((html) => {
       console.log("HTML content length:", html.length);
-      
+
       // Parse the HTML to extract product information
       const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
+      const doc = parser.parseFromString(html, "text/html");
+
       // Extract product details from the parsed HTML
       const productDetails = extractProductDetailsFromHTML(doc, productId);
-      
+
       if (productDetails) {
         popup.innerHTML = `
           <button onclick="closeProductDetails()" style="
@@ -1066,28 +1519,46 @@ function fetchProductDetailsFromUrl(productUrl, popup) {
           </div>
           <div style="display: flex; gap: 20px; margin-bottom: 20px;">
             <div style="flex: 0 0 120px;">
-              <img src="${productDetails.imageUrl || 'https://via.placeholder.com/120'}" 
-                   alt="${productDetails.title || 'Product'}" 
+              <img src="${
+                productDetails.imageUrl || "https://via.placeholder.com/120"
+              }" 
+                   alt="${productDetails.title || "Product"}" 
                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
             </div>
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 10px 0; color: #333;">${productDetails.title || 'Unknown Product'}</h4>
-              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${productDetails.id || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(productDetails.price || 0).toFixed(2)}</div>
-              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${productDetails.category || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${productDetails.subCategory || 'N/A'}</div>
+              <h4 style="margin: 0 0 10px 0; color: #333;">${
+                productDetails.title || "Unknown Product"
+              }</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${
+                productDetails.id || "N/A"
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(
+                productDetails.price || 0
+              ).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${
+                productDetails.category || "N/A"
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${
+                productDetails.subCategory || "N/A"
+              }</div>
             </div>
           </div>
           <div style="margin-bottom: 15px;">
             <strong>Description:</strong>
-            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${productDetails.description || 'No description available'}</div>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${
+              productDetails.description || "No description available"
+            }</div>
           </div>
-          ${productDetails.details ? `
+          ${
+            productDetails.details
+              ? `
           <div style="margin-bottom: 15px;">
             <strong>Details:</strong>
             <div style="margin-top: 5px; color: #666; line-height: 1.5;">${productDetails.details}</div>
           </div>
-          ` : ''}
+          `
+              : ""
+          }
         `;
         return true;
       } else {
@@ -1114,8 +1585,8 @@ function fetchProductDetailsFromUrl(productUrl, popup) {
         return false;
       }
     })
-    .catch(error => {
-      console.error('Error fetching product details from URL:', error);
+    .catch((error) => {
+      console.error("Error fetching product details from URL:", error);
       popup.innerHTML = `
         <button onclick="closeProductDetails()" style="
           position: absolute;
@@ -1143,8 +1614,8 @@ function fetchProductDetailsFromUrl(productUrl, popup) {
 // Fallback function to fetch product details from Google Apps Script
 function fetchProductDetailsFromScript(productId, popup) {
   return fetch(PRODUCTS_API_URL)
-    .then(response => response.json())
-    .then(data => {
+    .then((response) => response.json())
+    .then((data) => {
       // Check if this is a single product response or all products response
       if (data.success && data.product) {
         // Single product response (existing format)
@@ -1165,34 +1636,57 @@ function fetchProductDetailsFromScript(productId, popup) {
           </div>
           <div style="display: flex; gap: 20px; margin-bottom: 20px;">
             <div style="flex: 0 0 120px;">
-              <img src="${product.imageUrl || product.image || product.mainImage || 'https://via.placeholder.com/120'}" 
+              <img src="${
+                product.imageUrl ||
+                product.image ||
+                product.mainImage ||
+                "https://via.placeholder.com/120"
+              }" 
                    alt="${product.title || product.name}" 
                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
             </div>
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
-              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
-              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
-              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${product.sku || 'N/A'}</div>
+              <h4 style="margin: 0 0 10px 0; color: #333;">${
+                product.title || product.name || "Unknown Product"
+              }</h4>
+              <div style="margin-bottom: 8px;"><strong>ID:</strong> ${
+                product.id || productId
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(
+                product.price || 0
+              ).toFixed(2)}</div>
+              <div style="margin-bottom: 8px;"><strong>Category:</strong> ${
+                product.category || "N/A"
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${
+                product.subCategory || "N/A"
+              }</div>
+              <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${
+                product.sku || "N/A"
+              }</div>
             </div>
           </div>
           <div style="margin-bottom: 15px;">
             <strong>Description:</strong>
-            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+            <div style="margin-top: 5px; color: #666; line-height: 1.5;">${
+              product.description || "No description available"
+            }</div>
           </div>
-          ${product.details ? `
+          ${
+            product.details
+              ? `
           <div style="margin-bottom: 15px;">
             <strong>Details:</strong>
             <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
           </div>
-          ` : ''}
+          `
+              : ""
+          }
         `;
         return true;
       } else if (Array.isArray(data)) {
         // All products response - find the specific product by ID
-        const product = data.find(p => p.id == productId);
+        const product = data.find((p) => p.id == productId);
         if (product) {
           popup.innerHTML = `
             <button onclick="closeProductDetails()" style="
@@ -1210,32 +1704,61 @@ function fetchProductDetailsFromScript(productId, popup) {
             </div>
             <div style="display: flex; gap: 20px; margin-bottom: 20px;">
               <div style="flex: 0 0 120px;">
-                <img src="${product.mainImage || product.image || product.imageUrl || 'https://via.placeholder.com/120'}" 
+                <img src="${
+                  product.mainImage ||
+                  product.image ||
+                  product.imageUrl ||
+                  "https://via.placeholder.com/120"
+                }" 
                      alt="${product.title || product.name}" 
                      style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
               </div>
               <div style="flex: 1;">
-                <h4 style="margin: 0 0 10px 0; color: #333;">${product.title || product.name || 'Unknown Product'}</h4>
-                <div style="margin-bottom: 8px;"><strong>ID:</strong> ${product.id || productId}</div>
-                <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(product.price || 0).toFixed(2)}</div>
-                <div style="margin-bottom: 8px;"><strong>Category:</strong> ${product.category || 'N/A'}</div>
-                <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${product.subCategory || 'N/A'}</div>
-                <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${product.sku || 'N/A'}</div>
-                <div style="margin-bottom: 8px;"><strong>Stock:</strong> ${product.inStock ? 'In Stock' : 'Out of Stock'}</div>
+                <h4 style="margin: 0 0 10px 0; color: #333;">${
+                  product.title || product.name || "Unknown Product"
+                }</h4>
+                <div style="margin-bottom: 8px;"><strong>ID:</strong> ${
+                  product.id || productId
+                }</div>
+                <div style="margin-bottom: 8px;"><strong>Price:</strong> $${(
+                  product.price || 0
+                ).toFixed(2)}</div>
+                <div style="margin-bottom: 8px;"><strong>Category:</strong> ${
+                  product.category || "N/A"
+                }</div>
+                <div style="margin-bottom: 8px;"><strong>Sub Category:</strong> ${
+                  product.subCategory || "N/A"
+                }</div>
+                <div style="margin-bottom: 8px;"><strong>SKU:</strong> ${
+                  product.sku || "N/A"
+                }</div>
+                <div style="margin-bottom: 8px;"><strong>Stock:</strong> ${
+                  product.inStock ? "In Stock" : "Out of Stock"
+                }</div>
               </div>
             </div>
             <div style="margin-bottom: 15px;">
               <strong>Description:</strong>
-              <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.description || 'No description available'}</div>
+              <div style="margin-top: 5px; color: #666; line-height: 1.5;">${
+                product.description || "No description available"
+              }</div>
             </div>
-            ${product.details ? `
+            ${
+              product.details
+                ? `
             <div style="margin-bottom: 15px;">
               <strong>Details:</strong>
               <div style="margin-top: 5px; color: #666; line-height: 1.5;">${product.details}</div>
             </div>
-            ` : ''}
-            ${product.images && product.images.length > 1 ? `
-            ` : ''}
+            `
+                : ""
+            }
+            ${
+              product.images && product.images.length > 1
+                ? `
+            `
+                : ""
+            }
           `;
           return true;
         } else {
@@ -1283,8 +1806,8 @@ function fetchProductDetailsFromScript(productId, popup) {
         return false;
       }
     })
-    .catch(error => {
-      console.error('Error fetching product details from script:', error);
+    .catch((error) => {
+      console.error("Error fetching product details from script:", error);
       popup.innerHTML = `
         <button onclick="closeProductDetails()" style="
           position: absolute;
@@ -1313,16 +1836,18 @@ function fetchProductDetailsFromScript(productId, popup) {
 function extractProductDetailsFromHTML(doc, productId) {
   try {
     console.log("Extracting product details from HTML for ID:", productId);
-    
+
     // Extract product information based on the actual product page structure
-    
+
     // Look for product title
-    const titleElement = doc.querySelector('.product-title');
-    const title = titleElement ? titleElement.textContent.trim() : 'Unknown Product';
+    const titleElement = doc.querySelector(".product-title");
+    const title = titleElement
+      ? titleElement.textContent.trim()
+      : "Unknown Product";
     console.log("Found title:", title);
-    
+
     // Look for product price
-    const priceElement = doc.querySelector('.product-price');
+    const priceElement = doc.querySelector(".product-price");
     let price = 0;
     if (priceElement) {
       const priceText = priceElement.textContent.trim();
@@ -1333,22 +1858,26 @@ function extractProductDetailsFromHTML(doc, productId) {
         console.log("Extracted price:", price);
       }
     }
-    
+
     // Look for product image
-    const imageElement = doc.querySelector('.main-image');
-    const imageUrl = imageElement ? imageElement.src : 'https://via.placeholder.com/120';
+    const imageElement = doc.querySelector(".main-image");
+    const imageUrl = imageElement
+      ? imageElement.src
+      : "https://via.placeholder.com/120";
     console.log("Found image URL:", imageUrl);
-    
+
     // Look for product description
-    const descElement = doc.querySelector('.product-description');
-    const description = descElement ? descElement.textContent.trim() : 'No description available';
+    const descElement = doc.querySelector(".product-description");
+    const description = descElement
+      ? descElement.textContent.trim()
+      : "No description available";
     console.log("Found description:", description);
-    
+
     // Look for category information
-    const categoryElements = doc.querySelectorAll('.category-tag');
-    let category = 'N/A';
-    let subCategory = 'N/A';
-    
+    const categoryElements = doc.querySelectorAll(".category-tag");
+    let category = "N/A";
+    let subCategory = "N/A";
+
     if (categoryElements.length > 0) {
       category = categoryElements[0].textContent.trim();
       console.log("Found category:", category);
@@ -1357,26 +1886,29 @@ function extractProductDetailsFromHTML(doc, productId) {
         console.log("Found subcategory:", subCategory);
       }
     }
-    
+
     // Look for additional details
-    const detailsElement = doc.querySelector('.product-details');
-    let details = '';
+    const detailsElement = doc.querySelector(".product-details");
+    let details = "";
     if (detailsElement) {
       // Get the content inside product-details, excluding the h3 title
-      const detailsContent = detailsElement.querySelector('div');
-      details = detailsContent ? detailsContent.textContent.trim() : '';
+      const detailsContent = detailsElement.querySelector("div");
+      details = detailsContent ? detailsContent.textContent.trim() : "";
       console.log("Found details:", details);
     }
-    
+
     // Check if we found meaningful data
-    const hasValidData = title !== 'Unknown Product' || price > 0 || description !== 'No description available';
+    const hasValidData =
+      title !== "Unknown Product" ||
+      price > 0 ||
+      description !== "No description available";
     console.log("Has valid data:", hasValidData);
-    
+
     if (!hasValidData) {
       console.log("No valid product data found in HTML, will use fallback");
       return null;
     }
-    
+
     return {
       id: productId,
       title: title,
@@ -1385,17 +1917,17 @@ function extractProductDetailsFromHTML(doc, productId) {
       description: description,
       category: category,
       subCategory: subCategory,
-      details: details
+      details: details,
     };
   } catch (error) {
-    console.error('Error extracting product details from HTML:', error);
+    console.error("Error extracting product details from HTML:", error);
     return null;
   }
 }
 
 // Function to close product details popup
 function closeProductDetails() {
-  const overlay = document.getElementById('product-details-overlay');
+  const overlay = document.getElementById("product-details-overlay");
   if (overlay) {
     overlay.remove();
   }

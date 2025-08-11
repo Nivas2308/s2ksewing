@@ -9,19 +9,31 @@ let payments; // Square payments instance
 let orderDetails = {}; // To store all order details
 let isGuestCheckout = false;
 
+// Enhanced fetchAndCachePricingConfig function to ensure COD charges are fetched
 async function fetchAndCachePricingConfig() {
   const scriptUrl =
     "https://script.google.com/macros/s/AKfycbxFQGWg83k7nTxCRfqezwQUNl5fU85tGpEVd1m1ARqOiPxskPzmPiLD1oi7giX5v5syRw/exec";
+
   try {
+    console.log("Fetching pricing configuration...");
     const response = await fetch(`${scriptUrl}?action=getPricingConfig`);
     const data = await response.json();
+
+    // Ensure COD charges are included in the config
+    if (!data.codCharges && data.codCharges !== 0) {
+      data.codCharges = 0; // Default to 0 if not specified
+    }
+
+    console.log("Pricing config loaded:", data);
     sessionStorage.setItem("pricingConfig", JSON.stringify(data));
-    window.pricingConfig = data; // update global for immediate use
+    window.pricingConfig = data;
     updatePaymentMethodAvailability();
+
     return data;
   } catch (e) {
     console.error("Failed to fetch pricing config:", e);
-    // fallback to sessionStorage if available
+
+    // Enhanced fallback to include COD charges
     const stored = sessionStorage.getItem("pricingConfig");
     if (stored) {
       const data = JSON.parse(stored);
@@ -29,7 +41,10 @@ async function fetchAndCachePricingConfig() {
       updatePaymentMethodAvailability();
       return data;
     }
-    return null;
+
+    sessionStorage.setItem("pricingConfig", JSON.stringify(defaultConfig));
+    window.pricingConfig = defaultConfig;
+    return defaultConfig;
   }
 }
 
@@ -98,7 +113,12 @@ async function loadPricingConfig() {
     // Try to get pricing config from session storage
     const storedConfig = sessionStorage.getItem("pricingConfig");
     if (storedConfig) {
-      return JSON.parse(storedConfig);
+      const config = JSON.parse(storedConfig);
+      // Ensure COD charges are present
+      if (!config.codCharges && config.codCharges !== 0) {
+        config.codCharges = 0;
+      }
+      return config;
     }
 
     // If not in session storage, fetch from Google Sheets
@@ -115,40 +135,16 @@ async function loadPricingConfig() {
       throw new Error(data.error);
     }
 
+    // Ensure COD charges are included
+    if (!data.codCharges && data.codCharges !== 0) {
+      data.codCharges = 0;
+    }
+
     // Save to session storage
     sessionStorage.setItem("pricingConfig", JSON.stringify(data));
     return data;
   } catch (error) {
     console.error("Error loading pricing config:", error);
-
-    // Use default pricing if fetch fails
-    const defaultPricing = {
-      discountPercentage: 0,
-      vatPercentage: 10,
-      shippingCosts: {
-        domestic: 9.99,
-        business: 14.99,
-        international: 24.99,
-        express: 19.99,
-      },
-      freeShippingThreshold: 100,
-      deliveryTimes: {
-        domestic: 5,
-        business: 3,
-        international: 10,
-        express: 2,
-      },
-      promoCodes: [
-        { code: "WELCOME10", discount: 10, type: "percentage" },
-        {
-          code: "FREESHIP",
-          discount: 100,
-          type: "percentage",
-          applyTo: "shipping",
-        },
-        { code: "SAVE20", discount: 20, type: "flat" },
-      ],
-    };
 
     sessionStorage.setItem("pricingConfig", JSON.stringify(defaultPricing));
     return defaultPricing;
@@ -278,7 +274,17 @@ function loadSummaryItems() {
           compPrice = typeof comp.price === "number" ? comp.price : 0;
         }
 
-        // Add to summary HTML
+        // FIX: Get pattern notes from multiple possible sources
+        const patternNotes =
+          comp.PatternNotes ||
+          comp.patternNotes ||
+          comp.customPatternNotes ||
+          comp.sewingPatternNotes ||
+          comp.fabricPatternNotes ||
+          comp.notes ||
+          null;
+
+        // Add to summary HTML with proper pattern notes display
         summaryHTML += `
            <div class="summary-item complementary-summary-item">
              <img src="${
@@ -295,8 +301,13 @@ function loadSummaryItems() {
                      : ""
                  }
                  ${
-                   comp.notes
-                     ? `<div class="item-notes"><i class="fas fa-sticky-note"></i> ${comp.notes}</div>`
+                   patternNotes && patternNotes.trim() !== ""
+                     ? `<div class="item-notes"><i class="fas fa-scissors"></i> Pattern Notes: ${patternNotes}</div>`
+                     : ""
+                 }
+                 ${
+                   comp.color
+                     ? `<div class="item-color"><i class="fas fa-palette"></i> Color: ${comp.color}</div>`
                      : ""
                  }
                </div>
@@ -323,17 +334,24 @@ function generateItemId(title) {
   );
 }
 
-// Function to get all complementary items from cart
+// Enhanced function to get complementary items with proper custom fabric pattern notes mapping
 function getComplementaryItems() {
   let complementaryItems = [];
 
   cart.forEach((item) => {
     if (item.complementaryItems && item.complementaryItems.length > 0) {
       item.complementaryItems.forEach((comp) => {
-        complementaryItems.push({
-          id: comp.id || comp.productId || generateItemId(comp.title), // Ensure ID is included
-          productId: comp.productId || comp.id || generateItemId(comp.title), // Ensure productId is also set
+        // Enhanced complementary item with proper parent product ID mapping
+        const complementaryItem = {
+          id: comp.id || comp.productId || generateItemId(comp.title),
+          productId: comp.productId || comp.id || generateItemId(comp.title),
+
+          // FIX: Ensure parent product information is properly captured
+          parentProductId:
+            item.id || item.productId || generateItemId(item.title),
           parentItem: item.title,
+          parentItemId: item.id || item.productId || generateItemId(item.title),
+
           name: comp.title,
           price: comp.price,
           size: comp.size,
@@ -343,7 +361,81 @@ function getComplementaryItems() {
               ? comp.price * comp.size
               : comp.price,
           image: comp.image || "https://via.placeholder.com/60",
-        });
+
+          // Custom fabric specific details with proper pattern notes mapping
+          isCustomFabric: comp.isCustom || comp.isCustomFabric || false,
+          customFabricDetails:
+            comp.isCustom || comp.isCustomFabric
+              ? {
+                  color: comp.color || comp.fabricColor || "Not specified",
+                  material:
+                    comp.material || comp.fabricMaterial || "Not specified",
+
+                  // FIX: Proper pattern notes mapping - check multiple possible property names
+                  pattern:
+                    comp.PatternNotes ||
+                    comp.patternNotes ||
+                    comp.pattern ||
+                    comp.fabricPattern ||
+                    comp.sewingPattern ||
+                    comp.customPatternNotes ||
+                    "Not specified",
+
+                  description:
+                    comp.description ||
+                    comp.fabricDescription ||
+                    "Custom fabric selection",
+
+                  // FIX: Map pattern notes from multiple possible sources
+                  patternNotes:
+                    comp.PatternNotes ||
+                    comp.patternNotes ||
+                    comp.customPatternNotes ||
+                    comp.sewingPatternNotes ||
+                    comp.fabricPatternNotes ||
+                    comp.notes ||
+                    "No additional notes",
+
+                  customPrice: comp.customPrice || comp.price || 1.0,
+                  fabricType: comp.fabricType || "Custom",
+                  finish: comp.finish || comp.fabricFinish || "Standard",
+                  weight: comp.weight || comp.fabricWeight || "Not specified",
+                  width: comp.width || comp.fabricWidth || "Standard width",
+
+                  // Additional pattern-specific fields
+                  sewingInstructions:
+                    comp.sewingInstructions || comp.instructions || null,
+                  patternSize: comp.patternSize || comp.size || null,
+                  difficulty: comp.difficulty || comp.patternDifficulty || null,
+                }
+              : null,
+
+          // Additional metadata with proper parent product references
+          itemType:
+            comp.isCustom || comp.isCustomFabric ? "custom_fabric" : "standard",
+          addedDate: new Date().toISOString(),
+          specifications: comp.specifications || {},
+
+          // FIX: Add flattened fields for easier sheet processing
+          fabricPatternNotes:
+            comp.PatternNotes ||
+            comp.patternNotes ||
+            comp.customPatternNotes ||
+            comp.sewingPatternNotes ||
+            comp.fabricPatternNotes ||
+            comp.notes ||
+            null,
+
+          // FIX: Add parent product information at multiple levels for redundancy
+          parentProductInfo: {
+            id: item.id || item.productId || generateItemId(item.title),
+            name: item.title,
+            price: item.price,
+            category: item.category || "Not specified",
+          },
+        };
+
+        complementaryItems.push(complementaryItem);
       });
     }
   });
@@ -351,7 +443,7 @@ function getComplementaryItems() {
   return complementaryItems;
 }
 
-// Calculate order summary
+// Enhanced calculateOrderSummary function with COD charges support
 function calculateOrderSummary() {
   // Calculate subtotal
   const subtotal = orderItems.reduce((total, item) => total + item.subtotal, 0);
@@ -379,23 +471,19 @@ function calculateOrderSummary() {
   // Apply discount if any
   let discount = 0;
   try {
-    // Get applied promo code from session storage
     const appliedPromoCode = JSON.parse(
       sessionStorage.getItem("appliedPromoCode")
     );
 
     if (appliedPromoCode) {
-      // Use amount property if it exists, otherwise use discount property
       const discountAmount =
         appliedPromoCode.amount || appliedPromoCode.discount || 0;
 
       if (appliedPromoCode.type === "percentage") {
         if (appliedPromoCode.applyTo === "shipping") {
-          // Don't change shipping discount handling
           let shippingCost =
             pricingConfig.shippingCosts?.[selectedShipping] || 9.99;
           discount = shippingCost * (discountAmount / 100);
-          // This will be applied to shipping later
         } else {
           discount = fullSubtotal * (discountAmount / 100);
         }
@@ -403,11 +491,9 @@ function calculateOrderSummary() {
         appliedPromoCode.type === "flat" ||
         appliedPromoCode.type === "fixed"
       ) {
-        // Handle both "flat" and "fixed" types for compatibility
         discount = Math.min(fullSubtotal, discountAmount);
       }
 
-      // Make sure to explicitly show the discount row when needed
       if (discount > 0) {
         const discountElement = document.getElementById("discountValue");
         if (discountElement) {
@@ -421,7 +507,6 @@ function calculateOrderSummary() {
     }
   } catch (e) {
     console.error("Error parsing promo code:", e);
-    // If there's an error, remove the applied promo code
     sessionStorage.removeItem("appliedPromoCode");
     const discountRow = document.getElementById("discountRow");
     if (discountRow) {
@@ -456,15 +541,26 @@ function calculateOrderSummary() {
     console.error("Error applying shipping discount:", e);
   }
 
-  // Calculate the amount to tax (subtotal minus discount)
-  const taxableAmount = fullSubtotal - discount + shippingCost;
+  // Calculate COD charges if COD payment method is selected
+  let codCharges = 0;
+  const isCODSelected = document
+    .getElementById("codPayment")
+    ?.classList.contains("active");
 
-  // Calculate VAT/tax based on the discounted amount
+  if (isCODSelected) {
+    codCharges = pricingConfig.codCharges || 0;
+    console.log("COD charges applied:", codCharges);
+  }
+
+  // Calculate the amount to tax (subtotal minus discount + shipping + COD charges)
+  const taxableAmount = fullSubtotal - discount + shippingCost + codCharges;
+
+  // Calculate VAT/tax based on the taxable amount
   const vatPercentage = pricingConfig.vatPercentage || 10;
   const tax = taxableAmount * (vatPercentage / 100);
 
   // Calculate total
-  orderTotal = fullSubtotal + tax + shippingCost - discount;
+  orderTotal = fullSubtotal + tax + shippingCost + codCharges - discount;
 
   // Update order summary display
   const subtotalElement = document.getElementById("subtotal");
@@ -488,11 +584,29 @@ function calculateOrderSummary() {
     }
   }
 
+  // Show/hide COD charges row
+  const codChargesElement = document.getElementById("codCharges");
+  const codChargesRow = document.getElementById("codChargesRow");
+
+  if (codCharges > 0) {
+    if (codChargesElement) {
+      codChargesElement.textContent = `$${codCharges.toFixed(2)}`;
+    }
+    if (codChargesRow) {
+      codChargesRow.style.display = "flex";
+    }
+  } else {
+    if (codChargesRow) {
+      codChargesRow.style.display = "none";
+    }
+  }
+
   const totalElement = document.getElementById("total");
   if (totalElement) {
     totalElement.textContent = `$${orderTotal.toFixed(2)}`;
   }
 
+  // Handle discount row visibility
   if (discount > 0) {
     const discountElement = document.getElementById("discountValue");
     if (discountElement) {
@@ -509,7 +623,7 @@ function calculateOrderSummary() {
     }
   }
 
-  // Store order details for submission
+  // Store order details for submission (updated with COD charges)
   orderDetails = {
     items: orderItems,
     complementaryItems: getComplementaryItems(),
@@ -518,6 +632,7 @@ function calculateOrderSummary() {
     taxableAmount: taxableAmount,
     tax: tax,
     shipping: shippingCost,
+    codCharges: codCharges,
     total: orderTotal,
     shippingMethod: selectedShipping,
   };
@@ -919,8 +1034,7 @@ async function placeOrder() {
     const requireLogin = false; // Set to true if login is mandatory
     if (requireLogin && !userId) {
       showNotification("Please log in to place an order.", "error");
-      // Optionally redirect to login page
-      // setTimeout(() => window.location.href = "login.html", 2000);
+      showLoading(false);
       return;
     }
 
@@ -942,6 +1056,7 @@ async function placeOrder() {
     // Validate email format
     if (customerInfo.email && !isValidEmail(customerInfo.email)) {
       showNotification("Please enter a valid email address.", "error");
+      showLoading(false);
       return;
     }
 
@@ -962,16 +1077,19 @@ async function placeOrder() {
       // Basic card validation
       if (cardNumber.length < 13 || cardNumber.length > 19) {
         showNotification("Please enter a valid card number.", "error");
+        showLoading(false);
         return;
       }
 
       if (!cardExpiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
         showNotification("Please enter a valid expiry date (MM/YY).", "error");
+        showLoading(false);
         return;
       }
 
       if (cardCvv.length < 3 || cardCvv.length > 4) {
         showNotification("Please enter a valid CVV.", "error");
+        showLoading(false);
         return;
       }
 
@@ -995,10 +1113,25 @@ async function placeOrder() {
         "Your cart is empty. Please add items before placing an order.",
         "error"
       );
+      showLoading(false);
       return;
     }
 
-    // Always get the value, regardless of payment method
+    // Get enhanced complementary items with custom fabric details
+    const complementaryItems = getComplementaryItems();
+
+    // Validate custom fabric data if present
+    if (complementaryItems.some((item) => item.isCustomFabric)) {
+      validateCustomFabricData(complementaryItems);
+    }
+
+    // Update order details to include enhanced complementary items
+    orderDetails = {
+      ...orderDetails,
+      complementaryItems: complementaryItems,
+    };
+
+    // Create comprehensive order object with enhanced data structure
     const order = {
       id: generateOrderNumber(),
       date: new Date().toISOString(),
@@ -1006,7 +1139,6 @@ async function placeOrder() {
       customer: customerInfo,
       order: {
         ...orderDetails,
-
         items: orderDetails.items.map((item) => ({
           ...item,
           imageUrl:
@@ -1014,20 +1146,20 @@ async function placeOrder() {
           price: parseFloat(item.price) || 0,
           quantity: parseInt(item.quantity) || 1,
         })),
-        complementaryItems:
-          orderDetails.complementaryItems?.map((item) => ({
-            ...item,
-            imageUrl:
-              item.image || item.imageUrl || "https://via.placeholder.com/60",
-            price: parseFloat(item.price) || 0,
-            quantity: parseInt(item.quantity) || 1,
-          })) || [],
+        complementaryItems: complementaryItems,
         orderSource: "web",
         browserInfo: {
           userAgent: navigator.userAgent,
           language: navigator.language,
           timestamp: Date.now(),
         },
+        // Add custom fabric flags for easy identification
+        hasCustomFabrics: complementaryItems.some(
+          (item) => item.isCustomFabric
+        ),
+        customFabricCount: complementaryItems.filter(
+          (item) => item.isCustomFabric
+        ).length,
       },
       paymentMethod: paymentMethod,
       paymentDetails: paymentDetails,
@@ -1044,20 +1176,18 @@ async function placeOrder() {
       orderId: order.id,
       paymentMethod: order.paymentMethod,
       itemCount: order.order.items.length,
+      complementaryItemCount: order.order.complementaryItems.length,
+      customFabricCount: order.order.customFabricCount,
       totalAmount: order.order.total,
     });
 
-    // Process the order
+    // Process the order with enhanced custom fabric handling
     await processOrder(order);
 
-    // Clear cart and session data
-    localStorage.removeItem("shoppingCart");
-    sessionStorage.removeItem("appliedPromoCode");
+    // Clear cart and session data after successful order
+    clearCartSimple();
 
-    // Optionally clear other temporary data
-    sessionStorage.removeItem("checkoutFormData");
-
-    // Show success message and redirect or show order details
+    // Show success message and redirect
     showOrderSuccess(order);
 
     // Optional: Track successful order for analytics
@@ -1079,6 +1209,9 @@ async function placeOrder() {
     } else if (error.message.includes("inventory")) {
       errorMessage =
         "Some items are no longer available. Please review your cart.";
+    } else if (error.message.includes("custom fabric")) {
+      errorMessage =
+        "There was an issue processing your custom fabric selections. Please review and try again.";
     }
 
     showNotification(errorMessage, "error");
@@ -1260,67 +1393,145 @@ function showOrderSuccess(order) {
 // ORDER SUBMISSION
 async function processOrder(order) {
   try {
-    // Get the Google Script URL from your configuration
     const scriptUrl =
       "https://script.google.com/macros/s/AKfycbxXBgS76lCOYor2UvWmXLlx9o5EBQrYDz-HSajTYLkyPC93EvRyNTZe0k0_TS7oa3_8/exec";
 
-    // Ensure standardized image URLs for all items (main and complementary)
+    // Enhanced order standardization with proper parent product ID mapping
     const standardizedOrder = {
       ...order,
-      // Ensure order details are properly formatted
       order: {
         ...order.order,
-        // Standardize all image URLs in the main items array
         items: order.order.items.map((item) => ({
           ...item,
           imageUrl:
             item.imageUrl || item.image || "https://via.placeholder.com/60",
-          // Remove the image property to avoid duplication
           image: undefined,
+          // FIX: Ensure main item has proper product ID
+          productId:
+            item.id ||
+            item.productId ||
+            generateItemId(item.name || item.title),
+          id:
+            item.id ||
+            item.productId ||
+            generateItemId(item.name || item.title),
         })),
-        // Standardize all image URLs in the complementary items array if it exists
+
+        // FIX: Enhanced complementary items with explicit parent product ID mapping
         complementaryItems: (order.order.complementaryItems || []).map(
           (item) => ({
             ...item,
             imageUrl:
               item.imageUrl || item.image || "https://via.placeholder.com/60",
-            // Remove the image property to avoid duplication
             image: undefined,
-            // Ensure parent item is properly set
+
+            // FIX: Ensure parent product information is always present
+            parentProductId: item.parentProductId || item.parentItemId || null,
             parentItem: item.parentItem || "",
+            parentItemId: item.parentItemId || item.parentProductId || null,
+
+            // FIX: Ensure product ID is present
+            productId: item.productId || item.id || generateItemId(item.name),
+            id: item.id || item.productId || generateItemId(item.name),
+
+            // Ensure custom fabric details are preserved with proper pattern notes
+            customFabricDetails:
+              item.isCustomFabric && item.customFabricDetails
+                ? {
+                    color: item.customFabricDetails.color || "Not specified",
+                    material:
+                      item.customFabricDetails.material || "Not specified",
+
+                    // FIX: Ensure pattern notes are properly mapped
+                    pattern:
+                      item.customFabricDetails.PatternNotes ||
+                      item.customFabricDetails.pattern ||
+                      item.customFabricDetails.patternNotes ||
+                      "Not specified",
+
+                    description:
+                      item.customFabricDetails.description ||
+                      "Custom fabric selection",
+
+                    // FIX: Multiple fallbacks for pattern notes
+                    patternNotes:
+                      item.customFabricDetails.PatternNotes ||
+                      item.customFabricDetails.patternNotes ||
+                      item.customFabricDetails.customPatternNotes ||
+                      item.customFabricDetails.sewingPatternNotes ||
+                      item.fabricPatternNotes ||
+                      "No additional notes",
+
+                    customPrice:
+                      parseFloat(item.customFabricDetails.customPrice) || 1.0,
+                    fabricType: item.customFabricDetails.fabricType || "Custom",
+                    finish: item.customFabricDetails.finish || "Standard",
+                    weight: item.customFabricDetails.weight || "Not specified",
+                    width: item.customFabricDetails.width || "Standard width",
+                  }
+                : null,
+
+            // FIX: Flatten important fields for easier sheet processing
+            fabricColor: item.customFabricDetails?.color || null,
+            fabricMaterial: item.customFabricDetails?.material || null,
+            fabricPattern:
+              item.customFabricDetails?.PatternNotes ||
+              item.customFabricDetails?.pattern ||
+              item.customFabricDetails?.patternNotes ||
+              null,
+            fabricDescription: item.customFabricDetails?.description || null,
+
+            // FIX: Ensure pattern notes are available at multiple levels
+            fabricPatternNotes:
+              item.customFabricDetails?.PatternNotes ||
+              item.customFabricDetails?.patternNotes ||
+              item.customFabricDetails?.customPatternNotes ||
+              item.fabricPatternNotes ||
+              null,
+
+            // Additional flags for sheet processing
+            isCustomFabric: item.isCustomFabric || false,
+            itemType: item.itemType || "standard",
+
+            // FIX: Include parent product information for redundancy
+            parentProductInfo: item.parentProductInfo || null,
           })
         ),
       },
     };
 
-    // Make sure required fields match what the Apps Script expects
+    // Create the order data structure for Google Sheets with enhanced parent ID mapping
     const orderData = {
       action: "submitOrder",
       order: {
-        // Order ID required by Apps Script
         id: standardizedOrder.id,
-        // Ensure date is in ISO format
         date: standardizedOrder.date,
-        // Customer information expected by Apps Script
         customer: standardizedOrder.customer,
-        // Payment details
         paymentMethod: standardizedOrder.paymentMethod,
-        // Status field required by Apps Script
         status: standardizedOrder.status,
-        // Shipping method needs to be at the top level as well as in the order object
         shippingMethod: selectedShipping,
-        // Order details with items, subtotals, etc.
+
         order: {
           ...standardizedOrder.order,
-          // Make sure shipping method is also included in the order object
           shippingMethod: selectedShipping,
+
+          // Add flags to indicate custom fabrics
+          hasCustomFabrics: standardizedOrder.order.complementaryItems.some(
+            (item) => item.isCustomFabric
+          ),
+          customFabricCount: standardizedOrder.order.complementaryItems.filter(
+            (item) => item.isCustomFabric
+          ).length,
         },
       },
     };
 
-    console.log("Submitting order data:", JSON.stringify(orderData));
+    console.log(
+      "Submitting order with proper parent product IDs:",
+      JSON.stringify(orderData, null, 2)
+    );
 
-    // First store order in localStorage as backup
+    // Store order in localStorage as backup
     const orders = JSON.parse(localStorage.getItem("orders") || "[]");
     orders.push(standardizedOrder);
     localStorage.setItem("orders", JSON.stringify(orders));
@@ -1332,16 +1543,12 @@ async function processOrder(order) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(orderData),
-      mode: "no-cors", // This is important for Google Apps Script
+      mode: "no-cors",
     });
 
-    // In no-cors mode we don't get a proper response object we can parse
-    // Instead, we'll just return the original order object
     return standardizedOrder;
   } catch (error) {
-    console.error("Error submitting order to server:", error);
-    // Return the order object even if there's an error
-    // so the local success flow can continue
+    console.error("Error submitting order with parent product IDs:", error);
     return order;
   }
 }
@@ -1437,26 +1644,34 @@ function updatePaymentMethodAvailability() {
   }
 }
 
+// Enhanced selectPaymentMethod function with COD charges
+
 window.selectPaymentMethod = function (method) {
+  // Remove active class from all payment methods
   document.querySelectorAll(".payment-method").forEach((el) => {
     el.classList.remove("active");
   });
 
+  // Add active class to selected method
   const selectedPayment = document.getElementById(`${method}Payment`);
-  if (selectedPayment) selectedPayment.classList.add("active");
+  if (selectedPayment) {
+    selectedPayment.classList.add("active");
+  }
 
+  // Show/hide payment forms based on selection
   const cardForm = document.getElementById("cardPaymentForm");
   const codForm = document.getElementById("codPaymentForm");
 
   if (method === "card") {
     if (cardForm) cardForm.style.display = "block";
     if (codForm) codForm.style.display = "none";
-  } else {
+  } else if (method === "cod") {
     if (cardForm) cardForm.style.display = "none";
     if (codForm) codForm.style.display = "block";
   }
 
-  calculateOrderSummary(); // recalculate without COD charges
+  // Recalculate order summary with COD charges if applicable
+  calculateOrderSummary();
 };
 
 // Patch calculateOrderSummary to include COD charges if needed
@@ -1469,3 +1684,56 @@ window.calculateOrderSummary = function () {
     totalElement.textContent = `$${orderTotal.toFixed(2)}`;
   }
 };
+
+// Helper function to generate custom fabric summary
+function generateCustomFabricSummary(complementaryItems) {
+  const customFabrics = complementaryItems.filter(
+    (item) => item.isCustomFabric
+  );
+
+  if (customFabrics.length === 0) {
+    return null;
+  }
+
+  return customFabrics.map((fabric) => ({
+    name: fabric.name,
+    color: fabric.fabricColor,
+    material: fabric.fabricMaterial,
+    pattern: fabric.fabricPattern,
+    price: fabric.price,
+
+    // FIX: Ensure pattern notes are included in summary
+    notes: fabric.fabricPatternNotes,
+    patternNotes: fabric.fabricPatternNotes,
+
+    parentItem: fabric.parentItem,
+  }));
+}
+
+// Function to validate custom fabric data before submission
+function validateCustomFabricData(complementaryItems) {
+  const customFabrics = complementaryItems.filter(
+    (item) => item.isCustomFabric
+  );
+
+  for (const fabric of customFabrics) {
+    if (!fabric.customFabricDetails) {
+      console.warn(`Custom fabric ${fabric.name} missing detailed information`);
+      continue;
+    }
+
+    const details = fabric.customFabricDetails;
+
+    // Log custom fabric details for verification
+    console.log(`Custom Fabric Details for ${fabric.name}:`, {
+      color: details.color,
+      material: details.material,
+      pattern: details.pattern,
+      description: details.description,
+      patternNotes: details.patternNotes,
+      price: details.customPrice,
+    });
+  }
+
+  return true;
+}

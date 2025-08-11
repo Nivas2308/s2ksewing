@@ -118,7 +118,7 @@ function verifyEmployeeEmail() {
 
     // Redirect to admin login after a short delay
     setTimeout(() => {
-      window.location.href = "adminlogin.html";
+      window.location.href = "/server/adminlogin.html";
     }, 1500);
   } else {
     closeEmployeeModal();
@@ -475,7 +475,7 @@ function logout() {
   updateProfileIconColor(false);
 
   // Redirect to login page
-  window.location.href = "login.html";
+  window.location.href = "/public/login.html";
 }
 
 // Function to validate email format
