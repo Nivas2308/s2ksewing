@@ -5,7 +5,7 @@ let currentTab = "all";
 let currentPage = 1;
 const ITEMS_PER_PAGE = 10;
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbxVcYsfFWqMeaYbFYJZuNpaA2hFnLGsSOcGhyDDhmGFJhkZqKhutDd9mzflBmmNMjyq/exec";
+  "https://script.google.com/macros/s/AKfycbz250emrafVgqhfloBssH0lKrzHcKCbyRjL2LkU1tNzV_m5EwgAes3486G6YuO8Xbv2/exec";
 const PRODUCTS_API_URL =
   "https://script.google.com/macros/s/AKfycby9ucXgMhxRaUyVIP_k-8cela5CJlYrWG7y5YOD3zShvf0OYW2HkeAwr4o4zo0zMC1S/exec";
 
@@ -85,6 +85,14 @@ function loadOrders() {
     .then((data) => {
       if (data.success) {
         currentOrders = data.orders;
+
+        // FIXED: Sort orders by date (newest first)
+        currentOrders.sort((a, b) => {
+          const dateA = new Date(a["Date"] || a.date || 0);
+          const dateB = new Date(b["Date"] || b.date || 0);
+          return dateB.getTime() - dateA.getTime(); // Newest first
+        });
+
         console.log("Loaded all orders:", currentOrders); // Debug log
         console.log("Total orders loaded:", currentOrders.length); // Debug log
         updateTabCounters(currentOrders);
@@ -131,7 +139,7 @@ function updateTabCounters(orders) {
 
 // Display filtered orders based on current tab and search
 function displayFilteredOrders() {
-  let filteredOrders = currentOrders;
+  let filteredOrders = [...currentOrders]; // Create a copy to avoid mutating original
 
   // Apply search filter if any
   const searchTerm = document.getElementById("orderSearch").value.toLowerCase();
@@ -163,6 +171,13 @@ function displayFilteredOrders() {
     });
   }
 
+  // FIXED: Ensure filtered orders maintain date sorting (newest first)
+  filteredOrders.sort((a, b) => {
+    const dateA = new Date(a["Date"] || a.date || 0);
+    const dateB = new Date(b["Date"] || b.date || 0);
+    return dateB.getTime() - dateA.getTime(); // Newest first
+  });
+
   console.log(
     `Filtered orders for tab "${currentTab}":`,
     filteredOrders.length
@@ -180,6 +195,7 @@ function displayFilteredOrders() {
   // Update pagination controls
   updatePagination(currentPage, totalPages, filteredOrders.length);
 }
+
 function showCustomItemDetails(itemIndex) {
   if (!fullOrderData || !fullOrderData.order || !fullOrderData.order.items) {
     alert("No custom item details found.");
@@ -651,11 +667,7 @@ function displayOrderDetail(order) {
           <td>
             <div>
               ${itemName}
-              ${
-                isCustomFabric
-                  ? '<span style="color: #007bff; font-weight: bold; font-size: 11px; background: #e3f2fd; padding: 2px 6px; border-radius: 10px; margin-left: 5px;">CUSTOM</span>'
-                  : ""
-              }
+              
             </div>
             ${customFabricDetails}
           </td>
@@ -769,13 +781,94 @@ function detectCustomFabric(item, itemName, fullOrderData, index) {
   return isCustom;
 }
 
-// Enhanced function to build custom fabric details HTML - SIMPLIFIED for table display
+// Enhanced function to build custom fabric details HTML
 function buildCustomFabricDetailsHTML(item, fullOrderData, index) {
-  // Only show a simple indicator in the table - all details will be in popup
+  const details = [];
+
+  // Get details from the item itself
+  const itemProperties = [
+    "material",
+    "color",
+    "size",
+    "sewingPatternNotes",
+    "notes",
+    "description",
+    "fabric",
+  ];
+  itemProperties.forEach((prop) => {
+    if (item[prop] && item[prop] !== "" && item[prop] !== null) {
+      const label =
+        prop.charAt(0).toUpperCase() + prop.slice(1).replace(/([A-Z])/g, " $1");
+      details.push(`${label}: ${item[prop]}`);
+    }
+  });
+
+  // Get details from fullOrderData if available
+  if (
+    fullOrderData &&
+    fullOrderData.order &&
+    fullOrderData.order.items &&
+    fullOrderData.order.items[index]
+  ) {
+    const fullItem = fullOrderData.order.items[index];
+
+    itemProperties.forEach((prop) => {
+      if (fullItem[prop] && fullItem[prop] !== "" && fullItem[prop] !== null) {
+        const label =
+          prop.charAt(0).toUpperCase() +
+          prop.slice(1).replace(/([A-Z])/g, " $1");
+        const detailText = `${label}: ${fullItem[prop]}`;
+
+        // Avoid duplicates
+        if (!details.includes(detailText)) {
+          details.push(detailText);
+        }
+      }
+    });
+
+    // Check options object
+    if (fullItem.options && typeof fullItem.options === "object") {
+      Object.keys(fullItem.options).forEach((key) => {
+        if (
+          fullItem.options[key] &&
+          fullItem.options[key] !== "" &&
+          fullItem.options[key] !== null
+        ) {
+          const label =
+            key.charAt(0).toUpperCase() +
+            key.slice(1).replace(/([A-Z])/g, " $1");
+          const detailText = `${label}: ${fullItem.options[key]}`;
+
+          // Avoid duplicates
+          if (!details.includes(detailText)) {
+            details.push(detailText);
+          }
+        }
+      });
+    }
+  }
+
+  // Remove duplicates and sort
+  const uniqueDetails = [...new Set(details)].sort();
+
+  // if (uniqueDetails.length > 0) {
+  //   return `
+  //     <div class="custom-fabric-details" style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px;">
+  //       <strong>Custom Fabric Details:</strong><br>
+  //       ${uniqueDetails
+  //         .map(
+  //           (detail) =>
+  //             `<span style="display: block; margin: 2px 0; font-size: 12px; color: #666;">${detail}</span>`
+  //         )
+  //         .join("")}
+  //     </div>
+  //   `;
+  // }
+
   return `
-    <div class="custom-fabric-details" style="margin-top: 10px; padding: 8px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-      <strong>Custom Fabric Item:</strong><br>
-      <span style="display: block; margin: 2px 0; font-size: 12px; color: #856404; font-style: italic;">Click Product ID to view full details</span>
+    <div class="custom-fabric-details" style=" display: none; margin-top: 10px; padding: 8px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+      <strong>Custom Item:</strong><br>
+      <span style="display: block; margin: 2px 0; font-size: 12px; color: #856404; font-style: italic;">Click Product ID to view details</span>
     </div>
   `;
 }
@@ -819,55 +912,76 @@ function showCustomItemDetails(itemIndex) {
     position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   `;
 
-  // Collect only the specific fields requested
+  // Collect all available details
   const details = [];
 
-  // Only show these specific fields
-  const fieldsToShow = {
-    "Item Name": fullItem["Item Name"] || fullItem.name || fullItem.itemName,
-    Size: fullItem["Size"] || fullItem.size,
-    Id: fullItem["Id"] || fullItem.id || fullItem["ID"],
-    "Parent Item": fullItem["Parent Item"] || fullItem.parentItem,
-    "Parent Item Id":
-      fullItem["Parent Item Id"] ||
-      fullItem.parentItemId ||
-      fullItem["Parent Item ID"],
-
-    "Fabric Color":
-      fullItem["Fabric Color"] || fullItem.fabricColor || fullItem.color,
-    "Fabric Material":
-      fullItem["Fabric Material"] ||
-      fullItem.fabricMaterial ||
-      fullItem.material,
-    "Fabric Description":
-      fullItem["Fabric Description"] ||
-      fullItem.fabricDescription ||
-      fullItem.description,
-    "Fabric Pattern Notes":
-      fullItem["Fabric Pattern Notes"] ||
-      fullItem.fabricPatternNotes ||
-      fullItem.sewingPatternNotes,
+  // Standard properties
+  const standardProps = {
+    name: "Item Name",
+    itemName: "Item Name",
+    "Item Name": "Item Name",
+    material: "Material",
+    color: "Color",
+    size: "Size",
+    fabric: "Fabric Type",
+    sewingPatternNotes: "Sewing Pattern Notes",
+    notes: "Notes",
+    description: "Description",
+    customization: "Customization",
+    Price: "Price",
+    price: "Price",
+    Quantity: "Quantity",
+    quantity: "Quantity",
   };
 
-  Object.keys(fieldsToShow).forEach((fieldName) => {
-    const value = fieldsToShow[fieldName];
-    if (value && value !== "" && value !== null && value !== "undefined") {
-      details.push(`<strong>${fieldName}:</strong> ${value}`);
+  Object.keys(standardProps).forEach((key) => {
+    if (fullItem[key] && fullItem[key] !== "" && fullItem[key] !== null) {
+      const value =
+        typeof fullItem[key] === "number"
+          ? key.toLowerCase().includes("price")
+            ? `$${fullItem[key].toFixed(2)}`
+            : fullItem[key]
+          : fullItem[key];
+      details.push(`<strong>${standardProps[key]}:</strong> ${value}`);
     }
   });
 
-  // Handle image separately
-  let imageHtml = "";
-  const imageUrl = fullItem["Image Url"] || fullItem.imageUrl || fullItem.image;
-  if (imageUrl && imageUrl !== "" && imageUrl !== null) {
-    imageHtml = `
-      <div style="margin: 15px 0; text-align: center;">
-        <strong>Custom Fabric Image:</strong><br>
-        <img src="${imageUrl}" alt="Custom Fabric" style="max-width: 300px; max-height: 300px; border-radius: 8px; border: 2px solid #007bff; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <div style="display: none; color: #dc3545; font-style: italic; margin-top: 10px;">Image could not be loaded</div>
-      </div>
-    `;
+  // Options object
+  if (fullItem.options && typeof fullItem.options === "object") {
+    Object.keys(fullItem.options).forEach((key) => {
+      if (
+        fullItem.options[key] &&
+        fullItem.options[key] !== "" &&
+        fullItem.options[key] !== null
+      ) {
+        const label =
+          key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1");
+        details.push(`<strong>${label}:</strong> ${fullItem.options[key]}`);
+      }
+    });
   }
+
+  // Any other properties not covered above
+  Object.keys(fullItem).forEach((key) => {
+    if (
+      !standardProps[key] &&
+      key !== "options" &&
+      fullItem[key] &&
+      fullItem[key] !== "" &&
+      fullItem[key] !== null &&
+      typeof fullItem[key] !== "object"
+    ) {
+      const label =
+        key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1");
+      const value =
+        typeof fullItem[key] === "number"
+          ? key.toLowerCase().includes("price")
+            ? `$${fullItem[key].toFixed(2)}`
+            : fullItem[key]
+          : fullItem[key];
+      details.push(`<strong>${label}:</strong> ${value}`);
+    }
+  });
 
   popup.innerHTML = `
     <button onclick="closeProductDetails()" style="
@@ -878,20 +992,15 @@ function showCustomItemDetails(itemIndex) {
       <i class="fas fa-cut" style="margin-right: 8px;"></i>
       Custom Fabric Item Details
     </h3>
-    ${imageHtml}
     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
       ${
         details.length
           ? details
               .map(
                 (d) =>
-                  `<div style="margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">${d}</div>`
+                  `<div style="margin-bottom: 8px; padding: 4px 0; border-bottom: 1px solid #e9ecef; last-child:border-bottom: none;">${d}</div>`
               )
               .join("")
-              .replace(
-                /(<div[^>]*>.*?<\/div>)(?!.*<div)/,
-                "$1".replace("border-bottom: 1px solid #e9ecef;", "")
-              )
           : '<em style="color: #6c757d;">No specific details available for this custom item.</em>'
       }
     </div>
@@ -906,7 +1015,7 @@ function showCustomItemDetails(itemIndex) {
   document.body.appendChild(overlay);
 }
 
-// Helper function to fill order totals (extracted for better organization)
+// Helper function to fill order totals - FIXED to always recalculate total with COD charges
 function fillOrderTotals(order) {
   let subtotal = 0,
     tax = 0,
@@ -940,16 +1049,24 @@ function fillOrderTotals(order) {
     shipping = order.shipping;
   }
 
-  // Handle Additional Cost (formerly COD Charges)
+  // Handle Additional Cost (separate from COD Charges)
   let additionalCost = 0;
   if (typeof order["Additional Cost"] === "number") {
     additionalCost = order["Additional Cost"];
-  } else if (typeof order["COD Charges"] === "number") {
-    additionalCost = order["COD Charges"];
   } else if (order.order && typeof order.order.additionalCost === "number") {
     additionalCost = order.order.additionalCost;
+  } else if (typeof order.additionalCost === "number") {
+    additionalCost = order.additionalCost;
+  }
+
+  // Handle COD Charges (separate from Additional Cost)
+  let codCharges = 0;
+  if (typeof order["COD Charges"] === "number") {
+    codCharges = order["COD Charges"];
   } else if (order.order && typeof order.order.codCharges === "number") {
-    additionalCost = order.order.codCharges;
+    codCharges = order.order.codCharges;
+  } else if (typeof order.codCharges === "number") {
+    codCharges = order.codCharges;
   }
 
   // Try to get Extra Amount
@@ -962,25 +1079,27 @@ function fillOrderTotals(order) {
     extraAmount = order.extraAmount;
   }
 
+  // FIXED: Always calculate total instead of using stored total
+  // This ensures COD charges and other updates are reflected
+  total = subtotal + tax + shipping + additionalCost + codCharges + extraAmount;
+
   // Show Additional Cost row
   const additionalCostRow = document.getElementById("additionalCostRow");
   const additionalCostCell = document.getElementById("detailAdditionalCost");
   if (additionalCostRow && additionalCostCell) {
-    additionalCostRow.style.display = "";
+    additionalCostRow.style.display = additionalCost > 0 ? "" : "none";
     additionalCostCell.textContent = `$${additionalCost.toFixed(2)}`;
   }
 
-  // Try to get total
-  if (typeof order["Total"] === "number") {
-    total = order["Total"];
-  } else if (order.order && typeof order.order.total === "number") {
-    total = order.order.total;
-  } else if (typeof order.total === "number") {
-    total = order.total;
-  } else {
-    total = subtotal + tax + shipping + additionalCost + extraAmount;
+  // Show COD Charges row
+  const codChargesRow = document.getElementById("codChargesRow");
+  const codChargesCell = document.getElementById("detailCODCharges");
+  if (codChargesRow && codChargesCell) {
+    codChargesRow.style.display = codCharges > 0 ? "" : "none";
+    codChargesCell.textContent = `$${codCharges.toFixed(2)}`;
   }
 
+  // Update all the display elements
   document.getElementById("detailSubtotal").textContent = `$${subtotal.toFixed(
     2
   )}`;
@@ -992,6 +1111,154 @@ function fillOrderTotals(order) {
     "detailExtraAmount"
   ).textContent = `$${extraAmount.toFixed(2)}`;
   document.getElementById("detailTotal").textContent = `$${total.toFixed(2)}`;
+
+  console.log("Total calculation breakdown:", {
+    subtotal,
+    tax,
+    shipping,
+    additionalCost,
+    codCharges,
+    extraAmount,
+    calculatedTotal: total,
+  });
+}
+
+// Helper function to setup update form (modified to handle both fields)
+function setupUpdateForm(order) {
+  const extraAmount =
+    order["Extra Amount"] ||
+    order.extraAmount ||
+    (order.order ? order.order.extraAmount : 0) ||
+    0;
+  const additionalCost =
+    order["Additional Cost"] ||
+    order.additionalCost ||
+    (order.order ? order.order.additionalCost : 0) ||
+    0;
+  const codCharges =
+    order["COD Charges"] ||
+    order.codCharges ||
+    (order.order ? order.order.codCharges : 0) ||
+    0;
+
+  document.getElementById("updateOrderId").value = selectedOrderId;
+  document.getElementById("orderStatus").value =
+    order["Order Status"] || order.status || "Order Placed";
+  document.getElementById("courier").value =
+    order["Courier"] || order.courier || "";
+  document.getElementById("trackingId").value =
+    order["Tracking ID"] || order.trackingId || "";
+  document.getElementById("comments").value =
+    order["Comments"] || order.comments || "";
+  document.getElementById("extraAmount").value = extraAmount || 0;
+
+  // Set additional cost and COD charges if form fields exist
+  const additionalCostField = document.getElementById("additionalCost");
+  if (additionalCostField) {
+    additionalCostField.value = additionalCost || 0;
+  }
+
+  const codChargesField = document.getElementById("codCharges");
+  if (codChargesField) {
+    codChargesField.value = codCharges || 0;
+  }
+}
+
+// Update order status with improved error handling and verification (modified to handle both fields)
+function updateOrderStatus(event) {
+  event.preventDefault();
+
+  const formData = {
+    orderId: document.getElementById("updateOrderId").value,
+    orderStatus: document.getElementById("orderStatus").value,
+    courier: document.getElementById("courier").value,
+    trackingId: document.getElementById("trackingId").value,
+    comments: document.getElementById("comments").value,
+    extraAmount: parseFloat(document.getElementById("extraAmount").value) || 0,
+  };
+
+  // Add additional cost and COD charges if form fields exist
+  const additionalCostField = document.getElementById("additionalCost");
+  if (additionalCostField) {
+    formData.additionalCost = parseFloat(additionalCostField.value) || 0;
+  }
+
+  const codChargesField = document.getElementById("codCharges");
+  if (codChargesField) {
+    formData.codCharges = parseFloat(codChargesField.value) || 0;
+  }
+
+  console.log("Updating order with data:", formData);
+
+  // Validate form
+  if (!formData.orderId || !formData.orderStatus) {
+    alert("Order ID and Status are required!");
+    return;
+  }
+
+  // Show loading state
+  const submitButton = event.target.querySelector('button[type="submit"]');
+  const originalButtonText = submitButton.textContent;
+  submitButton.textContent = "Updating...";
+  submitButton.disabled = true;
+
+  // Create the request payload
+  const requestBody = {
+    action: "updateOrderStatus",
+    data: formData,
+  };
+
+  console.log("Sending request:", requestBody);
+
+  // Use a more robust approach for the API call
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  })
+    .then((response) => {
+      console.log("Response status:", response.status);
+      submitButton.textContent = "Verifying...";
+
+      // Wait briefly then verify the update
+      setTimeout(() => {
+        verifyOrderUpdate(
+          formData.orderId,
+          formData.orderStatus,
+          () => {
+            // Success callback
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+            alert("Order status updated successfully!");
+            loadOrders(); // Refresh order list
+            closeOrderDetail();
+          },
+          () => {
+            // Failure callback - but don't assume it failed
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+            alert(
+              "Update request sent. Please refresh to see if changes were applied."
+            );
+            loadOrders(); // Refresh anyway to see current state
+          }
+        );
+      }, 3000); // Wait 3 seconds before checking
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      submitButton.textContent = originalButtonText;
+      submitButton.disabled = false;
+
+      // Even if fetch fails, the request might have gone through
+      alert(
+        "Update request sent, but verification failed. Please refresh the page to check if the update was applied."
+      );
+      loadOrders(); // Refresh to see current state
+    });
 }
 
 // Helper function to setup update form (extracted for better organization)
@@ -1951,3 +2218,129 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+// Enhanced function to show custom item details in popup - UPDATED for specific fields only
+function showCustomItemDetails(itemIndex) {
+  console.log("Showing custom item details for index:", itemIndex);
+
+  if (
+    !window.fullOrderData ||
+    !window.fullOrderData.order ||
+    !window.fullOrderData.order.items
+  ) {
+    alert("No custom item details found in order data.");
+    return;
+  }
+
+  const fullItem = window.fullOrderData.order.items[itemIndex];
+  if (!fullItem) {
+    alert("Custom item not found at index " + itemIndex);
+    return;
+  }
+
+  console.log("Full item data:", fullItem);
+
+  // Create popup overlay
+  const overlay = document.createElement("div");
+  overlay.id = "product-details-overlay";
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: flex;
+    justify-content: center; align-items: center; z-index: 10000;
+  `;
+
+  // Create popup content
+  const popup = document.createElement("div");
+  popup.id = "product-details-popup";
+  popup.style.cssText = `
+    background: white; border-radius: 8px; padding: 20px;
+    max-width: 500px; max-height: 80vh; overflow-y: auto;
+    position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  `;
+
+  // Collect only the specific fields requested
+  const details = [];
+
+  // Only show these specific fields
+  const fieldsToShow = {
+    "Item Name": fullItem["Item Name"] || fullItem.name || fullItem.itemName,
+    Size: fullItem["Size"] || fullItem.size,
+    Id: fullItem["Id"] || fullItem.id || fullItem["ID"],
+    "Parent Item": fullItem["Parent Item"] || fullItem.parentItem,
+    "Parent Item Id":
+      fullItem["Parent Item Id"] ||
+      fullItem.parentItemId ||
+      fullItem["Parent Item ID"],
+
+    "Fabric Color":
+      fullItem["Fabric Color"] || fullItem.fabricColor || fullItem.color,
+    "Fabric Material":
+      fullItem["Fabric Material"] ||
+      fullItem.fabricMaterial ||
+      fullItem.material,
+    "Fabric Description":
+      fullItem["Fabric Description"] ||
+      fullItem.fabricDescription ||
+      fullItem.description,
+    "Fabric Pattern Notes":
+      fullItem["Fabric Pattern Notes"] ||
+      fullItem.fabricPatternNotes ||
+      fullItem.sewingPatternNotes,
+  };
+
+  Object.keys(fieldsToShow).forEach((fieldName) => {
+    const value = fieldsToShow[fieldName];
+    if (value && value !== "" && value !== null && value !== "undefined") {
+      details.push(`<strong>${fieldName}:</strong> ${value}`);
+    }
+  });
+
+  // Handle image separately
+  let imageHtml = "";
+  const imageUrl = fullItem["Image Url"] || fullItem.imageUrl || fullItem.image;
+  if (imageUrl && imageUrl !== "" && imageUrl !== null) {
+    imageHtml = `
+      <div style="margin: 15px 0; text-align: center;">
+        <strong>Custom Fabric Image:</strong><br>
+        <img src="${imageUrl}" alt="Custom Fabric" style="max-width: 300px; max-height: 300px; border-radius: 8px; border: 2px solid #007bff; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div style="display: none; color: #dc3545; font-style: italic; margin-top: 10px;">Image could not be loaded</div>
+      </div>
+    `;
+  }
+
+  popup.innerHTML = `
+    <button onclick="closeProductDetails()" style="
+      position: absolute; top: 10px; right: 15px;
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: #666;">&times;</button>
+    <h3 style="margin-bottom: 15px; color: #28a745;">
+      <i class="fas fa-cut" style="margin-right: 8px;"></i>
+      Custom Fabric Item Details
+    </h3>
+    ${imageHtml}
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+      ${
+        details.length
+          ? details
+              .map(
+                (d) =>
+                  `<div style="margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">${d}</div>`
+              )
+              .join("")
+              .replace(
+                /(<div[^>]*>.*?<\/div>)(?!.*<div)/,
+                "$1".replace("border-bottom: 1px solid #e9ecef;", "")
+              )
+          : '<em style="color: #6c757d;">No specific details available for this custom item.</em>'
+      }
+    </div>
+    <div style="text-align: center; margin-top: 15px;">
+      <small style="color: #6c757d; font-style: italic;">
+        Custom fabric items are made to order based on the specifications above.
+      </small>
+    </div>
+  `;
+
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+}

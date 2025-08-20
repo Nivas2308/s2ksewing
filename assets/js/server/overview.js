@@ -4,7 +4,7 @@ const PRODUCTS_API =
 const CUSTOMERS_API =
   "https://script.google.com/macros/s/AKfycbwwp9dqgdsh77s2H-uoV970UuGSeiCQ5_pbeC4P75uz-UND78MjDJtzZSUYV42iiegd/exec?action=getAllCustomers";
 const ORDERS_API =
-  "https://script.google.com/macros/s/AKfycbzxf6QIcDxddugHTflm8lXtHcDo4gs0qGxqNznHGnet8AHf7esaYsVGXXoBTXKsMpgh/exec";
+  "https://script.google.com/macros/s/AKfycbzxp45xdczlcpym3gy5nMK0r1f4MYSi46m-TzAAaG7ylEmw1hkM9JMTOZxotXFJO0HU/exec";
 
 // Global chart instances
 let categoryChart, customerChart, salesChart;

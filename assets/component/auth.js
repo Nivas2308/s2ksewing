@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Use the correct deployment ID
       const url =
-        "https://script.google.com/macros/s/AKfycbz6xJBw9moH6g_iXHO9Cn0vAVZW47AAS2gihZTAn-yJoLCx-8_scvxKLU2rg7N41TdZ/exec";
+        "https://script.google.com/macros/s/AKfycbwWmAPt83L7z-yfDZRp4VDwDW8bnmU_D0m2tvjFhTGWbjylOYVXAFSaEgZyXr_vD2oC/exec";
 
       // Use fetch with no-cors mode
       fetch(url + "?email=" + encodeURIComponent(email) + "&source=website", {
@@ -119,7 +119,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Logo
-
 document.addEventListener("DOMContentLoaded", function () {
   fetch(
     "https://script.google.com/macros/s/AKfycbxWNzaRVCHFKBBq-bCCj4o_ZKLk7HhlmTHDehEilj8RVWCzPSv0VKtox6pvg9v3EuSPkw/exec?type=branding"

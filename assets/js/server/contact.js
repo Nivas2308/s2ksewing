@@ -1,5 +1,5 @@
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbw1OXOzP77UTIfgu3vd_gw4aoSkgahtrCC3tAc3XuFgn_hwgjwVJNSZBCFl63QKAC-e/exec";
+  "https://script.google.com/macros/s/AKfycbxUjqSYA336aC9VbvcYRCDh86CeO1c51w-bqe1awiJkvXPJE7np2Z5PztwCDK-rfnqt/exec";
 
 // Store contact info locally to ensure persistence
 let contactInfoCache = {

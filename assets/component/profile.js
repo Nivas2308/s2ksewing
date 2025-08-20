@@ -296,10 +296,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-
-const favicon = document.createElement('link');
-favicon.rel = 'icon';
-favicon.type = 'image/png';
-favicon.href = '/assets/img/logo.png';
+const favicon = document.createElement("link");
+favicon.rel = "icon";
+favicon.type = "image/png";
+favicon.href = "/assets/img/logo.png";
 
 document.head.appendChild(favicon);

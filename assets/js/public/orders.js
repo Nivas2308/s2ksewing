@@ -596,7 +596,7 @@ function updatePaymentSummary(order) {
     const codChargesRow = document.createElement("div");
     codChargesRow.className = "summary-row";
     codChargesRow.innerHTML = `
-      <div>COD Charges</div>
+      <div>CBD Charges</div>
       <div>${formatPrice(codCharges)}</div>
     `;
     paymentSummaryContainer.appendChild(codChargesRow);
@@ -607,14 +607,16 @@ function updatePaymentSummary(order) {
     const extraAmountRow = document.createElement("div");
     extraAmountRow.className = "summary-row";
     extraAmountRow.innerHTML = `
-      <div>Extra Amount</div>
-      <div>${formatPrice(extraAmount)}</div>
+      <div>Additional Cost</div>
+      <div class="additional-value" style="color: #4caf50;">${formatPrice(
+        extraAmount
+      )}</div>
     `;
     paymentSummaryContainer.appendChild(extraAmountRow);
   }
 
   // Calculate final total including extra amount
-  const finalTotal = total;
+  const finalTotal = total + extraAmount;
 
   // Total
   const totalRow = document.createElement("div");
@@ -630,7 +632,7 @@ function updatePaymentSummary(order) {
   paymentMethodRow.className = "payment-method";
   let paymentMethodText = "";
   if (order.paymentMethod && order.paymentMethod.toLowerCase() === "cod") {
-    paymentMethodText = "Cash on Delivery";
+    paymentMethodText = "Cash Before Delivery";
   } else {
     paymentMethodText = "Online Payment";
   }

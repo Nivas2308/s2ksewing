@@ -1,1445 +1,748 @@
-// Global variables
-const ORDERS_SHEET_NAME = "Orders";
-const ORDER_ITEMS_SHEET_NAME = "Order Items";
-const SHEET_ID = "1DS_ycmVO8GPIQpvyEIeiwyU4SQtG2OkV_enVJDT4wuc";
+/**
+ * Complete Google Apps Script Code for S2K Sewing Contact Management System
+ * This file should be saved as Code.gs in your Google Apps Script project
+ */
 
+// Configuration Constants - UPDATE THESE FOR YOUR PROJECT
+const CONTACT_SHEET_NAME = "Contact_Submissions";
+const ADMIN_SHEET_NAME = "Admin_Contact_Info";
+const SPREADSHEET_ID = "1dzzk4IK89JE2FHOjgvytFiecVEiQwu2Q-Pe2eg72eyQ"; // Your spreadsheet ID
+const ADMIN_EMAIL = "s2ksewing@gmail.com"; // Your email address
 
-function doPost(e) {
-  try {
-    // First check if e is undefined (direct function call)
-    if (typeof e === 'undefined') {
-      console.error("doPost called directly without event object");
-      return createResponse(false, 'This function must be called via HTTP POST');
-    }
-    
-    // Then check for postData
-    if (!e.postData) {
-      console.error("No postData found in request");
-      return createResponse(false, 'No POST data received. Make sure to send data in the request body.');
-    }
-    
-    // Rest of your existing doPost implementation...
-    console.log("doPost event object:", JSON.stringify(e));
-    
-    // Handle URL-encoded form data (for updateOrderAmount)
-    if (e.postData.type === 'application/x-www-form-urlencoded') {
-      const params = e.parameter;
-      const action = params.action;
-      
-      console.log("doPost received URL-encoded action:", action);
-      console.log("doPost received URL-encoded params:", JSON.stringify(params));
-      
-      if (action === 'updateOrderAmount') {
-        return updateOrderAmount(params);
-      }
-      
-      return createResponse(false, 'Invalid action for URL-encoded request');
-    }
-    
-    // Handle JSON data (existing functionality)
-    if (!e.postData.contents) {
-      console.error("No contents found in postData");
-      return createResponse(false, 'No content found in POST data.');
-    }
-    
-    console.log("Raw POST data:", e.postData.contents);
-    
-    // Parse incoming JSON data
-    let data;
-    try {
-      data = JSON.parse(e.postData.contents);
-    } catch (parseError) {
-      console.error("JSON parsing error:", parseError);
-      return createResponse(false, 'Invalid JSON format in request body: ' + parseError.toString());
-    }
-    
-    const action = data.action;
-    
-    // Log the incoming request
-    console.log("doPost received action:", action);
-    console.log("doPost received data:", JSON.stringify(data));
-    
-    // Validate action parameter
-    if (!action) {
-      return createResponse(false, 'Action parameter is required');
-    }
-    
-    // Handle different actions
-    if (action === 'submitOrder') {
-      if (!data.order) {
-        return createResponse(false, 'Order data is required for submitOrder action');
-      }
-      return processOrderSubmission(data.order);
-    } else if (action === 'updateOrderStatus') {
-      if (!data.data) {
-        return createResponse(false, 'Update data is required for updateOrderStatus action');
-      }
-      return updateOrderStatusWithDetails(data.data);
-    } else {
-      return createResponse(false, 'Invalid action specified. Supported actions: submitOrder, updateOrderStatus, updateOrderAmount');
-    }
-  } catch (error) {
-    console.error("doPost error:", error);
-    console.error("Error stack:", error.stack);
-    return createResponse(false, 'Error processing request: ' + error.toString());
-  }
-}
+/**
+ * Main entry point for HTTP requests (GET and POST)
+ */
 function doGet(e) {
   try {
-    // Log the entire event object for debugging
-    console.log("doGet event object:", JSON.stringify(e));
-    
-    // Check if parameter exists
-    if (!e || !e.parameter) {
-      console.error("No parameters found in request");
-      return createResponse(false, 'No parameters received in GET request');
-    }
-    
-    // Parse the query parameters
     const action = e.parameter.action;
-    
-    console.log("doGet received action:", action);
-    console.log("doGet received parameters:", JSON.stringify(e.parameter));
-    
-    // Validate action parameter
-    if (!action) {
-      return createResponse(false, 'Action parameter is required');
+
+    if (action === "get_admin_contact_info") {
+      return getAdminContactInfo();
     }
-    
-    if (action === 'getOrders') {
-      return getOrdersResponse(e.parameter.limit, e.parameter.userId);
-    } else if (action === 'getAllOrders') {
-      // NEW: Handle getAllOrders action for dashboard
-      return getAllOrdersResponse(e.parameter.limit);
-    } else if (action === 'getOrderDetails') {
-      if (!e.parameter.orderId) {
-        return createResponse(false, 'orderId parameter is required for getOrderDetails action');
-      }
-      return getOrderDetailsResponse(e.parameter.orderId, e.parameter.userId);
-    } else if (action === 'getOrderStats') {
-      return getOrderStats(e.parameter.userId);
-    } else if (action === 'test') {
-      // Add a test endpoint
-      return createResponse(true, 'Web app is working correctly', {
-        timestamp: new Date().toISOString(),
-        parameters: e.parameter
-      });
-    } else {
-      return createResponse(false, 'Invalid action specified. Supported actions: getOrders, getAllOrders, getOrderDetails, getOrderStats, test');
-    }
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Invalid GET request",
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    console.error("doGet error:", error);
-    console.error("Error stack:", error.stack);
-    return createResponse(false, 'Error processing request: ' + error.toString());
+    console.error("Error in doGet:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Server error: " + error.message,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-
-function updateOrderAmount(params) {
+/**
+ * Main entry point for POST requests
+ */
+function doPost(e) {
   try {
-    const orderId = params.orderId;
-    const extraAmount = parseFloat(params.extraAmount || 0);
-    const newTotal = parseFloat(params.newTotal || 0);
-    
-    console.log(`Updating order ${orderId} with extra amount: ${extraAmount}, new total: ${newTotal}`);
-    
-    if (!orderId) {
-      return createResponse(false, 'Order ID is required');
+    console.log("=== INCOMING POST REQUEST ===");
+    console.log("Parameters:", e.parameter);
+
+    const action = e.parameter.action;
+
+    if (action === "submit_contact_form") {
+      return handleContactFormSubmission(e.parameter);
+    } else if (action === "get_admin_contact_info") {
+      return getAdminContactInfo();
     }
-    
-    if (extraAmount < 0) {
-      return createResponse(false, 'Extra amount cannot be negative');
-    }
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const orderIdIndex = headers.indexOf('Order ID');
-    const totalIndex = headers.indexOf('Total');
-    const additionalCostIndex = headers.indexOf('Additional Cost');
-    const lastUpdatedIndex = headers.indexOf('Last Updated');
-    const fullJsonIndex = headers.indexOf('Full Order JSON');
-    
-    if (orderIdIndex === -1) {
-      return createResponse(false, 'Order ID column not found in sheet');
-    }
-    
-    if (totalIndex === -1) {
-      return createResponse(false, 'Total column not found in sheet');
-    }
-    
-    // Get all data to find the order
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(false, 'No orders found in sheet');
-    }
-    
-    const allData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Find the row with matching order ID
-    let targetRowIndex = -1;
-    for (let i = 0; i < allData.length; i++) {
-      if (allData[i][orderIdIndex] === orderId) {
-        targetRowIndex = i + 2; // +2 because sheet rows are 1-indexed and we start from row 2
-        break;
-      }
-    }
-    
-    if (targetRowIndex === -1) {
-      return createResponse(false, `Order ${orderId} not found in sheet`);
-    }
-    
-    // Create Additional Cost column if it doesn't exist
-    if (additionalCostIndex === -1) {
-      const lastCol = headers.length;
-      ordersSheet.getRange(1, lastCol + 1).setValue('Additional Cost');
-      ordersSheet.getRange(targetRowIndex, lastCol + 1).setValue(extraAmount);
-    } else {
-      // Update existing Additional Cost column
-      const currentAdditionalCost = parseFloat(allData[targetRowIndex - 2][additionalCostIndex] || 0);
-      const newAdditionalCost = currentAdditionalCost + extraAmount;
-      ordersSheet.getRange(targetRowIndex, additionalCostIndex + 1).setValue(newAdditionalCost);
-    }
-    
-    // Update the total
-    ordersSheet.getRange(targetRowIndex, totalIndex + 1).setValue(newTotal);
-    
-    // Update Last Updated timestamp
-    const now = new Date();
-    if (lastUpdatedIndex !== -1) {
-      ordersSheet.getRange(targetRowIndex, lastUpdatedIndex + 1).setValue(now);
-    }
-    
-    // Update Full Order JSON if it exists
-    if (fullJsonIndex !== -1) {
-      try {
-        const currentFullJson = allData[targetRowIndex - 2][fullJsonIndex];
-        if (currentFullJson) {
-          const fullOrderData = JSON.parse(currentFullJson);
-          
-          // Update the order object in the JSON
-          if (fullOrderData.order) {
-            fullOrderData.order.extraAmount = (fullOrderData.order.extraAmount || 0) + extraAmount;
-            fullOrderData.order.total = newTotal;
-          }
-          
-          // Update root level fields
-          fullOrderData.extraAmount = (fullOrderData.extraAmount || 0) + extraAmount;
-          fullOrderData.total = newTotal;
-          fullOrderData.lastUpdated = now.toISOString();
-          
-          ordersSheet.getRange(targetRowIndex, fullJsonIndex + 1).setValue(JSON.stringify(fullOrderData));
-        }
-      } catch (jsonError) {
-        console.error('Error updating Full Order JSON:', jsonError);
-        // Don't fail the entire operation if JSON update fails
-      }
-    }
-    
-    console.log(`Successfully updated order ${orderId}`);
-    
-    return createResponse(true, 'Order amount updated successfully', {
-      orderId: orderId,
-      extraAmount: extraAmount,
-      newTotal: newTotal,
-      updatedAt: now.toISOString()
-    });
-    
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Unknown action: " + action,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    console.error('Error updating order amount:', error);
-    return createResponse(false, 'Failed to update order amount: ' + error.message);
+    console.error("Error in doPost:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Server error: " + error.message,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-
 /**
- * Get ALL orders from ALL users for dashboard analytics
- * This function does NOT filter by user ID - it returns all orders
+ * Handle contact form submission
  */
-function getAllOrdersResponse(limitParam) {
+function handleContactFormSubmission(params) {
   try {
-    const limit = parseInt(limitParam) || 1000; // Default to 1000 for dashboard
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
+    console.log("=== HANDLING CONTACT FORM SUBMISSION ===");
+    console.log("Raw form data:", params);
+
+    // Validate required fields
+    if (!params.name || !params.email || !params.message) {
+      throw new Error("Missing required fields: name, email, or message");
     }
-    
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(true, 'No orders found', { orders: [] });
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    
-    // Get all order data (NO FILTERING BY USER ID)
-    const allOrderData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Sort by date (most recent first) and limit results
-    allOrderData.sort((a, b) => {
-      const dateA = new Date(a[headers.indexOf('Date')]);
-      const dateB = new Date(b[headers.indexOf('Date')]);
-      return dateB - dateA;
-    });
-    
-    const limitedOrders = allOrderData.slice(0, limit);
-    
-    // Create an array of order objects
-    const orders = limitedOrders.map(row => {
-      const order = {};
-      headers.forEach((header, index) => {
-        // Format date fields
-        if (header === 'Date' && row[index] instanceof Date) {
-          order[header] = row[index].toISOString();
-        } 
-        // Process Items JSON with better error handling and fallback
-        else if (header === 'Items JSON') {
-          order[header] = row[index];
-          
-          try {
-            if (typeof row[index] === 'string' && row[index].trim().startsWith("[")) {
-              order.items = JSON.parse(row[index]);
-              
-              const validItems = order.items.every(item => 
-                item.price !== undefined && 
-                item.quantity !== undefined
-              );
-              
-              if (!validItems) {
-                const orderIdIndex = headers.indexOf('Order ID');
-                const orderId = row[orderIdIndex];
-                const userIdIndex = headers.indexOf('User ID');
-                const userId = row[userIdIndex] || "GUEST";
-                order.items = getOrderItems(orderId, userId);
-              }
-            } else {
-              const orderIdIndex = headers.indexOf('Order ID');
-              const orderId = row[orderIdIndex];
-              const userIdIndex = headers.indexOf('User ID');
-              const userId = row[userIdIndex] || "GUEST";
-              order.items = getOrderItems(orderId, userId);
-            }
-          } catch (e) {
-            console.error('Error parsing Items JSON:', e);
-            const orderIdIndex = headers.indexOf('Order ID');
-            const orderId = row[orderIdIndex];
-            const userIdIndex = headers.indexOf('User ID');
-            const userId = row[userIdIndex] || "GUEST";
-            order.items = getOrderItems(orderId, userId);
-          }
-        }
-        // Don't include the full JSON in the list view
-        else if (header !== 'Full Order JSON') {
-          order[header] = row[index];
-        }
+
+    // Generate unique submission ID
+    const submissionId =
+      "S2K_" +
+      Date.now() +
+      "_" +
+      Math.random().toString(36).substring(2, 8).toUpperCase();
+    console.log("Generated submission ID:", submissionId);
+
+    // Clean and prepare form data
+    const formData = {
+      name: params.name.trim(),
+      email: params.email.trim().toLowerCase(),
+      phone: params.phone ? params.phone.trim() : "",
+      subject: params.subject || "general",
+      message: params.message.trim(),
+      timestamp: new Date().toISOString(),
+      submissionId: submissionId,
+    };
+
+    console.log("Cleaned form data:", formData);
+
+    // Save to spreadsheet first
+    console.log("=== SAVING TO SPREADSHEET ===");
+    const saveResult = saveToSpreadsheet(formData);
+    console.log("Spreadsheet save result:", saveResult);
+
+    // Send email notification
+    console.log("=== SENDING EMAIL NOTIFICATION ===");
+    const emailResult = sendEmailNotification(formData, submissionId);
+    console.log("Email notification result:", emailResult);
+
+    // Return success response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        message: "Contact form submitted successfully",
+        submissionId: submissionId,
+        emailSent: emailResult,
+        timestamp: formData.timestamp,
+      })
+    )
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders({
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET",
+        "Access-Control-Allow-Headers": "Content-Type",
       });
-      return order;
-    });
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: 'All orders retrieved successfully',
-      orders: orders,
-      totalCount: allOrderData.length
-    })).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    return createResponse(false, 'Error retrieving all orders: ' + error.toString());
+    console.error("❌ Error in handleContactFormSubmission:", error);
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Failed to submit contact form: " + error.message,
+        error: error.toString(),
+      })
+    )
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders({
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET",
+        "Access-Control-Allow-Headers": "Content-Type",
+      });
   }
 }
 
 /**
- * Process an order submission and store it in the Orders sheet
+ * Save form data to Google Spreadsheet
  */
-function processOrderSubmission(orderData) {
-  if (!orderData) {
-    return createResponse(false, 'Invalid order data: Order data is missing');
-  }
-  
-  // Ensure customer object exists
-  if (!orderData.customer) {
-    return createResponse(false, 'Invalid order data: Customer information is missing');
-  }
-  
-  // Ensure order object exists
-  if (!orderData.order) {
-    return createResponse(false, 'Invalid order data: Order details are missing');
-  }
-  
-  // Set default order status - ALWAYS "Order Placed" when customer places order
-  orderData.status = "Order Placed";
-  
-  // Get user ID - use "GUEST" as default if not provided
-  const userId = orderData.userId || orderData.customer.userId || "GUEST";
-  
-  // Standardize image URLs across the entire order object
-  orderData = standardizeImageUrls(orderData);
+function saveToSpreadsheet(formData) {
+  try {
+    console.log("Opening spreadsheet with ID:", SPREADSHEET_ID);
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = ss.getSheetByName(CONTACT_SHEET_NAME);
 
-  // --- Additional Cost Logic (formerly COD charges) ---
-  let additionalCost = 0;
-  // Accept additional cost from any payment method, not just COD
-  if (orderData.order.additionalCost !== undefined && orderData.order.additionalCost !== null) {
-    additionalCost = parseFloat(orderData.order.additionalCost) || 0;
-  } else if (orderData.order.codCharges !== undefined && orderData.order.codCharges !== null) {
-    // Backward compatibility: if old codCharges field is used
-    additionalCost = parseFloat(orderData.order.codCharges) || 0;
-  }
-  
-  // Add extra amount if provided (for dynamic updates)
-  if (orderData.order.extraAmount !== undefined && orderData.order.extraAmount !== null) {
-    additionalCost += parseFloat(orderData.order.extraAmount) || 0;
-  }
-  
-  // Add to total if not already included
-  if (!orderData.order.total || orderData.order.total < (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + additionalCost - 0.01)) {
-    orderData.order.total = (orderData.order.subtotal + orderData.order.tax + orderData.order.shipping - (orderData.order.discount || 0) + additionalCost);
-  }
+    // Create sheet if it doesn't exist
+    if (!sheet) {
+      console.log("Creating new sheet:", CONTACT_SHEET_NAME);
+      sheet = ss.insertSheet(CONTACT_SHEET_NAME);
 
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  let ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-  
-  // Create Orders sheet if it doesn't exist
-  if (!ordersSheet) {
-    ordersSheet = ss.insertSheet(ORDERS_SHEET_NAME);
-    
-    // Set up headers with reorganized columns and Last Updated column after Comments
-    const headers = [
-  'Order ID', 
-  'Date', 
-  'User ID',
-  'Customer Name', 
-  'Email', 
-  'Phone', 
-  'Address', 
-  'City', 
-  'State', 
-  'ZIP', 
-  'Country', 
-  'Payment Method', 
-  'Payment Status',
-  'Shipping Method',
-  'Subtotal', 
-  'Tax', 
-  'Shipping', 
-  'Discount', 
-  'Additional Cost',
-  'Extra Amount', // Add this new column
-  'Total',
-  'Order Status',
-  'Courier',
-  'Tracking ID',
-  'Comments',
-  'Last Updated',
-  'Processing Timestamp',
-  'Shipped Timestamp',
-  'Delivered Timestamp',
-  'Notes',
-  'Items JSON',
-  'Full Order JSON'
-];
-    
-    ordersSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    ordersSheet.setFrozenRows(1);
-    
-    // Format the header row
-    const headerRange = ordersSheet.getRange(1, 1, 1, headers.length);
-    headerRange.setBackground('#4CAF50');
-    headerRange.setFontColor('#FFFFFF');
-    headerRange.setFontWeight('bold');
-    headerRange.setHorizontalAlignment('center');
-  }
-  
-  // Generate order ID if not provided
-  if (!orderData.id) {
-    orderData.id = generateOrderId();
-  }
-  
-  // Set order date if not provided
-  if (!orderData.date) {
-    orderData.date = new Date().toISOString();
-  }
-  
-  // Set payment status based on payment method - UPDATED LOGIC
-  let paymentStatus = "";
-  if (orderData.paymentMethod === 'cod') {
-    paymentStatus = "pending_cod";
-  } else if (orderData.paymentMethod === 'card') {
-    paymentStatus = "pending_payment";
-  } else {
-    paymentStatus = "pending_payment"; // Default for other payment methods
-  }
-  
-  // Current timestamp for Last Updated
-  const currentTimestamp = new Date();
-  
-  // Prepare order data for insertion
-  const orderRow = [
-  orderData.id,
-  new Date(orderData.date),
-  userId,
-  `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-  orderData.customer.email,
-  orderData.customer.phone || '',
-  orderData.customer.address,
-  orderData.customer.city,
-  orderData.customer.state || '',
-  orderData.customer.zip,
-  orderData.customer.country,
-  orderData.paymentMethod,
-  paymentStatus,
-  orderData.shippingMethod || orderData.order.shippingMethod || 'domestic',
-  orderData.order.subtotal,
-  orderData.order.tax,
-  orderData.order.shipping,
-  orderData.order.discount || 0,
-  additionalCost, // Additional Cost (base COD charges)
-  orderData.order.extraAmount || 0, // Extra Amount (dynamic updates)
-  orderData.order.total,
-  orderData.status,
-  '', // Courier
-  '', // Tracking ID
-  '', // Comments
-  currentTimestamp,
-  '', // Processing Timestamp
-  '', // Shipped Timestamp
-  '', // Delivered Timestamp
-  orderData.customer.notes || '',
-  JSON.stringify([...(orderData.order.items || []), ...(orderData.order.complementaryItems || [])]),
-  JSON.stringify(orderData)
-];
-  
-  // Insert order data
-  ordersSheet.appendRow(orderRow);
-  
-  // Create or update order items sheet
-  storeOrderItems(orderData, userId);
-  
-  // Send email confirmation if email is provided
-  if (orderData.customer.email) {
-    sendOrderConfirmationEmail(orderData, additionalCost);
-  }
-  
-  // Return success response with order ID
-  return createResponse(true, 'Order processed successfully', {
-    orderId: orderData.id,
-    orderStatus: orderData.status,
-    paymentStatus: paymentStatus
-  });
-}
+      // Add headers
+      sheet
+        .getRange(1, 1, 1, 8)
+        .setValues([
+          [
+            "Timestamp",
+            "Submission_ID",
+            "Name",
+            "Email",
+            "Phone",
+            "Subject",
+            "Message",
+            "Status",
+          ],
+        ]);
 
-/**
- * Store order items with User ID
- */
-function storeOrderItems(orderData, userId) {
-  // Use "GUEST" as default if userId is not provided or is null/empty
-  const finalUserId = userId || "GUEST";
-  
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  let itemsSheet = ss.getSheetByName(ORDER_ITEMS_SHEET_NAME);
-  
-  // Create Order Items sheet if it doesn't exist
-  if (!itemsSheet) {
-    itemsSheet = ss.insertSheet(ORDER_ITEMS_SHEET_NAME);
-    
-    // Set up headers with User ID column
-    const headers = [
-      'Order ID', 
-      'Date', 
-      'User ID',
-      'Customer Name',
-      'Item Name', 
-      'Product ID',
-      'Quantity',
-      'Price', 
-      'Subtotal',
-      'Options',
-      'Image URL',
-      'Parent Item',
-      'Is Complementary'
+      // Format headers
+      const headerRange = sheet.getRange(1, 1, 1, 8);
+      headerRange.setFontWeight("bold");
+      headerRange.setBackground("#4285F4");
+      headerRange.setFontColor("white");
+    }
+
+    // Add the form data
+    const newRow = [
+      new Date(formData.timestamp),
+      formData.submissionId,
+      formData.name,
+      formData.email,
+      formData.phone,
+      getSubjectCategory(formData.subject),
+      formData.message,
+      "New",
     ];
-    
-    itemsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    itemsSheet.setFrozenRows(1);
-    
-    // Format the header row
-    const headerRange = itemsSheet.getRange(1, 1, 1, headers.length);
-    headerRange.setBackground('#4CAF50');
-    headerRange.setFontColor('#FFFFFF');
-    headerRange.setFontWeight('bold');
-    headerRange.setHorizontalAlignment('center');
-  }
-  
-  // Add regular items
-  if (orderData.order && Array.isArray(orderData.order.items)) {
-    orderData.order.items.forEach(item => {
-      const imageUrl = item.imageUrl || item.image || 'https://via.placeholder.com/60';
-      
-      const optionsObj = {
-        ...item.options,
-        size: item.size,
-        notes: item.notes,
-        color: item.color,
-        material: item.material,
-        description: item.description,
-        sewingPatternNotes: item.sewingPatternNotes
-      };
-      
-      const itemRow = [
-        orderData.id,
-        new Date(orderData.date),
-        finalUserId, // Will be "GUEST" if not provided
-        `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-        item.name,
-        item.productId || '',
-        item.quantity,
-        item.price,
-        item.subtotal || (item.price * item.quantity),
-        JSON.stringify(optionsObj),
-        imageUrl,
-        '',
-        false
-      ];
-      
-      itemsSheet.appendRow(itemRow);
-    });
-  }
-  
-    // Add complementary items if they exist
-  if (orderData.order && Array.isArray(orderData.order.complementaryItems)) {
-    console.log('Processing complementary items:', JSON.stringify(orderData.order.complementaryItems));
-    
-    orderData.order.complementaryItems.forEach(item => {
-      const imageUrl = item.imageUrl || item.image || 'https://via.placeholder.com/60';
-      
-      // Use item.id if available, otherwise fall back to item.productId
-      const itemId = item.id || item.productId || '';
-      
-      console.log('Saving complementary item with ID:', itemId, 'for item:', item.name);
-      
-      const optionsObj = {
-        ...item.options,
-        size: item.size,
-        notes: item.notes,
-        color: item.color,
-        material: item.material,
-        description: item.description,
-        sewingPatternNotes: item.sewingPatternNotes
-      };
-      
-      const itemRow = [
-        orderData.id,
-        new Date(orderData.date),
-        finalUserId, // Will be "GUEST" if not provided
-        `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-        item.name,
-        itemId, // Save the complimentary item ID
-        1,
-        item.price || 0,
-        item.subtotal || item.price || 0,
-        JSON.stringify(optionsObj),
-        imageUrl,
-        item.parentItem || '',
-        true
-      ];
-      
-      itemsSheet.appendRow(itemRow);
-    });
-  }
-}
 
-/**
- * Get recent orders for the dashboard (optionally filtered by user ID)
- */
-function getOrdersResponse(limitParam, userId) {
-  try {
-    const limit = parseInt(limitParam) || 10;
-    // Use "GUEST" as default if userId is not provided
-    const finalUserId = userId || "GUEST";
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
-    }
-    
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(true, 'No orders found', { orders: [] });
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const userIdIndex = headers.indexOf('User ID');
-    
-    // Get all order data
-    const allOrderData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Filter by user ID (including GUEST)
-    let filteredOrders = allOrderData;
-    if (userIdIndex !== -1) {
-      filteredOrders = allOrderData.filter(row => row[userIdIndex] === finalUserId);
-    }
-    
-    // Sort by date (most recent first) and limit results
-    filteredOrders.sort((a, b) => {
-      const dateA = new Date(a[headers.indexOf('Date')]);
-      const dateB = new Date(b[headers.indexOf('Date')]);
-      return dateB - dateA;
-    });
-    
-    const limitedOrders = filteredOrders.slice(0, limit);
-    
-    // Create an array of order objects
-    const orders = limitedOrders.map(row => {
-      const order = {};
-      headers.forEach((header, index) => {
-        // Format date fields
-        if ((header === 'Date' || header === 'Last Updated' || header.endsWith('Timestamp')) && row[index] instanceof Date) {
-          order[header] = row[index].toISOString();
-        } 
-        // Process Items JSON with better error handling and fallback
-        else if (header === 'Items JSON') {
-          order[header] = row[index];
-          
-          try {
-            if (typeof row[index] === 'string' && row[index].trim().startsWith("[")) {
-              order.items = JSON.parse(row[index]);
-              
-              const validItems = order.items.every(item => 
-                item.price !== undefined && 
-                item.quantity !== undefined
-              );
-              
-              if (!validItems) {
-                const orderIdIndex = headers.indexOf('Order ID');
-                const orderId = row[orderIdIndex];
-                order.items = getOrderItems(orderId, finalUserId);
-              }
-            } else {
-              const orderIdIndex = headers.indexOf('Order ID');
-              const orderId = row[orderIdIndex];
-              order.items = getOrderItems(orderId, finalUserId);
-            }
-          } catch (e) {
-            console.error('Error parsing Items JSON:', e);
-            const orderIdIndex = headers.indexOf('Order ID');
-            const orderId = row[orderIdIndex];
-            order.items = getOrderItems(orderId, finalUserId);
-          }
-        }
-        // Don't include the full JSON in the list view
-        else if (header !== 'Full Order JSON') {
-          order[header] = row[index];
-        }
-      });
-      return order;
-    });
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: 'Orders retrieved successfully',
-      orders: orders
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return createResponse(false, 'Error retrieving orders: ' + error.toString());
-  }
-}
+    sheet.appendRow(newRow);
+    console.log("✅ Data saved to spreadsheet successfully");
 
-/**
- * Get order details by ID (optionally filtered by user ID for security)
- */
-function getOrderDetailsResponse(orderId, userId) {
-  try {
-    if (!orderId) {
-      return createResponse(false, 'Order ID is required');
-    }
-    
-    // Use "GUEST" as default if userId is not provided
-    const finalUserId = userId || "GUEST";
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const orderIdIndex = headers.indexOf('Order ID');
-    const userIdIndex = headers.indexOf('User ID');
-    
-    if (orderIdIndex === -1) {
-      return createResponse(false, 'Order ID column not found');
-    }
-    
-    // Get all data
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(false, 'No orders found');
-    }
-    
-    const allData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Find the order row
-    let targetRow = null;
-    for (let i = 0; i < allData.length; i++) {
-      const row = allData[i];
-      if (row[orderIdIndex] === orderId) {
-        // Allow lookup by orderId only, ignore userId check
-        targetRow = row;
-        break;
-      }
-    }
-    
-    if (!targetRow) {
-      return createResponse(false, `Order with ID ${orderId} not found`);
-    }
-    
-    // Create an order object
-    const order = {};
-    let fullOrderJSON = null;
-    
-    headers.forEach((header, index) => {
-      if ((header === 'Date' || header === 'Last Updated' || header.endsWith('Timestamp')) && targetRow[index] instanceof Date) {
-        order[header] = targetRow[index].toISOString();
-      } else if (header === 'Full Order JSON') {
-        try {
-          fullOrderJSON = JSON.parse(targetRow[index]);
-        } catch (e) {
-          console.error('Error parsing Full Order JSON:', e);
-          fullOrderJSON = null;
-        }
-      } else {
-        order[header] = targetRow[index];
-      }
-    });
-    
-    // Add items from Order Items sheet if needed
-    if (!order.items || !Array.isArray(order.items)) {
-      order.items = getOrderItems(orderId, finalUserId);
-    }
-    
-    // Use the parsed full JSON if available, otherwise use the constructed order object
-    const responseData = { ...(fullOrderJSON || {}), ...order };
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: 'Order details retrieved successfully',
-      order: responseData
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return createResponse(false, 'Error retrieving order details: ' + error.toString());
-  }
-}
-
-/**
- * Get order items from the Order Items sheet (with GUEST handling)
- */
-function getOrderItems(orderId, userId) {
-  try {
-    // Use "GUEST" as default if userId is not provided
-    const finalUserId = userId || "GUEST";
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const itemsSheet = ss.getSheetByName(ORDER_ITEMS_SHEET_NAME);
-    
-    if (!itemsSheet) {
-      return [];
-    }
-    
-    const lastRow = itemsSheet.getLastRow();
-    if (lastRow <= 1) {
-      return [];
-    }
-    
-    // Get headers to map column indices
-    const headers = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
-    const orderIdIndex = headers.indexOf('Order ID');
-    const userIdIndex = headers.indexOf('User ID');
-    const imageUrlIndex = headers.indexOf('Image URL');
-    
-    if (orderIdIndex === -1) {
-      return [];
-    }
-    
-    // Get all rows
-    const allData = itemsSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Filter rows for the given order ID and user ID (including GUEST)
-    const orderItems = allData.filter(row => {
-      const matchesOrderId = row[orderIdIndex] === orderId;
-      const matchesUserId = userIdIndex === -1 || row[userIdIndex] === finalUserId;
-      return matchesOrderId && matchesUserId;
-    });
-    
-    if (orderItems.length === 0) {
-      return [];
-    }
-    
-    // Create array of item objects
-    return orderItems.map(row => {
-      const item = {};
-      headers.forEach((header, index) => {
-        if (header === 'Date' && row[index] instanceof Date) {
-          item[header] = row[index].toISOString();
-        } else if (header === 'Options' && typeof row[index] === 'string') {
-          try {
-            item[header] = JSON.parse(row[index]);
-          } catch (e) {
-            item[header] = {};
-          }
-        } else {
-          item[header] = row[index];
-        }
-      });
-      
-      // Ensure the image URL is properly transferred
-      if (imageUrlIndex !== -1 && row[imageUrlIndex]) {
-        item.imageUrl = row[imageUrlIndex];
-        item.image = row[imageUrlIndex]; // For backward compatibility
-      }
-      
-      return item;
-    });
-  } catch (error) {
-    console.error("Error getting order items:", error);
-    return [];
-  }
-}
-
-/**
- * Standardize image URLs across the entire order object
- */
-function standardizeImageUrls(orderData) {
-  if (!orderData) return orderData;
-  
-  // Process main order items
-  if (orderData.order && orderData.order.items && Array.isArray(orderData.order.items)) {
-    orderData.order.items = orderData.order.items.map(item => {
-      if (!item) return item;
-      
-      return {
-        ...item,
-        imageUrl: item.imageUrl || item.image || 'https://via.placeholder.com/60'
-      };
-    });
-  }
-  
-  // Process complementary items if they exist
-  if (orderData.order && orderData.order.complementaryItems && Array.isArray(orderData.order.complementaryItems)) {
-    orderData.order.complementaryItems = orderData.order.complementaryItems.map(item => {
-      if (!item) return item;
-      
-      return {
-        ...item,
-        id: item.id || item.productId, // Ensure ID is preserved
-        productId: item.productId || item.id, // Ensure productId is also set
-        imageUrl: item.imageUrl || item.image || 'https://via.placeholder.com/60'
-      };
-    });
-  }
-  
-  return orderData;
-}
-
-/**
- * Generate a unique order ID
- */
-function generateOrderId() {
-  const timestamp = new Date().getTime().toString().slice(-6);
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `ORD-${timestamp}-${random}`;
-}
-
-
-
-/**
- * Create a standardized API response
- */
-function createResponse(success, message, data = {}) {
-  const response = {
-    success: success,
-    message: message,
-    ...data
-  };
-  
-  return ContentService.createTextOutput(JSON.stringify(response))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-/**
- * Update order status with additional tracking details
- */
-function updateOrderStatusWithDetails(updateData) {
-  try {
-    if (!updateData || !updateData.orderId || !updateData.orderStatus) {
-      return createResponse(false, 'Invalid update data: Order ID and status are required');
-    }
-    
-    const orderId = updateData.orderId;
-    const newStatus = updateData.orderStatus;
-    const courier = updateData.courier || '';
-    const trackingId = updateData.trackingId || '';
-    const comments = updateData.comments || '';
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const orderIdIndex = headers.indexOf('Order ID');
-    const orderStatusIndex = headers.indexOf('Order Status');
-    const courierIndex = headers.indexOf('Courier');
-    const trackingIndex = headers.indexOf('Tracking ID');
-    const commentsIndex = headers.indexOf('Comments');
-    const lastUpdatedIndex = headers.indexOf('Last Updated');
-    const processingTimestampIndex = headers.indexOf('Processing Timestamp');
-    const shippedTimestampIndex = headers.indexOf('Shipped Timestamp');
-    const deliveredTimestampIndex = headers.indexOf('Delivered Timestamp');
-    const fullJsonIndex = headers.indexOf('Full Order JSON');
-    
-    if (orderIdIndex === -1 || orderStatusIndex === -1) {
-      return createResponse(false, 'Required columns not found in the Orders sheet');
-    }
-    
-    // Get all order IDs
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(false, 'No orders found');
-    }
-    
-    const orderIds = ordersSheet.getRange(2, orderIdIndex + 1, lastRow - 1, 1).getValues();
-    
-    // Find the row index for the order ID
-    let targetRowIndex = -1;
-    for (let i = 0; i < orderIds.length; i++) {
-      if (orderIds[i][0] === orderId) {
-        targetRowIndex = i + 2; // +2 because we start at row 2 and arrays are 0-indexed
-        break;
-      }
-    }
-    
-    if (targetRowIndex === -1) {
-      return createResponse(false, `Order with ID ${orderId} not found`);
-    }
-    
-    const now = new Date();
-    
-    // Update the order status and tracking info
-    ordersSheet.getRange(targetRowIndex, orderStatusIndex + 1).setValue(newStatus);
-    
-    if (courierIndex !== -1) {
-      ordersSheet.getRange(targetRowIndex, courierIndex + 1).setValue(courier);
-    }
-    
-    if (trackingIndex !== -1) {
-      ordersSheet.getRange(targetRowIndex, trackingIndex + 1).setValue(trackingId);
-    }
-    
-    if (commentsIndex !== -1) {
-      ordersSheet.getRange(targetRowIndex, commentsIndex + 1).setValue(comments);
-    }
-    
-    // Update Last Updated timestamp
-    if (lastUpdatedIndex !== -1) {
-      ordersSheet.getRange(targetRowIndex, lastUpdatedIndex + 1).setValue(now);
-    }
-
-    // Update status-specific timestamps if they are not already set
-    if (newStatus === "Processing" && processingTimestampIndex !== -1) {
-        const currentTimestamp = ordersSheet.getRange(targetRowIndex, processingTimestampIndex + 1).getValue();
-        if (!currentTimestamp) {
-            ordersSheet.getRange(targetRowIndex, processingTimestampIndex + 1).setValue(now);
-        }
-    }
-    if (newStatus === "Shipped" && shippedTimestampIndex !== -1) {
-        const currentTimestamp = ordersSheet.getRange(targetRowIndex, shippedTimestampIndex + 1).getValue();
-        if (!currentTimestamp) {
-            ordersSheet.getRange(targetRowIndex, shippedTimestampIndex + 1).setValue(now);
-        }
-    }
-    if (newStatus === "Delivered" && deliveredTimestampIndex !== -1) {
-        const currentTimestamp = ordersSheet.getRange(targetRowIndex, deliveredTimestampIndex + 1).getValue();
-        if (!currentTimestamp) {
-            ordersSheet.getRange(targetRowIndex, deliveredTimestampIndex + 1).setValue(now);
-        }
-    }
-    
-    // Update Full Order JSON if it exists
-    if (fullJsonIndex !== -1) {
-      try {
-        const currentFullJson = ordersSheet.getRange(targetRowIndex, fullJsonIndex + 1).getValue();
-        if (currentFullJson) {
-          const fullOrderData = JSON.parse(currentFullJson);
-          fullOrderData.status = newStatus;
-          fullOrderData.courier = courier;
-          fullOrderData.trackingId = trackingId;
-          fullOrderData.comments = comments;
-          fullOrderData.lastUpdated = now.toISOString();
-          
-          // Also update timestamps in the JSON
-          if (newStatus === "Processing" && !fullOrderData['Processing Timestamp']) {
-            fullOrderData['Processing Timestamp'] = now.toISOString();
-          }
-          if (newStatus === "Shipped" && !fullOrderData['Shipped Timestamp']) {
-            fullOrderData['Shipped Timestamp'] = now.toISOString();
-          }
-          if (newStatus === "Delivered" && !fullOrderData['Delivered Timestamp']) {
-            fullOrderData['Delivered Timestamp'] = now.toISOString();
-          }
-
-          ordersSheet.getRange(targetRowIndex, fullJsonIndex + 1).setValue(JSON.stringify(fullOrderData));
-        }
-      } catch (e) {
-        console.error('Error updating Full Order JSON:', e);
-      }
-    }
-    
-    // Send notification email if order is shipped and tracking ID is provided
-    if (newStatus.toLowerCase().includes('shipped') && trackingId) {
-      try {
-        sendShippingNotification(orderId, trackingId, courier);
-      } catch (e) {
-        console.error('Error sending shipping notification:', e);
-      }
-    }
-    
-    return createResponse(true, 'Order status updated successfully', {
-      orderId: orderId,
-      orderStatus: newStatus,
-      courier: courier,
-      trackingId: trackingId,
-      comments: comments,
-      lastUpdated: now.toISOString()
-    });
-  } catch (error) {
-    console.error("updateOrderStatusWithDetails error:", error);
-    return createResponse(false, 'Error updating order status: ' + error.toString());
-  }
-}
-
-/**
- * Get order statistics for a user (with GUEST handling)
- */
-function getOrderStats(userId) {
-  try {
-    // Use "GUEST" as default if userId is not provided
-    const finalUserId = userId || "GUEST";
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      return createResponse(false, 'Orders sheet not found');
-    }
-    
-    const lastRow = ordersSheet.getLastRow();
-    if (lastRow <= 1) {
-      return createResponse(true, 'No orders found', {
-        totalOrders: 0,
-        totalSpent: 0,
-        averageOrderValue: 0,
-        ordersByStatus: {}
-      });
-    }
-    
-    // Get headers to map column indices
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const userIdIndex = headers.indexOf('User ID');
-    const totalIndex = headers.indexOf('Total');
-    const statusIndex = headers.indexOf('Order Status');
-    
-    // Get all order data
-    const allOrderData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Filter by user ID (including GUEST)
-    let userOrders = allOrderData;
-    if (userIdIndex !== -1) {
-      userOrders = allOrderData.filter(row => row[userIdIndex] === finalUserId);
-    }
-    
-    if (userOrders.length === 0) {
-      return createResponse(true, 'No orders found for user', {
-        totalOrders: 0,
-        totalSpent: 0,
-        averageOrderValue: 0,
-        ordersByStatus: {}
-      });
-    }
-    
-    // Calculate statistics
-    const totalOrders = userOrders.length;
-    let totalSpent = 0;
-    const ordersByStatus = {};
-    
-    userOrders.forEach(row => {
-      // Calculate total spent
-      if (totalIndex !== -1 && typeof row[totalIndex] === 'number') {
-        totalSpent += row[totalIndex];
-      }
-      
-      // Count orders by status
-      if (statusIndex !== -1) {
-        const status = row[statusIndex] || 'Unknown';
-        ordersByStatus[status] = (ordersByStatus[status] || 0) + 1;
-      }
-    });
-    
-    const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
-    
-    return createResponse(true, 'Order statistics retrieved successfully', {
-      totalOrders: totalOrders,
-      totalSpent: parseFloat(totalSpent.toFixed(2)),
-      averageOrderValue: parseFloat(averageOrderValue.toFixed(2)),
-      ordersByStatus: ordersByStatus
-    });
-  } catch (error) {
-    console.error("getOrderStats error:", error);
-    return createResponse(false, 'Error retrieving order statistics: ' + error.toString());
-  }
-}
-
-/**
- * Send order confirmation email to customer
- */
-function sendOrderConfirmationEmail(orderData, codCharges) {
-  try {
-    const customerName = `${orderData.customer.firstName} ${orderData.customer.lastName}`;
-    const customerEmail = orderData.customer.email;
-    const orderId = orderData.id;
-    
-    // Create items list for email
-    let itemsList = '';
-    if (orderData.order.items && orderData.order.items.length > 0) {
-      itemsList = orderData.order.items.map(item => {
-        return `
-          <tr>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">
-              <img src="${item.imageUrl || 'https://via.placeholder.com/60'}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; margin-right: 10px; vertical-align: middle;">
-              ${item.name}
-            </td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-    
-    // Add complementary items if they exist
-    if (orderData.order.complementaryItems && orderData.order.complementaryItems.length > 0) {
-      const compItems = orderData.order.complementaryItems.map(item => {
-        return `
-          <tr>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">
-              <img src="${item.imageUrl || 'https://via.placeholder.com/60'}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; margin-right: 10px; vertical-align: middle;">
-              ${item.name} <span style="color: #28a745; font-weight: bold;">(Additional)</span>
-            </td>
-           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-          </tr>
-        `;
-      }).join('');
-      itemsList += compItems;
-    }
-    
-    // Create email body
-    const body = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #28a745; padding: 20px; text-align: center;">
-          <h2 style="color: white; margin: 0;">Order Confirmation</h2>
-        </div>
-        
-        <div style="padding: 20px;">
-          <p>Dear ${customerName},</p>
-          
-          <p>Thank you for your order! We've received your order and are preparing it for shipment.</p>
-          
-          <div style="background-color: #f5f5f5; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>Order ID:</strong> ${orderId}</p>
-            <p style="margin: 10px 0 0;"><strong>Order Date:</strong> ${new Date(orderData.date).toLocaleDateString()}</p>
-            <p style="margin: 10px 0 0;"><strong>Payment Method:</strong> ${orderData.paymentMethod === 'cod' ? 'Cash Before Delivery (CBD)' : 'Card Payment'}</p>
-          </div>
-          
-          <h3>Order Details:</h3>
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead>
-              <tr style="background-color: #f8f9fa;">
-                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Item</th>
-                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Qty</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Price</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsList}
-            </tbody>
-          </table>
-          
-          <div style="border-top: 2px solid #dee2e6; padding-top: 15px;">
-            <table style="width: 100%; margin-left: auto; width: 300px;">
-              <tr>
-                <td style="padding: 5px 0; text-align: right;"><strong>Subtotal:</strong></td>
-                <td style="padding: 5px 0; text-align: right; width: 100px;">$${orderData.order.subtotal.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 5px 0; text-align: right;"><strong>Tax:</strong></td>
-                <td style="padding: 5px 0; text-align: right;">$${orderData.order.tax.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 5px 0; text-align: right;"><strong>Shipping:</strong></td>
-                <td style="padding: 5px 0; text-align: right;">$${orderData.order.shipping.toFixed(2)}</td>
-              </tr>
-              ${orderData.order.discount > 0 ? `
-              <tr>
-                <td style="padding: 5px 0; text-align: right; color: #28a745;"><strong>Discount:</strong></td>
-                <td style="padding: 5px 0; text-align: right; color: #28a745;">-$${orderData.order.discount.toFixed(2)}</td>
-              </tr>
-              ` : ''}
-              ${(codCharges && codCharges > 0) ? `
-              <tr>
-                <td style="padding: 5px 0; text-align: right; color: #ff9800;"><strong>COD Charges:</strong></td>
-                <td style="padding: 5px 0; text-align: right; color: #ff9800;">$${codCharges.toFixed(2)}</td>
-              </tr>
-              ` : ''}
-              <tr style="border-top: 1px solid #dee2e6;">
-                <td style="padding: 10px 0; text-align: right; font-size: 18px;"><strong>Total:</strong></td>
-                <td style="padding: 10px 0; text-align: right; font-size: 18px; font-weight: bold;">$${orderData.order.total.toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
-          
-          <h3>Shipping Address:</h3>
-          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-            <p style="margin: 0;">
-              ${customerName}<br>
-              ${orderData.customer.address}<br>
-              ${orderData.customer.city}, ${orderData.customer.state} ${orderData.customer.zip}<br>
-              ${orderData.customer.country}<br>
-              Phone: ${orderData.customer.phone}
-            </p>
-          </div>
-          
-          ${orderData.customer.notes ? `
-          <h3>Order Notes:</h3>
-          <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
-            <p style="margin: 0;">${orderData.customer.notes}</p>
-          </div>
-          ` : ''}
-          
-          <p style="margin-top: 30px;">We'll send you another email when your order ships. If you have any questions, please contact our customer service.</p>
-          
-          <p>Thank you for your business!</p>
-        </div>
-        
-        <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-          <p>This is an automated message. Please do not reply to this email.</p>
-        </div>
-      </div>
-    `;
-    
-    // Send the email
-    MailApp.sendEmail({
-      to: customerEmail,
-      subject: `Order Confirmation - ${orderId}`,
-      htmlBody: body
-    });
-    
-    console.log(`Order confirmation email sent to ${customerEmail} for order ${orderId}`);
     return true;
   } catch (error) {
-    console.error("Error sending order confirmation email:", error);
+    console.error("❌ Error saving to spreadsheet:", error);
+    throw new Error("Failed to save to spreadsheet: " + error.message);
+  }
+}
+
+/**
+ * Send email notification to admin
+ */
+function sendEmailNotification(formData, submissionId) {
+  try {
+    console.log("=== STARTING EMAIL NOTIFICATION ===");
+    console.log("Admin email:", ADMIN_EMAIL);
+    console.log("Form data for email:", formData);
+
+    // Validate admin email
+    if (!ADMIN_EMAIL || !isValidEmail(ADMIN_EMAIL)) {
+      throw new Error("Invalid admin email address: " + ADMIN_EMAIL);
+    }
+
+    // Test Gmail access
+    try {
+      const quota = GmailApp.getRemainingDailyQuota();
+      console.log("Gmail quota remaining:", quota);
+
+      if (quota <= 0) {
+        throw new Error("Gmail daily quota exceeded");
+      }
+    } catch (gmailError) {
+      console.error("Gmail service error:", gmailError);
+      throw new Error("Gmail service not accessible: " + gmailError.message);
+    }
+
+    // Get admin contact info for email template
+    const adminContactInfo = getAdminContactInfoSync();
+    console.log("Admin contact info loaded");
+
+    // Create email content
+    const subjectCategory = getSubjectCategory(formData.subject);
+    const emailSubject = `🔔 New ${subjectCategory} - ${formData.name} | S2K Sewing`;
+
+    const plainTextBody = createPlainTextEmail(
+      formData,
+      submissionId,
+      adminContactInfo
+    );
+    const htmlBody = createHtmlEmail(formData, submissionId, adminContactInfo);
+
+    console.log("Email subject:", emailSubject);
+    console.log("Attempting to send email...");
+
+    // Send the email
+    GmailApp.sendEmail(ADMIN_EMAIL, emailSubject, plainTextBody, {
+      htmlBody: htmlBody,
+      name: "S2K Sewing Contact System",
+      replyTo: formData.email,
+      noReply: false,
+    });
+
+    console.log("✅ Email notification sent successfully");
+
+    // Log the successful email in spreadsheet
+    logEmailNotification(submissionId, ADMIN_EMAIL, "SUCCESS");
+
+    return true;
+  } catch (error) {
+    console.error("❌ Primary email failed:", error);
+
+    // Try simple fallback email
+    try {
+      console.log("Attempting fallback email...");
+      return sendFallbackEmail(formData, submissionId, error.message);
+    } catch (fallbackError) {
+      console.error("❌ Fallback email also failed:", fallbackError);
+
+      // Log the failure
+      logEmailNotification(
+        submissionId,
+        ADMIN_EMAIL,
+        "FAILED: " + error.message
+      );
+
+      return false;
+    }
+  }
+}
+
+/**
+ * Send simple fallback email
+ */
+function sendFallbackEmail(formData, submissionId, originalError) {
+  try {
+    const simpleSubject = `S2K Sewing Contact: ${formData.name}`;
+    const simpleBody = `NEW CONTACT FORM SUBMISSION
+
+Name: ${formData.name}
+Email: ${formData.email}
+Phone: ${formData.phone || "Not provided"}
+Subject: ${getSubjectCategory(formData.subject)}
+Message: ${formData.message}
+
+Submission ID: ${submissionId}
+Time: ${new Date(formData.timestamp).toLocaleString()}
+
+(Original email template failed: ${originalError})
+
+---
+Reply to this email to contact the customer directly.`;
+
+    GmailApp.sendEmail(ADMIN_EMAIL, simpleSubject, simpleBody);
+
+    console.log("✅ Fallback email sent successfully");
+    return true;
+  } catch (error) {
+    console.error("❌ Fallback email failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create HTML email template
+ */
+function createHtmlEmail(formData, submissionId, adminContactInfo) {
+  const subjectCategory = getSubjectCategory(formData.subject);
+  const urgencyClass = getUrgencyClass(formData.subject);
+  const submitTime = new Date(formData.timestamp).toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      margin: 0; 
+      padding: 20px; 
+      background-color: #f5f5f5;
+    }
+    .container { 
+      max-width: 600px; 
+      margin: 0 auto; 
+      background: white; 
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .header { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      color: white; 
+      padding: 30px 20px; 
+      text-align: center; 
+    }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header p { margin: 10px 0 0 0; opacity: 0.9; }
+    .content { padding: 30px; }
+    .info-section { 
+      background: #f8f9fa; 
+      padding: 20px; 
+      margin: 20px 0; 
+      border-radius: 8px; 
+      border-left: 5px solid #007bff; 
+    }
+    .info-section.urgent { border-left-color: #dc3545; }
+    .info-section.medium { border-left-color: #ffc107; }
+    .info-section h3 { margin: 0 0 15px 0; color: #2c3e50; }
+    .info-row { margin: 8px 0; }
+    .info-label { font-weight: 600; color: #495057; }
+    .info-value { color: #212529; }
+    .info-value a { color: #007bff; text-decoration: none; }
+    .message-section { 
+      background: #fff; 
+      border: 2px solid #e9ecef; 
+      border-radius: 8px; 
+      padding: 20px; 
+      margin: 20px 0; 
+    }
+    .message-content { 
+      background: #f8f9fa; 
+      padding: 15px; 
+      border-radius: 5px; 
+      border-left: 4px solid #28a745;
+      white-space: pre-wrap;
+    }
+    .actions { 
+      text-align: center; 
+      margin: 30px 0; 
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .btn { 
+      display: inline-block; 
+      padding: 12px 25px; 
+      margin: 5px; 
+      background: #007bff; 
+      color: white; 
+      text-decoration: none; 
+      border-radius: 25px; 
+      font-weight: 600;
+    }
+    .btn.phone { background: #28a745; }
+    .footer { 
+      background: #343a40; 
+      color: #adb5bd; 
+      padding: 20px; 
+      text-align: center; 
+      font-size: 12px; 
+    }
+    .priority-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .priority-urgent { background: #dc3545; color: white; }
+    .priority-medium { background: #ffc107; color: #212529; }
+    .priority-normal { background: #28a745; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧵 S2K Sewing Contact Alert</h1>
+      <p>New ${subjectCategory.toLowerCase()} received
+        <span class="priority-badge priority-${urgencyClass}">
+          ${urgencyClass.toUpperCase()} PRIORITY
+        </span>
+      </p>
+    </div>
+    
+    <div class="content">
+      <div class="info-section ${urgencyClass}">
+        <h3>👤 Customer Information</h3>
+        <div class="info-row">
+          <span class="info-label">Name:</span>
+          <span class="info-value">${formData.name}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value"><a href="mailto:${formData.email}">${
+    formData.email
+  }</a></span>
+        </div>
+        ${
+          formData.phone
+            ? `
+        <div class="info-row">
+          <span class="info-label">Phone:</span>
+          <span class="info-value"><a href="tel:${formData.phone.replace(
+            /\D/g,
+            ""
+          )}">${formData.phone}</a></span>
+        </div>`
+            : ""
+        }
+        <div class="info-row">
+          <span class="info-label">Category:</span>
+          <span class="info-value">${subjectCategory}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Submitted:</span>
+          <span class="info-value">${submitTime}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ID:</span>
+          <span class="info-value">${submissionId}</span>
+        </div>
+      </div>
+      
+      <div class="message-section">
+        <h3>💬 Customer Message</h3>
+        <div class="message-content">${formData.message}</div>
+      </div>
+      
+      <div class="actions">
+        <h3>🚀 Quick Actions</h3>
+        <a href="mailto:${formData.email}?subject=Re: ${encodeURIComponent(
+    subjectCategory
+  )} - S2K Sewing Response&body=${encodeURIComponent(
+    "Dear " + formData.name + ",\n\nThank you for contacting S2K Sewing...\n\n"
+  )}" class="btn">
+          📧 Reply to Customer
+        </a>
+        ${
+          formData.phone
+            ? `
+        <a href="tel:${formData.phone.replace(/\D/g, "")}" class="btn phone">
+          📞 Call Customer
+        </a>`
+            : ""
+        }
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>🤖 Automated notification from S2K Sewing Contact Management System</p>
+      <p>⏰ Please respond to the customer within 24 hours</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Create plain text email
+ */
+function createPlainTextEmail(formData, submissionId, adminContactInfo) {
+  const subjectCategory = getSubjectCategory(formData.subject);
+  const submitTime = new Date(formData.timestamp).toLocaleString();
+  const urgency = getUrgencyClass(formData.subject).toUpperCase();
+
+  return `🧵 S2K SEWING - NEW CONTACT FORM SUBMISSION
+=============================================
+
+PRIORITY LEVEL: ${urgency}
+CATEGORY: ${subjectCategory}
+
+CUSTOMER INFORMATION:
+--------------------
+Name: ${formData.name}
+Email: ${formData.email}
+Phone: ${formData.phone || "Not provided"}
+Submission Time: ${submitTime}
+Submission ID: ${submissionId}
+
+CUSTOMER MESSAGE:
+----------------
+${formData.message}
+
+QUICK ACTIONS:
+-------------
+- Reply to this email to respond to the customer
+- Call the customer: ${formData.phone || "No phone provided"}
+
+=============================================
+🤖 Automated notification from S2K Sewing Contact System
+⏰ Please respond within 24 hours for optimal service
+📧 Reply directly to this email to contact the customer`;
+}
+
+/**
+ * Get admin contact information
+ */
+function getAdminContactInfo() {
+  try {
+    const contactInfo = getAdminContactInfoSync();
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        contactInfo: contactInfo,
+      })
+    )
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders({
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST",
+        "Access-Control-Allow-Headers": "Content-Type",
+      });
+  } catch (error) {
+    console.error("Error getting admin contact info:", error);
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Failed to load contact info: " + error.message,
+      })
+    )
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders({
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST",
+        "Access-Control-Allow-Headers": "Content-Type",
+      });
+  }
+}
+
+/**
+ * Get admin contact info synchronously
+ */
+function getAdminContactInfoSync() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = ss.getSheetByName(ADMIN_SHEET_NAME);
+
+    if (!sheet) {
+      // Create admin sheet with default data
+      sheet = ss.insertSheet(ADMIN_SHEET_NAME);
+      sheet.getRange(1, 1, 1, 2).setValues([["Key", "Value"]]);
+      sheet.getRange(2, 1, 2, 2).setValues([
+        [
+          "customerSupport",
+          "Email: s2ksewing@gmail.com\nPhone: (555) 123-4567\nHours: Mon-Fri 9AM-5PM",
+        ],
+        [
+          "mainOffice",
+          "S2K Sewing Main Office\n123 Sewing Street\nCraft City, CC 12345",
+        ],
+      ]);
+
+      // Format headers
+      sheet
+        .getRange(1, 1, 1, 2)
+        .setFontWeight("bold")
+        .setBackground("#4285F4")
+        .setFontColor("white");
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const contactInfo = {};
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[0] && row[1] !== undefined) {
+        contactInfo[row[0]] = row[1];
+      }
+    }
+
+    return contactInfo;
+  } catch (error) {
+    console.error("Error getting admin contact info:", error);
+    return {
+      customerSupport: "Email: s2ksewing@gmail.com\nPhone: (555) 123-4567",
+      mainOffice: "S2K Sewing Main Office\n123 Sewing Street",
+    };
+  }
+}
+
+/**
+ * Log email notification attempt
+ */
+function logEmailNotification(submissionId, email, status) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let logSheet = ss.getSheetByName("Email_Log");
+
+    if (!logSheet) {
+      logSheet = ss.insertSheet("Email_Log");
+      logSheet
+        .getRange(1, 1, 1, 4)
+        .setValues([["Timestamp", "Submission_ID", "Email", "Status"]]);
+      logSheet
+        .getRange(1, 1, 1, 4)
+        .setFontWeight("bold")
+        .setBackground("#4285F4")
+        .setFontColor("white");
+    }
+
+    logSheet.appendRow([new Date(), submissionId, email, status]);
+  } catch (error) {
+    console.error("Error logging email notification:", error);
+  }
+}
+
+// Utility Functions
+function getSubjectCategory(subject) {
+  const categories = {
+    general: "General Inquiry",
+    technical: "Technical Support",
+    sales: "Sales Inquiry",
+    warranty: "Warranty Claim",
+    repair: "Repair Service",
+    parts: "Parts Request",
+    other: "Other Inquiry",
+  };
+
+  return categories[subject] || "General Inquiry";
+}
+
+function getUrgencyClass(subject) {
+  const urgentSubjects = ["technical", "warranty", "repair"];
+  const mediumSubjects = ["sales", "parts"];
+
+  if (urgentSubjects.includes(subject)) return "urgent";
+  if (mediumSubjects.includes(subject)) return "medium";
+  return "normal";
+}
+
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Test Functions for Debugging
+function testEmailFunctionality() {
+  console.log("=== TESTING EMAIL FUNCTIONALITY ===");
+
+  const testData = {
+    name: "Test Customer",
+    email: "test@example.com",
+    phone: "(555) 123-4567",
+    subject: "technical",
+    message:
+      "This is a test message to verify the email notification system is working properly.",
+    timestamp: new Date().toISOString(),
+    submissionId: "TEST_" + Date.now(),
+  };
+
+  try {
+    const result = sendEmailNotification(testData, testData.submissionId);
+    console.log("Test email result:", result);
+    return result;
+  } catch (error) {
+    console.error("Test email failed:", error);
     return false;
   }
 }
 
+function testFullSubmissionFlow() {
+  console.log("=== TESTING FULL SUBMISSION FLOW ===");
 
-/**
- * Send shipping notification email
- */
-function sendShippingNotification(orderId, trackingId, courier) {
+  const testParams = {
+    action: "submit_contact_form",
+    name: "John Test",
+    email: "john.test@example.com",
+    phone: "(555) 987-6543",
+    subject: "sales",
+    message:
+      "I am interested in your sewing machines. Please contact me with more information.",
+  };
+
   try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const ordersSheet = ss.getSheetByName(ORDERS_SHEET_NAME);
-    
-    if (!ordersSheet) {
-      console.error('Orders sheet not found for shipping notification');
-      return;
-    }
-    
-    // Get order details
-    const headers = ordersSheet.getRange(1, 1, 1, ordersSheet.getLastColumn()).getValues()[0];
-    const orderIdIndex = headers.indexOf('Order ID');
-    const emailIndex = headers.indexOf('Email');
-    const customerNameIndex = headers.indexOf('Customer Name');
-    
-    if (orderIdIndex === -1 || emailIndex === -1) {
-      console.error('Required columns not found for shipping notification');
-      return;
-    }
-    
-    const lastRow = ordersSheet.getLastRow();
-    const allData = ordersSheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    
-    // Find the order
-    const orderRow = allData.find(row => row[orderIdIndex] === orderId);
-    if (!orderRow) {
-      console.error(`Order ${orderId} not found for shipping notification`);
-      return;
-    }
-    
-    const customerEmail = orderRow[emailIndex];
-    const customerName = orderRow[customerNameIndex];
-    
-    if (!customerEmail) {
-      console.log('No email address found for shipping notification');
-      return;
-    }
-    
-    const subject = `Your Order Has Been Shipped - ${orderId}`;
-    const emailBody = `
-Dear ${customerName},
-
-Great news! Your order has been shipped and is on its way to you.
-
-Shipping Details:
-Order ID: ${orderId}
-Courier: ${courier}
-Tracking ID: ${trackingId}
-Status: Shipped
-
-You can track your package using the tracking ID provided above on the courier's website.
-
-Thank you for your business!
-
-Best regards,
-Your Store Team
-    `;
-    
-    // Send email
-    MailApp.sendEmail({
-      to: customerEmail,
-      subject: subject,
-      body: emailBody
-    });
-    
-    console.log(`Shipping notification sent to ${customerEmail} for order ${orderId}`);
+    const result = handleContactFormSubmission(testParams);
+    console.log("Full test result:", result);
+    return result;
   } catch (error) {
-    console.error('Error sending shipping notification:', error);
+    console.error("Full test failed:", error);
+    return false;
   }
 }

@@ -623,6 +623,25 @@ function calculateOrderSummary() {
     }
   }
 
+  const { additionalCost, hasCustomFabrics } = calculateAdditionalCost();
+
+  // Show/hide additional cost row
+  const additionalCostElement = document.getElementById("additionalCost");
+  const additionalCostRow = document.getElementById("additionalCostRow");
+
+  if (hasCustomFabrics) {
+    if (additionalCostElement) {
+      additionalCostElement.textContent = `$${additionalCost.toFixed(2)}`;
+    }
+    if (additionalCostRow) {
+      additionalCostRow.style.display = "flex";
+    }
+  } else {
+    if (additionalCostRow) {
+      additionalCostRow.style.display = "none";
+    }
+  }
+
   // Store order details for submission (updated with COD charges)
   orderDetails = {
     items: orderItems,
@@ -1394,7 +1413,7 @@ function showOrderSuccess(order) {
 async function processOrder(order) {
   try {
     const scriptUrl =
-      "https://script.google.com/macros/s/AKfycbxXBgS76lCOYor2UvWmXLlx9o5EBQrYDz-HSajTYLkyPC93EvRyNTZe0k0_TS7oa3_8/exec";
+      "https://script.google.com/macros/s/AKfycbyPicYBynmLDDfTTAUL2qOjOSuZSd7bMzXu6Nh0CW7MR9cGhoNGzqJiiHtrUGFb7j9E/exec";
 
     // Enhanced order standardization with proper parent product ID mapping
     const standardizedOrder = {
@@ -1736,4 +1755,24 @@ function validateCustomFabricData(complementaryItems) {
   }
 
   return true;
+}
+
+// Function to calculate additional cost from custom fabrics
+function calculateAdditionalCost() {
+  let additionalCost = 0;
+  let hasCustomFabrics = false;
+
+  cart.forEach((item) => {
+    if (item.complementaryItems && item.complementaryItems.length > 0) {
+      item.complementaryItems.forEach((comp) => {
+        if (comp.isCustom || comp.isCustomFabric) {
+          hasCustomFabrics = true;
+          // Add any additional processing costs for custom fabrics
+          additionalCost += 0; // Currently $0, but can be modified as needed
+        }
+      });
+    }
+  });
+
+  return { additionalCost, hasCustomFabrics };
 }
