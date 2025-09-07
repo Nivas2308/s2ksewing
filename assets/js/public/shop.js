@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
       profileIcon.classList.add("user-initial");
 
       // Update href to point to account page instead of login
-      profileLink.href = "cp.html"; // Customer profile/account page
+      profileLink.href = "/public/cp.html"; // Customer profile/account page
     } else {
       // User is not logged in - ensure icon is displayed
       profileIcon.innerHTML = "";
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
       profileIcon.classList.remove("user-initial");
 
       // Set link to login page
-      profileLink.href = "login.html";
+      profileLink.href = "/public/login.html";
     }
   }
 
@@ -283,7 +283,7 @@ function displayProducts(filteredProducts = null) {
   }
 
   // Calculate pagination
-  const productsPerPage = 20;
+  const productsPerPage = 24;
   const totalPages = Math.ceil(products.length / productsPerPage);
   const start = (currentPage - 1) * productsPerPage;
   const end = Math.min(start + productsPerPage, products.length);

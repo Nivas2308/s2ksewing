@@ -15,13 +15,28 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     />
     <link rel="stylesheet" href="/assets/component/index.css" />
-    <link rel="stylesheet" href="/assets/css/public/giftcard.css">
+    <link rel="stylesheet" href="/assets/css/public/giftcard.css" />
     <script src="/assets/component/auth.js"></script>
     <script src="/assets/component/profile.js"></script>
     <script src="/assets/js/public/giftcard.js"></script>
   </head>
 
-  <body class="bg-white-50 min-h-screen">
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50"
+      style="display: none"
+    >
+      <div class="text-center">
+        <div
+          class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-indigo-600 border-t-transparent"
+          role="status"
+        ></div>
+        <div class="mt-2 text-gray-600">Loading...</div>
+      </div>
+    </div>
+
     <!-- Loader -->
     <div id="loader">
       <div class="spinner"></div>
@@ -29,14 +44,21 @@
 
     <!-- AD BAR STARTS -->
     <div class="adbar-container">
-      <marquee id="scrolling-text">Welcome to S2K Sewing</marquee>
+      <marquee id="scrolling-text"
+        >Welcome to S2K Sewing - Your premier destination for gift cards! 🎁
+        Free delivery on orders over $100!</marquee
+      >
     </div>
 
-    <!-- Modified cart icon in the nav section -->
+    <!-- Navigation -->
     <div class="nav-container" style="z-index: 1">
       <div class="logo" id="logo-container">
         <a href="/index.html">
-          <img id="site-logo" src="" alt="S2K Sewing" />
+          <img
+            id="site-logo"
+            src="https://via.placeholder.com/120x40/4f46e5/ffffff?text=S2K+SEWING"
+            alt="S2K Sewing"
+          />
         </a>
       </div>
 
@@ -46,12 +68,25 @@
           id="your-cart-icon-container"
           style="position: relative; display: inline-block"
         >
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span class="cart-counter" id="cart-count">0</span>
+          <i class="fa-solid fa-cart-shopping text-xl"></i>
+          <span
+            class="cart-counter absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center"
+            id="cart-count"
+            style="display: none"
+            >0</span
+          >
         </a>
         <a href="login.html" id="profile-link">
-          <i class="fa fa-user-circle" id="profile-icon"></i>
+          <i class="fa fa-user-circle text-xl" id="profile-icon"></i>
         </a>
+      </div>
+    </div>
+
+    <!-- Page Title -->
+    <div class="container mx-auto px-4 py-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gift Cards</h1>
+        <p class="text-gray-600 mb-8">Perfect gifts for your loved ones</p>
       </div>
     </div>
 
@@ -62,12 +97,12 @@
         id="categoryFilters"
       >
         <button
-          class="category-filter bg-indigo-600 text-white rounded-full px-4 py-2 rounded hover:bg-indigo-700 transition-colors active"
+          class="category-filter bg-indigo-600 text-white rounded-full px-4 py-2 hover:bg-indigo-700 transition-colors active"
           data-category="all"
         >
           All Categories
         </button>
-        <!-- Dynamic categories will be added here -->
+        <!-- Dynamic categories will be added here by JavaScript -->
       </div>
     </div>
 
@@ -77,14 +112,15 @@
         id="giftCardsGrid"
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
       >
-        <!-- Gift cards will be loaded here -->
+        <!-- Gift cards will be loaded here by JavaScript -->
         <div class="text-center text-gray-500 col-span-full py-12">
-          Loading gift cards...
+          <i class="fas fa-gift text-4xl mb-4"></i>
+          <p>Loading gift cards...</p>
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Purchase Modal with Pricing Options -->
+    <!-- Enhanced Purchase Modal -->
     <div
       id="purchaseModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4"
@@ -144,34 +180,46 @@
                 </div>
               </div>
             </div>
-            <p id="modalCardDescription" class="text-gray-700 text-sm"></p>
+            <p id="modalCardDescription" class="text-gray-700 text-sm">
+              Gift card description will appear here
+            </p>
           </div>
 
           <!-- Pricing Section -->
           <div id="pricingSection" class="mb-6">
             <h4 class="font-semibold mb-3">Select Amount:</h4>
-            <div id="pricingOptions">
-              <!-- Pricing options will be populated here -->
+            <div id="pricingOptions" class="space-y-2">
+              <!-- Pricing options will be populated by JavaScript -->
             </div>
           </div>
 
           <!-- Quantity Section -->
-          <div class="quantity-control mb-6">
+          <div class="quantity-control mb-6 flex items-center gap-4">
             <label class="font-semibold">Quantity:</label>
-            <button type="button" class="quantity-btn" id="decreaseQty">
-              -
-            </button>
-            <input
-              type="number"
-              id="quantity"
-              class="quantity-input"
-              value="1"
-              min="1"
-              max="99"
-            />
-            <button type="button" class="quantity-btn" id="increaseQty">
-              +
-            </button>
+            <div class="flex items-center border border-gray-300 rounded-md">
+              <button
+                type="button"
+                class="px-3 py-2 hover:bg-gray-100 transition-colors"
+                id="decreaseQty"
+              >
+                -
+              </button>
+              <input
+                type="number"
+                id="quantity"
+                class="w-16 px-3 py-2 text-center border-0 focus:ring-0"
+                value="1"
+                min="1"
+                max="99"
+              />
+              <button
+                type="button"
+                class="px-3 py-2 hover:bg-gray-100 transition-colors"
+                id="increaseQty"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <!-- Total Amount -->
@@ -247,9 +295,9 @@
               <button
                 type="submit"
                 id="completePurchaseBtn"
-                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
-                Proceed to Payment
+                Add to Cart
               </button>
             </div>
           </form>
@@ -278,23 +326,42 @@
               d="M5 13l4 4L19 7"
             />
           </svg>
-          <h2 class="text-2xl font-bold mb-4">Purchase Successful!</h2>
+          <h2 class="text-2xl font-bold mb-4">Added to Cart Successfully!</h2>
           <p class="text-gray-700 mb-6">
-            Your gift card has been purchased successfully! We've sent the gift
-            card to the recipient's email address.
+            Your gift card has been added to your cart. You can proceed to
+            checkout when ready.
           </p>
           <div class="bg-gray-50 p-4 rounded-lg mb-6">
             <p class="text-sm text-gray-600">
-              Purchase ID: <span id="orderIdDisplay" class="font-mono">-</span>
+              Item ID: <span id="orderIdDisplay" class="font-mono">-</span>
             </p>
           </div>
-          <button
-            id="confirmDoneBtn"
-            class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-red-700"
-          >
-            Done
-          </button>
+          <div class="flex gap-3">
+            <button
+              id="continueShopping"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Continue Shopping
+            </button>
+            <button
+              id="viewCart"
+              class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              View Cart
+            </button>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Success/Error Notifications -->
+    <div
+      id="notification"
+      class="fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full opacity-0 transition-all duration-300"
+      style="display: none"
+    >
+      <div class="flex items-center">
+        <span id="notificationMessage">Notification message</span>
       </div>
     </div>
 
@@ -324,69 +391,72 @@
 
     <!-- FOOTER STARTS -->
     <footer class="footer-container">
-      <div class="newsletter">
-        <div class="newsletter-content">
-          <p id="newsletter-text">
-            Subscribe to our newsletter for latest updates!
-          </p>
+     <div class="newsletter">
+            <div class="newsletter-content">
+                <p id="newsletter-text">Subscribe to our newsletter for latest updates!</p>
+            </div>
+        </div>
+
+
+        <div class="newsletter-btn-container">
+          <input class="email-btn" type="email" placeholder="Email" />
+          <button class="sub-btn" type="button">Submit</button>
         </div>
       </div>
 
-      <div class="newsletter-btn-container">
-        <input class="email-btn" type="email" placeholder="Email" />
-        <button class="sub-btn" type="button">Submit</button>
-      </div>
-
-      <div class="footer-option-container">
-        <div class="payment tut">
-          <h4>Payment & Shipping</h4>
-          <ul>
-            <li><a href="shippingcost.html">Shipping Cost</a></li>
-            <li><a href="cancellationpolicy.html">Cancellation</a></li>
-          </ul>
+           <div class="footer-option-container">
+           <!-- <div class="footerlogo">
+           <h4><a href="index.html">S2K Sewing </a></h4>
+           </div> -->
+           
+            <div class="payment tut">
+                <h4>Payment & Shipping</h4>
+                <ul>
+                    <li><a href="shippingcost.html">Shipping Cost</a></li>
+                    
+                   
+                    <li><a href="cancellationpolicy.html">Cancellation </a></li>
+                </ul>
+            </div>
+            <div class="Services tut">
+                <h4>Services</h4>
+                <ul>
+                  <li><a href="giftcard.html">GiftCards</a></li>
+                </ul>
+            </div>
+            <div class="Help tut">
+                <h4>Help & Contact</h4>
+                <ul>
+                    <li><a href="contact.html">Help & Support</a></li>
+                    
+                    
+                </ul>
+            </div>
+            <div class="About-Us tut">
+                <h4>About Us</h4>
+                <ul>
+                    <li><a href="https://airlinksin.com/">Corporate Website</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
         </div>
-        <div class="Services tut">
-          <h4>Services</h4>
-          <ul>
-            <li><a href="giftcard.html">GiftCards</a></li>
-          </ul>
-        </div>
-        <div class="Help tut">
-          <h4>Help & Contact</h4>
-          <ul>
-            <li><a href="contact.html">Help & Support</a></li>
-          </ul>
-        </div>
-        <div class="About-Us tut">
-          <h4>About Us</h4>
-          <ul>
-            <li><a href="https://airlinksin.com/">Corporate Website</a></li>
-            <li><a href="contact.html">Contact</a></li>
-          </ul>
-        </div>
-      </div>
     </footer>
-
-    <div class="end-footer">
-      <div class="doc-con">
-        <span><a href="">Privacy Policy</a></span>
-        <span><a href="">GTC</a></span>
-      </div>
-
-      <div class="social-icon">
-        <a href="#"><i class="fa-brands fa-instagram"></i></a>
-        <a href="#"><i class="fa-brands fa-facebook"></i></a>
-        <a href="#"><i class="fa-brands fa-pinterest"></i></a>
-      </div>
-
-      <div class="copyright">
-        <span
-          >Proudly powered by
-          <a href="https://airlinksin.com/">AirLinksin</a></span
-        >
-      </div>
-    </div>
-
     
+        <div class="end-footer">
+            <div class="doc-con">
+                <span><a href="privacypolicy.html">Privacy Policy</a></span>
+                <span><a href="">GTC</a></span>
+            </div>
+    
+            <div class="social-icon">
+                <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#"><i class="fa-brands fa-pinterest"></i></a>
+            </div>
+    
+            <div class="copyright">
+                <span>Proudly powered by <a href="https://airlinksin.com/">AirLinksin</a></span>
+            </div>
+        </div>
   </body>
 </html>

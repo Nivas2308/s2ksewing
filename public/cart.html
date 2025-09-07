@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/assets/css/public/cart.css" defer />
     <script defer src="/assets/component/profile.js"></script>
     <script defer src="/assets/component/auth.js"></script>
-    <script defer src="/assets/js/public/cart.js"></script>
+    <script src="/assets/js/public/cart.js"></script>
   </head>
   <body style="height: 100%">
     <!-- Loader -->
@@ -81,7 +81,7 @@
                 </div>
 
                 <div class="summary-row">
-                  <span class="summary-label">Tax (%)</span>
+                  <span class="summary-label">Tax</span>
                   <span class="summary-value" id="tax">$0.00</span>
                 </div>
 
@@ -92,13 +92,13 @@
                     id="shippingSelect"
                     onchange="selectShippingOption(this.value)"
                   >
-                    <option value="domestic">Standard Shipping</option>
+                    <!-- <option value="domestic">Standard Shipping</option>
                     <option value="business">Business Delivery</option>
                     <option value="international">International</option>
-                    <option value="express">Express Delivery</option>
+                    <option value="express">Express Delivery</option> -->
                   </select>
                   <div class="shipping-dropdown-container">
-                    <span class="summary-value" id="shipping">$9.99</span>
+                    <span class="summary-value" id="shipping">$0.00</span>
                   </div>
                 </div>
 
@@ -118,7 +118,7 @@
                 <button class="btn checkout-btn" onclick="checkout()">
                   Proceed to Checkout <i class="fas fa-arrow-right"></i>
                 </button>
-                <a href="shop.html" class="continue-shopping">
+                <a href="/index.html" class="continue-shopping">
                   <i class="fas fa-arrow-left"></i> Continue Shopping
                 </a>
               </div>

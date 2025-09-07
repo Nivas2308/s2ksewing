@@ -1,4 +1,4 @@
-      /* imports */
+/* imports */
 @import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 
 /* Reset Settings */
@@ -46,60 +46,411 @@ body {
   overflow-x: hidden;
 }
 
-
-
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-  
-        background-color:white;
-      }
-      
-.container{
+/* Container - Responsive margins */
+.container {
   background-color: white;
-  margin: 30px 80px;
+  margin: 30px auto;
+  padding: 20px;
+  max-width: 1200px;
+  width: 90%;
 }
-      h1 {
-        text-align: center;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
-      th, td {
-        padding: 10px;
-        border: 1px solid #ddd;
-        text-align: center;
-      }
-      th {
-        background-color: #f2f2f2;
-      }
-      .button {
-        background-color: #5bb019d4;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: 600;
-        transition: background-color 0.3s;
-        text-decoration: none;
-        display: inline-block;
-      }
-      .button:hover {
-        background-color: #4a9015;
-      }
-      .loading {
-        text-align: center;
-        font-style: italic;
-        color: #666;
-        margin: 20px 0;
-      }
-      #lastUpdated {
-        font-size: 12px;
-        color: #666;
-        text-align: right;
-        margin-top: 20px;
-      }
+
+/* Headings */
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+/* Paragraph styling */
+p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+/* Table styling - Enhanced for mobile */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+th,
+td {
+  padding: 15px 10px;
+  border: 1px solid var(--border-color);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease;
+}
+
+/* Remove hover highlighting if not needed */
+/* tr:hover td {
+  background-color: #f8f9fa;
+} */
+
+/* Cost and delivery time styling */
+.cost {
+  font-weight: bold;
+  color: var(--accent-color);
+  font-size: 1.1rem;
+}
+
+.delivery-time {
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+/* Button styling */
+.button {
+  background: linear-gradient(135deg, #5bb019d4, #4a9015);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button:hover {
+  background: linear-gradient(135deg, #4a9015, #3d7a12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: var(--light-text);
+  margin: 40px 0;
+  padding: 20px;
+  background-color: var(--secondary-color);
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+/* Last updated */
+#lastUpdated {
+  font-size: 0.9rem;
+  color: var(--light-text);
+  text-align: right;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Mobile-first responsive design */
+
+/* Small devices (landscape phones, 576px and up) */
+@media (max-width: 768px) {
+  .container {
+    margin: 15px auto;
+    padding: 15px;
+    width: 95%;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile table - Stack layout */
+  table {
+    font-size: 0.9rem;
+  }
+
+  th,
+  td {
+    padding: 12px 8px;
+  }
+
+  th {
+    font-size: 0.9rem;
+  }
+
+  .button {
+    padding: 10px 20px;
+    font-size: 14px;
+    display: block;
+    text-align: center;
+    margin: 15px auto;
+    width: fit-content;
+  }
+
+  #lastUpdated {
+    text-align: center;
+    font-size: 0.8rem;
+  }
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 576px) {
+  .container {
+    margin: 10px auto;
+    padding: 10px;
+    width: 98%;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+
+  p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  /* Mobile table - Card layout */
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  tr:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  td {
+    border: none;
+    padding: 8px 0;
+    position: relative;
+    padding-left: 40% !important;
+    text-align: left;
+  }
+
+  td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 0;
+    width: 35%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: bold;
+    color: var(--accent-color);
+  }
+
+  /* Add data labels for mobile */
+  td:nth-of-type(1):before {
+    content: "Shipping Type";
+  }
+  td:nth-of-type(2):before {
+    content: "Cost";
+  }
+  td:nth-of-type(3):before {
+    content: "Delivery Time";
+  }
+
+  .loading {
+    margin: 20px 0;
+    padding: 15px;
+    font-size: 1rem;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .container {
+    margin: 40px auto;
+    padding: 30px;
+  }
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  th,
+  td {
+    padding: 18px 15px;
+  }
+
+  th {
+    font-size: 1.1rem;
+  }
+
+  td {
+    font-size: 1rem;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .container {
+    margin: 50px auto;
+    padding: 40px;
+  }
+
+  table {
+    margin-bottom: 30px;
+  }
+
+  th,
+  td {
+    padding: 20px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  table {
+    border-width: 0.5px;
+  }
+
+  th,
+  td {
+    border-width: 0.5px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .container {
+    margin: 0;
+    padding: 20px;
+    width: 100%;
+  }
+
+  .button {
+    display: none;
+  }
+
+  #lastUpdated {
+    display: none;
+  }
+
+  table {
+    box-shadow: none;
+    border: 2px solid #000;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    color: #000 !important;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #e0e0e0;
+    --light-text: #b0b0b0;
+    --border-color: #444;
+    --secondary-color: #2a2a2a;
+    --third-color: #3a3a3a;
+  }
+
+  body {
+    background-color: #1a1a1a;
+  }
+
+  .container {
+    background-color: #1a1a1a;
+  }
+
+  table {
+    background-color: #2a2a2a;
+  }
+
+  tr:hover td {
+    background-color: #3a3a3a;
+  }
+
+  .loading {
+    background-color: var(--secondary-color);
+  }
+}
+
+/* Focus styles for better accessibility */
+.button:focus,
+table:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Enhanced loading animation */
+.loading::after {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  border: 2px solid var(--light-text);
+  border-radius: 50%;
+  border-top-color: var(--accent-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

@@ -1,5 +1,5 @@
 const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbxWNzaRVCHFKBBq-bCCj4o_ZKLk7HhlmTHDehEilj8RVWCzPSv0VKtox6pvg9v3EuSPkw/exec";
+  "https://script.google.com/macros/s/AKfycbzxfNtJBDljaZZtixWpAKkYwWSWEpfIFeSz6B6lj43WyQaVlnH1W6ok8bvtx9etXwPGeQ/exec";
 const DEFAULT_BACKGROUND =
   "https://images.unsplash.com/photo-1470167290877-7d5d3446de4c?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   const SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbymiW25uafCai9Gchi7nkRN-7mBlMvzOuJ44-4tUbNmmnP6nMDLm414kQpSncIFlLO9/exec";
+    "https://script.google.com/macros/s/AKfycbwpaPF9pOYmTBxtenJq5H2oStKhl4843p8IdS7eS3yjSRFul_6J9bpGHP7qWt5HYzNr/exec";
 
   // Password strength meter
   passwordInput.addEventListener("input", function () {
@@ -166,16 +166,40 @@ document.addEventListener("DOMContentLoaded", function () {
     registerBtn.textContent = "";
     loader.style.display = "block";
 
-    // Get form data
-    const formData = new FormData(form);
+    // Create URLSearchParams object to send data
     const data = new URLSearchParams();
 
-    // Add all form fields except the image file
-    for (let [key, value] of formData.entries()) {
-      if (key !== "profileImage") {
-        data.append(key, value);
-      }
-    }
+    // Explicitly add all form fields including pincode
+    data.append("action", "register");
+    data.append("firstName", document.getElementById("firstName").value || "");
+    data.append("lastName", document.getElementById("lastName").value || "");
+    data.append("dob", document.getElementById("dob").value || "");
+    data.append("orgEmail", document.getElementById("orgEmail").value || "");
+    data.append(
+      "countryCode",
+      document.getElementById("countryCode").value || ""
+    );
+    data.append(
+      "mobileNumber",
+      document.getElementById("mobileNumber").value || ""
+    );
+    data.append(
+      "houseNumber",
+      document.getElementById("houseNumber").value || ""
+    );
+    data.append("street", document.getElementById("street").value || "");
+    data.append("city", document.getElementById("city").value || "");
+    data.append("state", document.getElementById("state").value || "");
+    data.append("country", document.getElementById("country").value || "");
+    data.append(
+      "department",
+      document.getElementById("department").value || ""
+    );
+    data.append("position", document.getElementById("position").value || "");
+    data.append("username", document.getElementById("username").value || "");
+    data.append("password", document.getElementById("password").value || "");
+    // Add pincode explicitly
+    data.append("pincode", document.getElementById("pincode").value || "");
 
     // Handle the image file separately
     const imageFile = profileImageInput.files[0];
@@ -193,16 +217,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
       reader.readAsDataURL(imageFile);
     } else {
-      // No image selected, just submit the form data
+      // No image selected, set default value
+      data.append("imageData", "No Image");
+      // Submit the form data
       submitFormData(data);
     }
 
     // Function to submit the form data
     function submitFormData(data) {
+      console.log("Submitting form data with pincode:", data.get("pincode")); // Debug log
+
       // Send data to Google Apps Script
       fetch(SCRIPT_URL, {
         redirect: "follow",
         method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
         body: data,
         mode: "no-cors", // Required for Google Apps Script
       })
@@ -224,6 +255,12 @@ document.addEventListener("DOMContentLoaded", function () {
           imagePreview.innerHTML =
             '<div class="image-preview-placeholder">No image<br>selected</div>';
           fileName.textContent = "No file chosen";
+
+          // Reset password strength meter
+          strengthMeter.style.width = "0%";
+          strengthMeter.style.backgroundColor = "#ddd";
+          strengthText.textContent = "Password strength";
+          strengthText.style.color = "#666";
         })
         .catch((error) => {
           // Handle error
@@ -240,6 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
   });
+
   // Custom alert function
   function showAlert(title, message, type) {
     const alertContainer = document.getElementById("custom-alert-container");

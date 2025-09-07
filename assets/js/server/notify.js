@@ -1,5 +1,5 @@
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbzc2m4iEYB7idPx9JgKi13xDBsNJAK8ldV-TB7_lkvwg_nh40Pxad2eFIPZcEHh4WvS/exec";
+  "https://script.google.com/macros/s/AKfycbzqRxOh2hLrU11llRAFJypEOSQYBhdoOLAVfVVj1UWYjIW6Z1EaznJZZRbtTX4L936_/exec";
 const superAdminEmail = "s2ksewing@gmail.com";
 
 if (localStorage.getItem("isSuperAdmin") !== "true") {
@@ -46,11 +46,20 @@ fetch(`${SCRIPT_URL}?action=getEmployees`)
           `;
       tbody.appendChild(tr);
     });
+  })
+  .catch((error) => {
+    console.error("Error fetching employees:", error);
+    const tbody = document.querySelector("#pendingTable tbody");
+    tbody.innerHTML =
+      "<tr><td colspan='7'>Error loading data. Please try again.</td></tr>";
   });
 
 function approve(username) {
   fetch(SCRIPT_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
       action: "approve_user",
       username: username,
@@ -61,21 +70,85 @@ function approve(username) {
     .then((msg) => {
       document.getElementById("message").textContent = msg;
       setTimeout(() => location.reload(), 1500);
+    })
+    .catch((error) => {
+      console.error("Error approving user:", error);
+      document.getElementById("message").textContent =
+        "Error approving user. Please try again.";
     });
 }
 
+// FIXED updateStatus function - corrected parameter name from 'employeeId' to match server expectation
 function updateStatus(id, status) {
+  // Add confirmation for deletion
+  if (status === "Deleted") {
+    if (
+      !confirm(
+        "Are you sure you want to permanently delete this employee? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+  }
+
+  // Add confirmation for denial
+  if (status === "Denied") {
+    if (
+      !confirm("Are you sure you want to deny this employee's application?")
+    ) {
+      return;
+    }
+  }
+
   fetch(SCRIPT_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
       action: "updateStatus",
-      employeeId: id,
+      employeeId: id, // This parameter name now matches what the server expects
       status: status,
     }),
   })
-    .then((res) => res.text())
-    .then((msg) => {
-      document.getElementById("message").textContent = msg;
-      setTimeout(() => location.reload(), 1500);
+    .then((res) => {
+      // Handle both JSON and text responses
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return res.json();
+      } else {
+        return res.text();
+      }
+    })
+    .then((response) => {
+      let message = "";
+      let isSuccess = false;
+
+      if (typeof response === "object" && response.message) {
+        message = response.message;
+        isSuccess = response.success;
+      } else {
+        message = response;
+        // For text responses, consider it successful if it doesn't contain "error"
+        isSuccess = !message.toLowerCase().includes("error");
+      }
+
+      // Display the message
+      const messageEl = document.getElementById("message");
+      messageEl.textContent = message;
+
+      // Add visual feedback based on success/failure
+      messageEl.style.color = isSuccess ? "green" : "red";
+
+      // Only reload if the operation was successful
+      if (isSuccess) {
+        setTimeout(() => location.reload(), 1500);
+      }
+    })
+    .catch((error) => {
+      console.error("Error updating status:", error);
+      const messageEl = document.getElementById("message");
+      messageEl.textContent = "Error updating status. Please try again.";
+      messageEl.style.color = "red";
     });
 }

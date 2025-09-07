@@ -309,8 +309,30 @@ function displayTestimonials(testimonialsToDisplay) {
   testimonialsToDisplay.forEach((testimonial) => {
     const testimonialItem = document.createElement("div");
     testimonialItem.className = "testimonial-item";
+
+    // Function to get initials
+    function getInitials(name) {
+      if (!name) return "U"; // Default for unknown names
+      const parts = name.trim().split(" ");
+      if (parts.length >= 2) {
+        return (
+          parts[0].charAt(0).toUpperCase() +
+          parts[parts.length - 1].charAt(0).toUpperCase()
+        );
+      }
+      return parts[0].charAt(0).toUpperCase();
+    }
+
+    // Decide what to show: image OR initials avatar
+    const avatarHTML =
+      testimonial.photo && testimonial.photo.trim() !== ""
+        ? `<img src="${testimonial.photo}" alt="${testimonial.name}" class="testimonial-img" onerror="this.src='https://via.placeholder.com/80?text=User'">`
+        : `<div class="testimonial-avatar">${getInitials(
+            testimonial.name
+          )}</div>`;
+
     testimonialItem.innerHTML = `
-      <img src="${testimonial.photo}" alt="${testimonial.name}" class="testimonial-img" onerror="this.src='https://via.placeholder.com/80?text=No+Image'">
+      ${avatarHTML}
       <div class="testimonial-content">
           <h3 class="testimonial-name">${testimonial.name}</h3>
           <p class="testimonial-position">${testimonial.position}</p>
@@ -321,10 +343,11 @@ function displayTestimonials(testimonialsToDisplay) {
           <button class="btn btn-danger delete-btn" data-id="${testimonial.id}">Delete</button>
       </div>
     `;
+
     testimonialsList.appendChild(testimonialItem);
   });
 
-  // Add event listeners to edit and delete buttons
+  // Edit button handler
   document.querySelectorAll(".edit-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const id = parseInt(this.getAttribute("data-id"));
@@ -332,6 +355,7 @@ function displayTestimonials(testimonialsToDisplay) {
     });
   });
 
+  // Delete button handler
   document.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const id = parseInt(this.getAttribute("data-id"));

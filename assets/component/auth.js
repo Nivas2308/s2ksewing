@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Use the correct deployment ID
       const url =
-        "https://script.google.com/macros/s/AKfycbwWmAPt83L7z-yfDZRp4VDwDW8bnmU_D0m2tvjFhTGWbjylOYVXAFSaEgZyXr_vD2oC/exec";
+        "https://script.google.com/macros/s/AKfycbzghyFB3y6eNLjzkWV5iU7WIp2qLC3ZHzET0c5O4B1k-LvtJYSOgVnwNUKC2BrqwToA/exec";
 
       // Use fetch with no-cors mode
       fetch(url + "?email=" + encodeURIComponent(email) + "&source=website", {

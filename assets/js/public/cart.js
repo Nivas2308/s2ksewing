@@ -33,23 +33,26 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Load and display cart
   loadCart();
 
+  enhancedLoadCart();
+
   // Update cart count
   updateCartCount();
 });
 
 // 2. PRICING CONFIGURATION
+let pricingConfig = null;
+
 async function fetchPricingConfig() {
   try {
     // Replace with your deployed Web App URL
     const scriptUrl =
-      "https://script.google.com/macros/s/AKfycbxFQGWg83k7nTxCRfqezwQUNl5fU85tGpEVd1m1ARqOiPxskPzmPiLD1oi7giX5v5syRw/exec";
+      "https://script.google.com/macros/s/AKfycbz4u8iR1P5W_mysP3V9mp0CSVcKjIW8ujGdRZBzy39Ydcvr4PIgrj2IvxES9EFX_Eeecg/exec";
 
-    // // Show loading indicator
-    // showNotification("Loading pricing information...", "info");
+    console.log("Fetching pricing configuration from server...");
 
     const response = await fetch(`${scriptUrl}?action=getPricingConfig`);
     if (!response.ok) {
-      throw new Error("Failed to fetch pricing configuration");
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -57,23 +60,66 @@ async function fetchPricingConfig() {
       throw new Error(data.error);
     }
 
-    // Save pricing config to session storage
+    // Save pricing config to both session storage and global variable
+    pricingConfig = data;
     sessionStorage.setItem("pricingConfig", JSON.stringify(data));
     console.log("Pricing configuration loaded:", data);
 
-    // Set default shipping option if not already selected
-    if (!sessionStorage.getItem("selectedShipping")) {
-      sessionStorage.setItem("selectedShipping", "domestic");
+    // Set default shipping option from the first available option
+    if (
+      data.shippingOptions &&
+      data.shippingOptions.length > 0 &&
+      !sessionStorage.getItem("selectedShipping")
+    ) {
+      sessionStorage.setItem(
+        "selectedShipping",
+        data.shippingOptions[0].name.toLowerCase()
+      );
     }
+
+    // Update shipping dropdown with available options
+    updateShippingDropdown(data.shippingOptions);
 
     return data;
   } catch (error) {
     console.error("Error fetching pricing config:", error);
-    showNotification("Using default pricing. " + error.message, "warning");
+    showNotification(
+      "Failed to load pricing configuration: " + error.message,
+      "warning"
+    );
 
-    sessionStorage.setItem("pricingConfig", JSON.stringify(defaultPricing));
-    return defaultPricing;
+    // Use fallback default pricing
+    pricingConfig = getDefaultPricing();
+    sessionStorage.setItem("pricingConfig", JSON.stringify(pricingConfig));
+    return pricingConfig;
   }
+}
+
+// Update shipping dropdown with fetched options
+function updateShippingDropdown(shippingOptions) {
+  const shippingSelect = document.getElementById("shippingSelect");
+  if (!shippingSelect || !shippingOptions || shippingOptions.length === 0) {
+    return;
+  }
+
+  // Clear existing options
+  shippingSelect.innerHTML = "";
+
+  // Add options from the sheet
+  shippingOptions.forEach((option) => {
+    const optionElement = document.createElement("option");
+    optionElement.value = option.name.toLowerCase();
+    optionElement.textContent = `${option.name} - $${option.cost.toFixed(2)} (${
+      option.deliveryDays
+    } days)`;
+    shippingSelect.appendChild(optionElement);
+  });
+
+  // Set selected option
+  const selectedShipping =
+    sessionStorage.getItem("selectedShipping") ||
+    shippingOptions[0].name.toLowerCase();
+  shippingSelect.value = selectedShipping;
 }
 
 // Function to fetch default amount for customized products
@@ -123,6 +169,7 @@ async function fetchCustomFabricDefaultAmount() {
 }
 
 // 3. CART LOADING AND DISPLAY
+
 function loadCart() {
   const userInfo = JSON.parse(localStorage.getItem(`userInfo`) || "{}");
   const userId = sessionStorage.getItem("userId");
@@ -187,7 +234,16 @@ function loadCart() {
   let cartHTML = guestNoticeHTML;
 
   cart.forEach((item, index) => {
-    // Main product image
+    // Check if this is a gift card
+    if (item.type === "giftcard" && typeof renderGiftCardItem === "function") {
+      const giftCardHTML = renderGiftCardItem(item, index);
+      if (giftCardHTML) {
+        cartHTML += giftCardHTML;
+        return; // Skip regular item processing
+      }
+    }
+
+    // Regular product processing (existing code)
     const itemImage = item.image || "https://via.placeholder.com/150";
 
     // Size display for garments or fabrics
@@ -223,7 +279,7 @@ function loadCart() {
     </span>`
         : "";
 
-    // Create the cart item HTML
+    // Create the cart item HTML for regular products
     cartHTML += `
       <div class="cart-item" data-index="${index}">
         <div class="cart-item-main">
@@ -254,7 +310,7 @@ function loadCart() {
         </button>
     `;
 
-    // Process complementary items
+    // Process complementary items (existing code)
     if (item.complementaryItems && item.complementaryItems.length > 0) {
       const isPattern =
         item.title.toLowerCase().includes("cotton") ||
@@ -441,12 +497,12 @@ function loadCart() {
 }
 
 // 4. CART SUMMARY CALCULATIONS
+
 function updateCartSummary() {
   const userId = sessionStorage.getItem("userId");
   const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
 
   let cart = [];
-
   if (isLoggedIn) {
     cart = JSON.parse(localStorage.getItem(`shoppingCart`) || "[]");
   } else {
@@ -465,9 +521,30 @@ function updateCartSummary() {
     return;
   }
 
+  // Get current pricing configuration
+  const currentPricingConfig =
+    pricingConfig ||
+    JSON.parse(sessionStorage.getItem("pricingConfig")) ||
+    getDefaultPricing();
+
   // Calculate subtotal
   let subtotal = 0;
+  let hasPhysicalItems = false; // Track if cart has items that need shipping
+
   cart.forEach((item) => {
+    // Handle gift cards
+    if (item.type === "giftcard" && item.giftCardDetails) {
+      const giftCardPrice = parseFloat(
+        item.giftCardDetails.selectedPrice || item.price
+      );
+      subtotal += giftCardPrice * (item.quantity || 1);
+      // Gift cards don't need shipping
+      return;
+    }
+
+    // Handle regular products
+    hasPhysicalItems = true; // Regular items need shipping
+
     let itemPrice = item.price;
     if (
       item.options &&
@@ -499,26 +576,51 @@ function updateCartSummary() {
     }
   });
 
-  // Get pricing configuration from session storage
-  const pricingConfig = JSON.parse(sessionStorage.getItem("pricingConfig")) || {
-    vatPercentage: 10,
-    shippingCosts: { domestic: 9.99 },
-    freeShippingThreshold: 100,
-    deliveryTimes: { domestic: 5 },
-  };
-
   // Get selected shipping type and calculate cost
-  const shippingType = sessionStorage.getItem("selectedShipping") || "domestic";
-  let shipping =
-    subtotal >= pricingConfig.freeShippingThreshold
-      ? 0
-      : pricingConfig.shippingCosts[shippingType] || 9.99;
+  const shippingType =
+    sessionStorage.getItem("selectedShipping") ||
+    (currentPricingConfig.shippingOptions &&
+    currentPricingConfig.shippingOptions[0]
+      ? currentPricingConfig.shippingOptions[0].name.toLowerCase()
+      : "domestic");
 
-  // First calculate the pre-tax total (subtotal + shipping)
+  // Find the selected shipping option from pricing config
+  let selectedShippingOption = null;
+  if (currentPricingConfig.shippingOptions) {
+    selectedShippingOption = currentPricingConfig.shippingOptions.find(
+      (option) => option.name.toLowerCase() === shippingType.toLowerCase()
+    );
+  }
+
+  // Calculate shipping cost
+  let shipping = 0;
+  let deliveryDays = 5; // default
+
+  // Only calculate shipping if there are physical items
+  if (hasPhysicalItems) {
+    if (selectedShippingOption) {
+      // Check for free shipping threshold
+      if (
+        currentPricingConfig.freeShippingThreshold &&
+        subtotal >= currentPricingConfig.freeShippingThreshold
+      ) {
+        shipping = 0;
+      } else {
+        shipping = selectedShippingOption.cost;
+      }
+      deliveryDays = selectedShippingOption.deliveryDays;
+    } else {
+      // Fallback to default pricing
+      shipping =
+        subtotal >= (currentPricingConfig.freeShippingThreshold || 100)
+          ? 0
+          : 9.99;
+    }
+  }
+
+  // Calculate tax based on VAT percentage from config
+  const taxRate = (currentPricingConfig.vatPercentage || 10) / 100;
   const preTaxTotal = subtotal + shipping;
-
-  // Calculate tax based on Tax percentage from config on the pre-tax total
-  const taxRate = pricingConfig.vatPercentage / 100 || 0.1;
   const tax = preTaxTotal * taxRate;
 
   // Calculate final total
@@ -529,7 +631,10 @@ function updateCartSummary() {
   taxElement.textContent = `$${tax.toFixed(2)}`;
 
   // Set shipping text with or without icon
-  if (shipping === 0) {
+  if (!hasPhysicalItems) {
+    shippingElement.innerHTML =
+      '<span class="digital-only">Not For Digital Items</span>';
+  } else if (shipping === 0) {
     shippingElement.innerHTML =
       '<span class="free-shipping"><i class="fas fa-gift"></i> FREE</span>';
   } else {
@@ -538,19 +643,22 @@ function updateCartSummary() {
 
   // Update delivery date if element exists
   if (deliveryElement) {
-    // Calculate delivery date based on selected shipping
-    const deliveryDays = pricingConfig.deliveryTimes[shippingType] || 5;
-    const deliveryDate = new Date();
-    deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
+    if (!hasPhysicalItems) {
+      deliveryElement.textContent = "Instant Digital Delivery";
+    } else {
+      // Calculate delivery date based on selected shipping
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
 
-    // Format the delivery date
-    const options = { weekday: "long", month: "long", day: "numeric" };
-    const formattedDeliveryDate = deliveryDate.toLocaleDateString(
-      "en-US",
-      options
-    );
+      // Format the delivery date
+      const options = { weekday: "long", month: "long", day: "numeric" };
+      const formattedDeliveryDate = deliveryDate.toLocaleDateString(
+        "en-US",
+        options
+      );
 
-    deliveryElement.textContent = formattedDeliveryDate;
+      deliveryElement.textContent = formattedDeliveryDate;
+    }
   }
 
   totalElement.textContent = `$${total.toFixed(2)}`;
@@ -737,7 +845,168 @@ function updateCartCountDisplay(itemCount) {
   }
 }
 
-// 8. CHECKOUT PROCESS
+// 8. CHECKOUT MANAGEMENT
+function checkout() {
+  const userId = sessionStorage.getItem("userId");
+  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+
+  let cart = [];
+  let userInfo = {};
+
+  if (isLoggedIn) {
+    // Get user info and cart data for logged-in users
+    userInfo = JSON.parse(localStorage.getItem(`userInfo`) || "{}");
+    cart = JSON.parse(localStorage.getItem(`shoppingCart`) || "[]");
+  } else {
+    // Get guest cart
+    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+    userInfo = { userId: null, name: "Guest", email: "" };
+  }
+
+  // Check if cart is empty
+  if (cart.length === 0) {
+    showNotification(
+      "Your cart is empty. Add some items before checkout.",
+      "warning"
+    );
+    return;
+  }
+
+  // Show custom popup for guest checkout
+  if (!isLoggedIn) {
+    showGuestCheckoutPopup(
+      // Continue as guest callback
+      () => {
+        proceedWithCheckout(cart, userInfo, isLoggedIn);
+      },
+      // Sign in instead callback
+      () => {
+        sessionStorage.setItem("redirectAfterLogin", "cart.html");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 500);
+      }
+    );
+    return;
+  }
+
+  // If logged in, proceed directly
+  proceedWithCheckout(cart, userInfo, isLoggedIn);
+}
+
+function proceedWithCheckout(cart, userInfo, isLoggedIn) {
+  // Show notification for guest checkout
+  if (!isLoggedIn) {
+    showNotification(
+      "Proceeding with guest checkout. Order history will not be saved.",
+      "warning"
+    );
+  }
+
+  // Get pricing configuration and selected shipping
+  const currentPricingConfig =
+    pricingConfig ||
+    JSON.parse(sessionStorage.getItem("pricingConfig")) ||
+    getDefaultPricing();
+
+  // Calculate cart totals
+  let subtotal = 0;
+  cart.forEach((item) => {
+    let itemPrice = item.price;
+    if (
+      item.options &&
+      item.options.size &&
+      typeof item.options.size === "number"
+    ) {
+      itemPrice = item.price * item.options.size;
+    }
+    subtotal += itemPrice * (item.quantity || 1);
+
+    // Add complementary items if any
+    if (item.complementaryItems && item.complementaryItems.length > 0) {
+      item.complementaryItems.forEach((comp) => {
+        let compPrice = comp.price;
+
+        // Handle custom fabrics with fetched default amount
+        if (comp.isCustom) {
+          // Use cached amount if available, otherwise use $1.00 as fallback
+          const cachedAmount = sessionStorage.getItem(
+            "customFabricDefaultAmount"
+          );
+          compPrice = cachedAmount ? parseFloat(cachedAmount) : 1.0;
+        } else if (comp.size && typeof comp.size === "number") {
+          compPrice = comp.price * comp.size;
+        }
+
+        subtotal += compPrice;
+      });
+    }
+  });
+
+  // Get selected shipping type and calculate cost
+  const shippingType = sessionStorage.getItem("selectedShipping") || "domestic";
+
+  // Find the selected shipping option from pricing config
+  let selectedShippingOption = null;
+  let shipping = 0;
+
+  if (currentPricingConfig.shippingOptions) {
+    selectedShippingOption = currentPricingConfig.shippingOptions.find(
+      (option) => option.name.toLowerCase() === shippingType.toLowerCase()
+    );
+  }
+
+  if (selectedShippingOption) {
+    // Check for free shipping threshold
+    if (
+      currentPricingConfig.freeShippingThreshold &&
+      subtotal >= currentPricingConfig.freeShippingThreshold
+    ) {
+      shipping = 0;
+    } else {
+      shipping = selectedShippingOption.cost;
+    }
+  } else {
+    // Fallback to default pricing
+    shipping =
+      subtotal >= (currentPricingConfig.freeShippingThreshold || 100)
+        ? 0
+        : 9.99;
+  }
+
+  // Calculate tax
+  const taxRate = (currentPricingConfig.vatPercentage || 10) / 100;
+  const tax = (subtotal + shipping) * taxRate;
+
+  // Calculate total
+  const total = subtotal + shipping + tax;
+
+  // Save checkout information to session storage
+  const checkoutData = {
+    cart: cart,
+    userId: userInfo.userId,
+    userName: userInfo.name,
+    email: userInfo.email,
+    isGuestCheckout: !isLoggedIn,
+    subtotal: subtotal.toFixed(2),
+    tax: tax.toFixed(2),
+    shipping: shipping.toFixed(2),
+    shippingType: shippingType,
+    total: total.toFixed(2),
+    timestamp: new Date().toISOString(),
+  };
+
+  sessionStorage.setItem("checkoutCart", JSON.stringify(checkoutData));
+
+  // Show processing notification
+  showNotification("Processing your order...", "info");
+
+  // Redirect to checkout page after short delay
+  setTimeout(() => {
+    window.location.href = "checkout.html";
+  }, 1000);
+}
+
 // Custom popup function for guest checkout notice
 function showGuestCheckoutPopup(onContinue, onSignIn) {
   // Create popup overlay
@@ -832,144 +1101,10 @@ function showGuestCheckoutPopup(onContinue, onSignIn) {
   document.body.appendChild(overlay);
 }
 
-// 8. CHECKOUT MANAGEMENT
-function checkout() {
-  const userId = sessionStorage.getItem("userId");
-  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+// Make sure these functions are globally available
+window.proceedWithCheckout = proceedWithCheckout;
+window.showGuestCheckoutPopup = showGuestCheckoutPopup;
 
-  let cart = [];
-  let userInfo = {};
-
-  if (isLoggedIn) {
-    // Get user info and cart data for logged-in users
-    userInfo = JSON.parse(localStorage.getItem(`userInfo`) || "{}");
-    cart = JSON.parse(localStorage.getItem(`shoppingCart`) || "[]");
-  } else {
-    // Get guest cart
-    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
-    userInfo = { userId: null, name: "Guest", email: "" };
-  }
-
-  // Check if cart is empty
-  if (cart.length === 0) {
-    showNotification(
-      "Your cart is empty. Add some items before checkout.",
-      "warning"
-    );
-    return;
-  }
-
-  // Show custom popup for guest checkout
-  if (!isLoggedIn) {
-    showGuestCheckoutPopup(
-      // Continue as guest callback
-      () => {
-        proceedWithCheckout(cart, userInfo, isLoggedIn);
-      },
-      // Sign in instead callback
-      () => {
-        sessionStorage.setItem("redirectAfterLogin", "cart.html");
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 500);
-      }
-    );
-    return;
-  }
-
-  // If logged in, proceed directly
-  proceedWithCheckout(cart, userInfo, isLoggedIn);
-}
-
-function proceedWithCheckout(cart, userInfo, isLoggedIn) {
-  // Show notification for guest checkout
-  if (!isLoggedIn) {
-    showNotification(
-      "Proceeding with guest checkout. Order history will not be saved.",
-      "warning"
-    );
-  }
-
-  // Get pricing configuration and selected shipping
-  const pricingConfig = JSON.parse(sessionStorage.getItem("pricingConfig")) || {
-    vatPercentage: 10,
-    shippingCosts: { domestic: 9.99 },
-    freeShippingThreshold: 100,
-  };
-
-  // Calculate cart totals
-  let subtotal = 0;
-  cart.forEach((item) => {
-    let itemPrice = item.price;
-    if (
-      item.options &&
-      item.options.size &&
-      typeof item.options.size === "number"
-    ) {
-      itemPrice = item.price * item.options.size;
-    }
-    subtotal += itemPrice * (item.quantity || 1);
-
-    // Add complementary items if any
-    if (item.complementaryItems && item.complementaryItems.length > 0) {
-      item.complementaryItems.forEach((comp) => {
-        let compPrice = comp.price;
-
-        // Handle custom fabrics with fetched default amount
-        if (comp.isCustom) {
-          // Use cached amount if available, otherwise use $1.00 as fallback
-          const cachedAmount = sessionStorage.getItem(
-            "customFabricDefaultAmount"
-          );
-          compPrice = cachedAmount ? parseFloat(cachedAmount) : 1.0;
-        } else if (comp.size && typeof comp.size === "number") {
-          compPrice = comp.price * comp.size;
-        }
-
-        subtotal += compPrice;
-      });
-    }
-  });
-
-  // Get selected shipping type and calculate cost
-  const shippingType = sessionStorage.getItem("selectedShipping") || "domestic";
-  let shipping =
-    subtotal >= pricingConfig.freeShippingThreshold
-      ? 0
-      : pricingConfig.shippingCosts[shippingType] || 9.99;
-
-  // Calculate tax
-  const taxRate = pricingConfig.vatPercentage / 100 || 0.1;
-  const tax = (subtotal + shipping) * taxRate;
-
-  // Calculate total
-  const total = subtotal + shipping + tax;
-
-  // Save checkout information to session storage
-  const checkoutData = {
-    cart: cart,
-    userId: userInfo.userId,
-    userName: userInfo.name,
-    email: userInfo.email,
-    isGuestCheckout: !isLoggedIn,
-    subtotal: subtotal.toFixed(2),
-    tax: tax.toFixed(2),
-    shipping: shipping.toFixed(2),
-    shippingType: shippingType,
-    total: total.toFixed(2),
-    timestamp: new Date().toISOString(),
-  };
-
-  sessionStorage.setItem("checkoutCart", JSON.stringify(checkoutData));
-
-  // Show processing notification
-  showNotification("Processing your order...", "info");
-
-  // Redirect to checkout page after short delay
-  setTimeout(() => {
-    window.location.href = "checkout.html";
-  }, 1000);
-}
 // 9. NOTES MANAGEMENT
 function showNotesEditor(itemIndex, compIndex) {
   const displayElement = document.getElementById(
@@ -1316,3 +1451,689 @@ window.saveNotes = saveNotes;
 window.selectShippingOption = selectShippingOption;
 window.handleQuantityInput = handleQuantityInput;
 window.migrateGuestCartToUser = migrateGuestCartToUser;
+
+// Function to render gift card items in the cart with special display
+function renderGiftCardItem(item, index) {
+  // Check if this is a gift card item
+  if (item.type !== "giftcard" || !item.giftCardDetails) {
+    return null; // Not a gift card, let other functions handle it
+  }
+
+  const giftCardDetails = item.giftCardDetails;
+  const itemImage = item.image || "https://via.placeholder.com/150";
+
+  // Format validity period
+  const validityText = giftCardDetails.validityDays
+    ? `Valid for ${giftCardDetails.validityDays} days`
+    : "No expiration";
+
+  // Create gift card specific HTML
+  return `
+    <div class="cart-item gift-card-item" data-index="${index}">
+      <div class="gift-card-badge">
+        <i class="fas fa-gift"></i> Gift Card
+      </div>
+      
+      <div class="cart-item-main">
+        <div class="gift-card-image-container">
+          <img src="${itemImage}" alt="${item.title}" class="cart-item-image">
+          <div class="gift-card-overlay">
+            <i class="fas fa-gift text-white"></i>
+          </div>
+        </div>
+        
+        <div class="cart-item-details">
+          <h3 class="cart-item-title">${item.title}</h3>
+          
+          <div class="gift-card-meta">
+            <div class="gift-card-category">
+              <i class="fas fa-tag"></i>
+              <span>${giftCardDetails.category || "General"}</span>
+            </div>
+            
+            <div class="gift-card-validity">
+              <i class="fas fa-calendar-alt"></i>
+              <span>${validityText}</span>
+            </div>
+            
+            <div class="gift-card-amount">
+              <i class="fas fa-dollar-sign"></i>
+              <span>$${parseFloat(
+                giftCardDetails.selectedPrice || item.price
+              ).toFixed(2)}</span>
+            </div>
+          </div>
+
+          <!-- Recipient Information -->
+          <div class="gift-card-recipient">
+            <div class="recipient-info">
+              <div class="recipient-detail">
+                <strong>To:</strong> ${giftCardDetails.recipientName}
+              </div>
+              <div class="recipient-detail">
+                <strong>Email:</strong> ${giftCardDetails.recipientEmail}
+              </div>
+              ${
+                giftCardDetails.personalMessage
+                  ? `
+                <div class="recipient-message">
+                  <strong>Message:</strong>
+                  <div class="message-text">"${giftCardDetails.personalMessage}"</div>
+                </div>
+              `
+                  : ""
+              }
+            </div>
+            
+            <!-- Edit recipient info button -->
+            <button class="edit-recipient-btn" onclick="editGiftCardRecipient(${index})" title="Edit recipient information">
+              <i class="fas fa-edit"></i> Edit Details
+            </button>
+          </div>
+
+          <div class="item-price-qty">
+            <div class="cart-item-price">$${(
+              parseFloat(giftCardDetails.selectedPrice || item.price) *
+              (item.quantity || 1)
+            ).toFixed(2)}</div>
+            <div class="cart-item-qty">
+              <div class="qty-controls">
+                <button class="qty-btn" onclick="updateQuantity(${index}, -1)">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <input type="text" class="qty-input" value="${
+                  item.quantity || 1
+                }" 
+                  onchange="updateQuantity(${index}, 0, this.value)" 
+                  oninput="handleQuantityInput(${index}, this)" min="1">
+                <button class="qty-btn" onclick="updateQuantity(${index}, 1)">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+              <div class="qty-label"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="remove-btn" onclick="removeItem(${index})" title="Remove gift card">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+    </div>
+  `;
+}
+
+// Function to edit gift card recipient information
+function editGiftCardRecipient(index) {
+  const userId = sessionStorage.getItem("userId");
+  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+
+  let cart = [];
+  let cartKey = "";
+
+  if (isLoggedIn) {
+    cart = JSON.parse(localStorage.getItem("shoppingCart") || "[]");
+    cartKey = "shoppingCart";
+  } else {
+    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+    cartKey = "guestCart";
+  }
+
+  const item = cart[index];
+  if (!item || item.type !== "giftcard" || !item.giftCardDetails) {
+    return;
+  }
+
+  const giftCardDetails = item.giftCardDetails;
+
+  // Create modal for editing recipient info
+  const modal = document.createElement("div");
+  modal.className = "gift-card-edit-modal";
+  modal.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Edit Gift Card Details</h3>
+          <button class="close-btn" onclick="closeGiftCardModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="gift-card-preview">
+            <img src="${item.image}" alt="${item.title}" class="preview-image">
+            <div class="preview-details">
+              <h4>${item.title}</h4>
+              <div class="preview-amount">$${parseFloat(
+                giftCardDetails.selectedPrice || item.price
+              ).toFixed(2)}</div>
+            </div>
+          </div>
+          
+          <form id="editGiftCardForm">
+            <div class="form-group">
+              <label for="editRecipientName">Recipient Name *</label>
+              <input type="text" id="editRecipientName" value="${
+                giftCardDetails.recipientName
+              }" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="editRecipientEmail">Recipient Email *</label>
+              <input type="email" id="editRecipientEmail" value="${
+                giftCardDetails.recipientEmail
+              }" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="editPersonalMessage">Personal Message</label>
+              <textarea id="editPersonalMessage" rows="3" placeholder="Add a personal message...">${
+                giftCardDetails.personalMessage || ""
+              }</textarea>
+            </div>
+          </form>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeGiftCardModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveGiftCardDetails(${index})">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Add modal styles
+  const style = document.createElement("style");
+  style.textContent = `
+    .gift-card-edit-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10000;
+    }
+    
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+    
+    .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .modal-body {
+      padding: 20px 24px;
+    }
+    
+    .gift-card-preview {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    .preview-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    
+    .preview-details h4 {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+    }
+    
+    .preview-amount {
+      font-size: 18px;
+      font-weight: bold;
+      color: #28a745;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    
+    .modal-footer {
+      padding: 15px 24px 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      border-top: 1px solid #eee;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+    }
+  `;
+
+  if (!document.getElementById("gift-card-modal-styles")) {
+    style.id = "gift-card-modal-styles";
+    document.head.appendChild(style);
+  }
+}
+
+// Function to close gift card edit modal
+function closeGiftCardModal() {
+  const modal = document.querySelector(".gift-card-edit-modal");
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Function to save gift card details
+function saveGiftCardDetails(index) {
+  const userId = sessionStorage.getItem("userId");
+  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+
+  let cart = [];
+  let cartKey = "";
+
+  if (isLoggedIn) {
+    cart = JSON.parse(localStorage.getItem("shoppingCart") || "[]");
+    cartKey = "shoppingCart";
+  } else {
+    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+    cartKey = "guestCart";
+  }
+
+  const item = cart[index];
+  if (!item || item.type !== "giftcard" || !item.giftCardDetails) {
+    return;
+  }
+
+  // Get form values
+  const recipientName = document
+    .getElementById("editRecipientName")
+    .value.trim();
+  const recipientEmail = document
+    .getElementById("editRecipientEmail")
+    .value.trim();
+  const personalMessage = document
+    .getElementById("editPersonalMessage")
+    .value.trim();
+
+  // Validate required fields
+  if (!recipientName || !recipientEmail) {
+    alert("Please fill in all required fields.");
+    return;
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(recipientEmail)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  // Update gift card details
+  cart[index].giftCardDetails.recipientName = recipientName;
+  cart[index].giftCardDetails.recipientEmail = recipientEmail;
+  cart[index].giftCardDetails.personalMessage = personalMessage;
+
+  // Save to localStorage
+  localStorage.setItem(cartKey, JSON.stringify(cart));
+
+  // Close modal
+  closeGiftCardModal();
+
+  // Reload cart to show updated information
+  loadCart();
+
+  // Show success notification
+  if (typeof showNotification === "function") {
+    showNotification("Gift card details updated successfully!", "success");
+  }
+
+  // If user is logged in, sync with server
+  if (isLoggedIn && cart[index].cartItemId) {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    pushCartItemToServer(userInfo.userId, cart[index]).catch((error) => {
+      console.error("Failed to sync gift card updates with server:", error);
+    });
+  }
+}
+
+// Function to calculate gift card totals for cart summary
+function calculateGiftCardTotal(cart) {
+  let giftCardTotal = 0;
+
+  cart.forEach((item) => {
+    if (item.type === "giftcard" && item.giftCardDetails) {
+      const itemPrice = parseFloat(
+        item.giftCardDetails.selectedPrice || item.price
+      );
+      giftCardTotal += itemPrice * (item.quantity || 1);
+    }
+  });
+
+  return giftCardTotal;
+}
+
+// Function to check if cart contains only digital products and hide/show shipping accordingly
+function updateShippingVisibility() {
+  const userId = sessionStorage.getItem("userId");
+  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+
+  let cart = [];
+  if (isLoggedIn) {
+    cart = JSON.parse(localStorage.getItem("shoppingCart") || "[]");
+  } else {
+    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+  }
+
+  // Check if cart contains any physical items
+  const hasPhysicalItems = cart.some((item) => {
+    // Gift cards are digital products
+    if (item.type === "giftcard") {
+      return false;
+    }
+
+    // Check for other digital product types if needed
+    if (item.type === "digital" || item.isDigital) {
+      return false;
+    }
+
+    // All other items are considered physical
+    return true;
+  });
+
+  // Get shipping-related elements
+  const shippingDropdown = document.getElementById("shippingSelect");
+  const shippingDropdownContainer = document.querySelector(
+    ".shipping-selection"
+  );
+  const shippingRow = document.querySelector(".summary-row.shipping-row");
+  const deliveryRow = document.querySelector(".summary-row.delivery-row");
+
+  // Alternative selectors if the above don't exist
+  const shippingSection = document.querySelector(".shipping-section");
+  const shippingOptions = document.querySelector(".shipping-options");
+
+  if (hasPhysicalItems) {
+    // Show shipping elements for physical items
+    showShippingElements([
+      shippingDropdown,
+      shippingDropdownContainer,
+      shippingSection,
+      shippingOptions,
+    ]);
+
+    // Update shipping row text to normal
+    if (shippingRow) {
+      const shippingLabel = shippingRow.querySelector(".summary-label");
+      if (shippingLabel) {
+        shippingLabel.textContent = "Shipping:";
+      }
+    }
+
+    // Update delivery row for physical items
+    if (deliveryRow) {
+      const deliveryLabel = deliveryRow.querySelector(".summary-label");
+      if (deliveryLabel) {
+        deliveryLabel.textContent = "Estimated Delivery:";
+      }
+    }
+  } else {
+    // Hide shipping elements for digital-only cart
+    hideShippingElements([
+      shippingDropdown,
+      shippingDropdownContainer,
+      shippingSection,
+      shippingOptions,
+    ]);
+
+    // Update shipping row text for digital items
+    if (shippingRow) {
+      const shippingLabel = shippingRow.querySelector(".summary-label");
+      if (shippingLabel) {
+        shippingLabel.textContent = "Shipping:";
+      }
+    }
+
+    // Update delivery row for digital items
+    if (deliveryRow) {
+      const deliveryLabel = deliveryRow.querySelector(".summary-label");
+      if (deliveryLabel) {
+        deliveryLabel.textContent = "Delivery:";
+      }
+    }
+  }
+}
+
+// Helper function to hide shipping elements
+function hideShippingElements(elements) {
+  elements.forEach((element) => {
+    if (element) {
+      element.style.display = "none";
+      element.classList.add("hidden-for-digital");
+    }
+  });
+}
+
+// Helper function to show shipping elements
+function showShippingElements(elements) {
+  elements.forEach((element) => {
+    if (element) {
+      element.style.display = "";
+      element.classList.remove("hidden-for-digital");
+    }
+  });
+}
+
+// Function to check if specific item is digital
+function isDigitalProduct(item) {
+  // Check for gift cards
+  if (item.type === "giftcard") {
+    return true;
+  }
+
+  // Check for other digital product indicators
+  if (item.type === "digital" || item.isDigital === true) {
+    return true;
+  }
+
+  // Check for digital product keywords in title (optional)
+  const digitalKeywords = [
+    "digital",
+    "download",
+    "ebook",
+    "pdf",
+    "virtual",
+    "online",
+  ];
+  const itemTitle = (item.title || "").toLowerCase();
+
+  if (digitalKeywords.some((keyword) => itemTitle.includes(keyword))) {
+    return true;
+  }
+
+  return false;
+}
+
+// Function to get cart composition summary
+function getCartComposition() {
+  const userId = sessionStorage.getItem("userId");
+  const isLoggedIn = userId && sessionStorage.getItem("isLoggedIn") === "true";
+
+  let cart = [];
+  if (isLoggedIn) {
+    cart = JSON.parse(localStorage.getItem("shoppingCart") || "[]");
+  } else {
+    cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+  }
+
+  let digitalCount = 0;
+  let physicalCount = 0;
+
+  cart.forEach((item) => {
+    if (isDigitalProduct(item)) {
+      digitalCount += item.quantity || 1;
+    } else {
+      physicalCount += item.quantity || 1;
+    }
+  });
+
+  return {
+    total: cart.length,
+    digitalItems: digitalCount,
+    physicalItems: physicalCount,
+    hasPhysicalItems: physicalCount > 0,
+    hasDigitalItems: digitalCount > 0,
+    isDigitalOnly: physicalCount === 0 && digitalCount > 0,
+  };
+}
+
+// Function to update checkout button text based on cart composition
+function updateCheckoutButtonText() {
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  const composition = getCartComposition();
+
+  if (!checkoutBtn) return;
+
+  if (composition.isDigitalOnly) {
+    checkoutBtn.innerHTML = '<i class="fas fa-download"></i> Complete Purchase';
+  } else if (composition.hasDigitalItems && composition.hasPhysicalItems) {
+    checkoutBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Checkout';
+  } else {
+    checkoutBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Checkout';
+  }
+}
+
+// Function to add shipping notice for mixed carts
+function updateShippingNotice() {
+  const composition = getCartComposition();
+
+  // Remove existing notice
+  const existingNotice = document.querySelector(".shipping-notice");
+  if (existingNotice) {
+    existingNotice.remove();
+  }
+
+  // Add notice for mixed carts
+  if (composition.hasDigitalItems && composition.hasPhysicalItems) {
+    const shippingSection =
+      document.querySelector(".cart-summary") ||
+      document.querySelector(".shipping-selection");
+
+    if (shippingSection) {
+      const notice = document.createElement("div");
+      notice.className = "shipping-notice";
+      notice.innerHTML = `
+        <div class="notice-content">
+          <i class="fas fa-info-circle"></i>
+          <span>Your cart contains both physical and digital items. 
+                Digital items will be delivered instantly, while physical items will be shipped.</span>
+        </div>
+      `;
+
+      shippingSection.insertBefore(notice, shippingSection.firstChild);
+    }
+  }
+}
+
+// Enhanced loadCart function integration
+function enhancedLoadCart() {
+  // Call the original loadCart function
+  loadCart();
+
+  // Update shipping visibility based on cart contents
+  updateShippingVisibility();
+
+  // Update checkout button text
+  updateCheckoutButtonText();
+
+  // Update shipping notice
+  updateShippingNotice();
+}
+
+// Export functions for global access
+window.renderGiftCardItem = renderGiftCardItem;
+window.editGiftCardRecipient = editGiftCardRecipient;
+window.closeGiftCardModal = closeGiftCardModal;
+window.saveGiftCardDetails = saveGiftCardDetails;
+window.calculateGiftCardTotal = calculateGiftCardTotal;
+window.updateShippingVisibility = updateShippingVisibility;
+window.isDigitalProduct = isDigitalProduct;
+window.getCartComposition = getCartComposition;
+window.updateCheckoutButtonText = updateCheckoutButtonText;
+window.updateShippingNotice = updateShippingNotice;
+window.enhancedLoadCart = enhancedLoadCart;

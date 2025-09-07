@@ -354,6 +354,7 @@ textarea {
   object-fit: cover;
   border-radius: var(--radius);
   margin-right: 12px;
+  margin-top: 10px;
   flex-shrink: 0;
 }
 
@@ -1231,4 +1232,148 @@ textarea {
   .custom-fabric-detail {
     font-size: 0.8rem;
   }
+}
+
+.gift-card-summary-item {
+  position: relative;
+  border-left: 4px solid #4caf50;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+}
+
+.gift-card-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 0;
+  background: linear-gradient(135deg, #4caf50, #97cb9c);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gift-card-meta {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.gift-card-meta > div {
+  margin-bottom: 4px;
+}
+
+.gift-card-meta > div:last-child {
+  margin-bottom: 0;
+}
+
+.gift-card-amount {
+  font-weight: bold;
+  color: #28a745;
+}
+
+.gift-card-message {
+  font-style: italic;
+  color: #666;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delivery-information {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.delivery-information h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delivery-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.digital-delivery,
+.physical-delivery {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.digital-delivery i {
+  color: #28a745;
+}
+
+.physical-delivery i {
+  color: #4caf50;
+}
+
+.digital-only {
+  color: #28a745;
+  font-style: italic;
+}
+
+.gift-card-delivery-notice,
+.mixed-cart-notice {
+  background: linear-gradient(135deg, #4caf50 0%, #629175 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.gift-card-delivery-notice {
+  background: linear-gradient(135deg, #4caf50 0%, #629175 100%);
+}
+
+.notice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.notice-content i {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 5px;
+}
+
+.notice-text strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.notice-text p {
+  margin: 0;
+  font-size: 15px;
+  opacity: 0.95;
+  line-height: 1.4;
+}
+
+.shipping-section.hidden {
+  display: none !important;
+}
+
+.gift-card-only-checkout .shipping-section {
+  display: none !important;
 }

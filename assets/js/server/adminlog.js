@@ -1,5 +1,5 @@
 const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbxWNzaRVCHFKBBq-bCCj4o_ZKLk7HhlmTHDehEilj8RVWCzPSv0VKtox6pvg9v3EuSPkw/exec";
+  "https://script.google.com/macros/s/AKfycbzpa6hUbVxXZfzTgNpoU2CfeoAz7UACmF39MoNUQNqmmVRWT5Fy8fAbmreRw3NQ0NI/exec";
 const DEFAULT_BACKGROUND =
   "https://images.unsplash.com/photo-1470167290877-7d5d3446de4c?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 

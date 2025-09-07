@@ -360,7 +360,7 @@ function ensureHttps(url) {
 // Fetch FAQs from Google Sheets or Admin Panel
 document.addEventListener("DOMContentLoaded", function () {
   fetch(
-    "https://script.google.com/macros/s/AKfycbyF_vLCIJK7evShOw2P_BPepGx-6fBIsGlndqnmfSiojDqgogEkYVeCZd9iU-2dI9RT/exec"
+    "https://script.google.com/macros/s/AKfycbzpa6hUbVxXZfzTgNpoU2CfeoAz7UACmF39MoNUQNqmmVRWT5Fy8fAbmreRw3NQ0NI/exec"
   )
     .then((response) => response.json())
     .then((data) => {
@@ -992,53 +992,6 @@ async function fetchTestimonials() {
 }
 
 // Use default testimonials if API fails
-function useDefaultTestimonials() {
-  testimonials = [
-    {
-      id: 1,
-      photo: "https://randomuser.me/api/portraits/women/65.jpg",
-      name: "Emma Thompson",
-      position: "CEO, Innovate Solutions",
-      text: "Partnering with this team has been a game-changer for our business. Their strategic approach to our digital transformation increased our conversion rates by 45% within just three months.",
-    },
-    {
-      id: 2,
-      photo: "https://randomuser.me/api/portraits/men/32.jpg",
-      name: "James Wilson",
-      position: "CTO, TechForward Inc.",
-      text: "As a technology company, we have high standards for our digital partners. This team not only met but exceeded our expectations. Their technical knowledge and innovative solutions made complex projects feel seamless.",
-    },
-    {
-      id: 3,
-      photo: "https://randomuser.me/api/portraits/women/45.jpg",
-      name: "Sophia Martinez",
-      position: "Marketing Director, Global Brands",
-      text: "The level of creativity and attention to detail this team brings is unmatched. They took the time to understand our brand voice and translated it perfectly into our digital presence.",
-    },
-    {
-      id: 4,
-      photo: "https://randomuser.me/api/portraits/men/67.jpg",
-      name: "Robert Chen",
-      position: "Founder, StartUp Ventures",
-      text: "As a startup founder, I needed a partner who could understand my vision and help bring it to life with limited resources. This team delivered exceptional value and strategic guidance.",
-    },
-    {
-      id: 5,
-      photo: "https://randomuser.me/api/portraits/women/22.jpg",
-      name: "Olivia Johnson",
-      position: "E-commerce Director, Retail Giant",
-      text: "Our e-commerce platform needed a complete overhaul to meet changing customer expectations. This team delivered a solution that improved user experience and optimized our backend operations.",
-    },
-    {
-      id: 6,
-      photo: "https://randomuser.me/api/portraits/men/41.jpg",
-      name: "Daniel Kim",
-      position: "Operations Manager, Service Pro",
-      text: "Working with this team transformed our service delivery model. Their custom software solution streamlined our operations, reducing response times by 40% and improving customer satisfaction.",
-    },
-  ];
-  renderTestimonials();
-}
 
 // Create testimonial cards
 function renderTestimonials() {
@@ -1057,26 +1010,44 @@ function renderTestimonials() {
 
     const card = document.createElement("div");
     card.className = "testimonial-card";
-    card.innerHTML = `
-            <div class="profile-header">
-                <div class="profile-img-container">
-                    <img src="${testimonial.photo}" alt="${testimonial.name}" class="profile-img" onerror="this.src='https://via.placeholder.com/70?text=User'">
-                </div>
-                <div class="client-info">
-                    <h4 class="client-name">${testimonial.name}</h4>
-                    <p class="client-position">${testimonial.position}</p>
-                </div>
-            </div>
-            <p class="testimonial-text">${testimonial.text}</p>
-            <div class="testimonial-rating">
-                <i class="fas fa-star"></i>
-                <i class="fas fa-star"></i>
-                <i class="fas fa-star"></i>
-                <i class="fas fa-star"></i>
-                <i class="fas fa-star"></i>
-            </div>
-        `;
+    // Function to generate initials from full name
+    function getInitials(name) {
+      if (!name) return "U"; // Default letter if name is missing
+      const parts = name.trim().split(" ");
+      if (parts.length >= 2) {
+        return (
+          parts[0].charAt(0).toUpperCase() +
+          parts[parts.length - 1].charAt(0).toUpperCase()
+        );
+      }
+      return parts[0].charAt(0).toUpperCase();
+    }
 
+    // Generate avatar if no photo provided
+    const avatarHTML =
+      testimonial.photo && testimonial.photo.trim() !== ""
+        ? `<img src="${testimonial.photo}" alt="${testimonial.name}" class="profile-img" onerror="this.src='https://via.placeholder.com/70?text=User'">`
+        : `<div class="name-avatar">${getInitials(testimonial.name)}</div>`;
+
+    card.innerHTML = `
+  <div class="profile-header">
+      <div class="profile-img-container">
+          ${avatarHTML}
+      </div>
+      <div class="client-info">
+          <h4 class="client-name">${testimonial.name}</h4>
+          <p class="client-position">${testimonial.position || ""}</p>
+      </div>
+  </div>
+  <p class="testimonial-text">${testimonial.text}</p>
+  <div class="testimonial-rating">
+      <i class="fas fa-star"></i>
+      <i class="fas fa-star"></i>
+      <i class="fas fa-star"></i>
+      <i class="fas fa-star"></i>
+      <i class="fas fa-star"></i>
+  </div>
+`;
     testimonialsContainer.appendChild(card);
   }
 

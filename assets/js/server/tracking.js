@@ -5,7 +5,7 @@ let currentTab = "all";
 let currentPage = 1;
 const ITEMS_PER_PAGE = 10;
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz250emrafVgqhfloBssH0lKrzHcKCbyRjL2LkU1tNzV_m5EwgAes3486G6YuO8Xbv2/exec";
+  "https://script.google.com/macros/s/AKfycbwytlQ7XeaBG74ve6wGGciZlcoIl7RE8877FXb8xF9VoUx00gSxJjnL17myKtjB-xRH/exec";
 const PRODUCTS_API_URL =
   "https://script.google.com/macros/s/AKfycby9ucXgMhxRaUyVIP_k-8cela5CJlYrWG7y5YOD3zShvf0OYW2HkeAwr4o4zo0zMC1S/exec";
 
